@@ -1,0 +1,166 @@
+2023-02-02T16:28:30.302 root               INFO     ------- new log session started -------
+2023-02-02T16:28:30.549 cli                INFO     starting acli 0.8.1.dev3+gebaa656.d20220803
+2023-02-02T16:28:30.549 cli                INFO     args: -o sandpit -s band_of_rocks -d wac_all_xrite wac panorama -l 1 2 3 4 5 6 7 8 9 -r 1 2 3 4 5 6 7 8 9 -p 21.2 -t -52
+2023-02-02T16:28:30.550 ExoFitPngXmlWriter INFO     requested bit depth: 12
+2023-02-02T16:28:30.550 ExoFitPngXmlWriter INFO     using xml template '/home/ariel/files/repos/exofit-git/src/acli/exofit_template.xml'
+2023-02-02T16:28:30.550 aupe_connect       INFO     connecting to AUPE @ 192.168.0.110:8888
+2023-02-02T16:28:30.563 cli                INFO     using auto exposure
+2023-02-02T16:28:30.563 cli                INFO     caching of shutters enabled
+2023-02-02T16:28:30.563 ShutterCache       INFO     loading shutter cache from '/home/ariel/files/phd/data/campaigns/compression/au/shutter_cache.toml'
+2023-02-02T16:28:30.564 wac_handler        INFO     command: panorama
+2023-02-02T16:28:30.660 WacWrapper         INFO     lwac initialized with AE
+2023-02-02T16:28:30.660 WacWrapper         INFO     lwac filters selected: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+2023-02-02T16:28:30.712 WacWrapper         INFO     rwac initialized with AE
+2023-02-02T16:28:30.713 WacWrapper         INFO     rwac filters selected: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+2023-02-02T16:28:30.714 wac_panorama       INFO     orienting the PTU to T: -52.0
+2023-02-02T16:28:31.160 wac_panorama       INFO     orienting the PTU to P: 21.2
+2023-02-02T16:28:31.774 CaptureHandler     INFO     starting capture
+2023-02-02T16:28:31.775 CaptureHandler     INFO     selecting camera: lwac
+2023-02-02T16:28:31.775 WacWrapper         INFO     filter: 1
+2023-02-02T16:28:34.833 WacWrapper         INFO     shutter: 0.366750
+2023-02-02T16:28:37.107 ExoFitPngXmlWriter INFO     saving image as 'band_of_rocks_wac_all_xrite_LWAC01_T00_P00_BS.png'
+2023-02-02T16:28:38.957 ExoFitPngXmlWriter INFO     creating XML sidecar metadata file
+2023-02-02T16:28:38.957 ExoFitPngXmlWriter INFO     adding image metadata tags
+2023-02-02T16:28:38.957 ExoFitPngXmlWriter WARNING  no GNC directory specified; skipping
+2023-02-02T16:28:38.958 ExoFitPngXmlWriter INFO     XML metadata saved as 'band_of_rocks_wac_all_xrite_LWAC01_T00_P00_BS.xml'
+2023-02-02T16:28:38.966 WacWrapper         INFO     final shutter stored in shutter cache: 0.188235
+2023-02-02T16:28:38.966 WacWrapper         INFO     filter: 2
+2023-02-02T16:28:40.757 WacWrapper         INFO     shutter: 0.148403
+2023-02-02T16:28:42.433 ExoFitPngXmlWriter INFO     saving image as 'band_of_rocks_wac_all_xrite_LWAC02_T00_P00_BS.png'
+2023-02-02T16:28:43.613 ExoFitPngXmlWriter INFO     creating XML sidecar metadata file
+2023-02-02T16:28:43.613 ExoFitPngXmlWriter INFO     adding image metadata tags
+2023-02-02T16:28:43.613 ExoFitPngXmlWriter WARNING  no GNC directory specified; skipping
+2023-02-02T16:28:43.614 ExoFitPngXmlWriter INFO     XML metadata saved as 'band_of_rocks_wac_all_xrite_LWAC02_T00_P00_BS.xml'
+2023-02-02T16:28:43.622 WacWrapper         INFO     final shutter stored in shutter cache: 0.095514
+2023-02-02T16:28:43.622 WacWrapper         INFO     filter: 3
+2023-02-02T16:28:45.473 WacWrapper         INFO     shutter: 0.070927
+2023-02-02T16:28:46.822 ExoFitPngXmlWriter INFO     saving image as 'band_of_rocks_wac_all_xrite_LWAC03_T00_P00_BS.png'
+2023-02-02T16:28:47.929 ExoFitPngXmlWriter INFO     creating XML sidecar metadata file
+2023-02-02T16:28:47.929 ExoFitPngXmlWriter INFO     adding image metadata tags
+2023-02-02T16:28:47.929 ExoFitPngXmlWriter WARNING  no GNC directory specified; skipping
+2023-02-02T16:28:47.929 ExoFitPngXmlWriter INFO     XML metadata saved as 'band_of_rocks_wac_all_xrite_LWAC03_T00_P00_BS.xml'
+2023-02-02T16:28:47.934 WacWrapper         INFO     final shutter stored in shutter cache: 0.051952
+2023-02-02T16:28:47.934 WacWrapper         INFO     filter: 4
+2023-02-02T16:28:49.773 WacWrapper         INFO     shutter: 2.881985
+2023-02-02T16:29:01.065 ExoFitPngXmlWriter INFO     saving image as 'band_of_rocks_wac_all_xrite_LWAC04_T00_P00_BS.png'
+2023-02-02T16:29:03.194 ExoFitPngXmlWriter INFO     creating XML sidecar metadata file
+2023-02-02T16:29:03.194 ExoFitPngXmlWriter INFO     adding image metadata tags
+2023-02-02T16:29:03.194 ExoFitPngXmlWriter WARNING  no GNC directory specified; skipping
+2023-02-02T16:29:03.194 ExoFitPngXmlWriter INFO     XML metadata saved as 'band_of_rocks_wac_all_xrite_LWAC04_T00_P00_BS.xml'
+2023-02-02T16:29:03.200 WacWrapper         INFO     final shutter stored in shutter cache: 1.340168
+2023-02-02T16:29:03.200 WacWrapper         INFO     filter: 5
+2023-02-02T16:29:04.930 WacWrapper         INFO     shutter: 0.636241
+2023-02-02T16:29:08.234 ExoFitPngXmlWriter INFO     saving image as 'band_of_rocks_wac_all_xrite_LWAC05_T00_P00_BS.png'
+2023-02-02T16:29:09.967 ExoFitPngXmlWriter INFO     creating XML sidecar metadata file
+2023-02-02T16:29:09.968 ExoFitPngXmlWriter INFO     adding image metadata tags
+2023-02-02T16:29:09.968 ExoFitPngXmlWriter WARNING  no GNC directory specified; skipping
+2023-02-02T16:29:09.968 ExoFitPngXmlWriter INFO     XML metadata saved as 'band_of_rocks_wac_all_xrite_LWAC05_T00_P00_BS.xml'
+2023-02-02T16:29:09.976 WacWrapper         INFO     final shutter stored in shutter cache: 0.335758
+2023-02-02T16:29:09.976 WacWrapper         INFO     filter: 6
+2023-02-02T16:29:11.687 WacWrapper         INFO     shutter: 1.633528
+2023-02-02T16:29:17.885 ExoFitPngXmlWriter INFO     saving image as 'band_of_rocks_wac_all_xrite_LWAC06_T00_P00_BS.png'
+2023-02-02T16:29:19.192 ExoFitPngXmlWriter INFO     creating XML sidecar metadata file
+2023-02-02T16:29:19.192 ExoFitPngXmlWriter INFO     adding image metadata tags
+2023-02-02T16:29:19.193 ExoFitPngXmlWriter WARNING  no GNC directory specified; skipping
+2023-02-02T16:29:19.193 ExoFitPngXmlWriter INFO     XML metadata saved as 'band_of_rocks_wac_all_xrite_LWAC06_T00_P00_BS.xml'
+2023-02-02T16:29:19.201 WacWrapper         INFO     final shutter stored in shutter cache: 0.976038
+2023-02-02T16:29:19.202 WacWrapper         INFO     filter: 7
+2023-02-02T16:29:20.903 WacWrapper         INFO     shutter: 1.046257
+2023-02-02T16:29:24.621 ExoFitPngXmlWriter INFO     saving image as 'band_of_rocks_wac_all_xrite_LWAC07_T00_P00_BS.png'
+2023-02-02T16:29:25.705 ExoFitPngXmlWriter INFO     creating XML sidecar metadata file
+2023-02-02T16:29:25.706 ExoFitPngXmlWriter INFO     adding image metadata tags
+2023-02-02T16:29:25.706 ExoFitPngXmlWriter WARNING  no GNC directory specified; skipping
+2023-02-02T16:29:25.706 ExoFitPngXmlWriter INFO     XML metadata saved as 'band_of_rocks_wac_all_xrite_LWAC07_T00_P00_BS.xml'
+2023-02-02T16:29:25.714 WacWrapper         INFO     final shutter stored in shutter cache: 0.726558
+2023-02-02T16:29:25.714 WacWrapper         INFO     filter: 8
+2023-02-02T16:29:27.458 WacWrapper         INFO     shutter: 0.851647
+2023-02-02T16:29:30.788 ExoFitPngXmlWriter INFO     saving image as 'band_of_rocks_wac_all_xrite_LWAC08_T00_P00_BS.png'
+2023-02-02T16:29:31.776 ExoFitPngXmlWriter INFO     creating XML sidecar metadata file
+2023-02-02T16:29:31.776 ExoFitPngXmlWriter INFO     adding image metadata tags
+2023-02-02T16:29:31.776 ExoFitPngXmlWriter WARNING  no GNC directory specified; skipping
+2023-02-02T16:29:31.776 ExoFitPngXmlWriter INFO     XML metadata saved as 'band_of_rocks_wac_all_xrite_LWAC08_T00_P00_BS.xml'
+2023-02-02T16:29:31.785 WacWrapper         INFO     final shutter stored in shutter cache: 0.634450
+2023-02-02T16:29:31.785 WacWrapper         INFO     filter: 9
+2023-02-02T16:29:33.601 WacWrapper         INFO     shutter: 0.723990
+2023-02-02T16:29:36.771 ExoFitPngXmlWriter INFO     saving image as 'band_of_rocks_wac_all_xrite_LWAC09_T00_P00_BS.png'
+2023-02-02T16:29:37.838 ExoFitPngXmlWriter INFO     creating XML sidecar metadata file
+2023-02-02T16:29:37.838 ExoFitPngXmlWriter INFO     adding image metadata tags
+2023-02-02T16:29:37.838 ExoFitPngXmlWriter WARNING  no GNC directory specified; skipping
+2023-02-02T16:29:37.838 ExoFitPngXmlWriter INFO     XML metadata saved as 'band_of_rocks_wac_all_xrite_LWAC09_T00_P00_BS.xml'
+2023-02-02T16:29:37.843 WacWrapper         INFO     final shutter stored in shutter cache: 0.519559
+2023-02-02T16:29:37.843 CaptureHandler     INFO     selecting camera: rwac
+2023-02-02T16:29:37.843 WacWrapper         INFO     filter: 1
+2023-02-02T16:29:40.974 WacWrapper         INFO     shutter: 0.303030
+2023-02-02T16:29:43.049 ExoFitPngXmlWriter INFO     saving image as 'band_of_rocks_wac_all_xrite_RWAC01_T00_P00_BS.png'
+2023-02-02T16:29:44.805 ExoFitPngXmlWriter INFO     creating XML sidecar metadata file
+2023-02-02T16:29:44.805 ExoFitPngXmlWriter INFO     adding image metadata tags
+2023-02-02T16:29:44.806 ExoFitPngXmlWriter WARNING  no GNC directory specified; skipping
+2023-02-02T16:29:44.806 ExoFitPngXmlWriter INFO     XML metadata saved as 'band_of_rocks_wac_all_xrite_RWAC01_T00_P00_BS.xml'
+2023-02-02T16:29:44.813 WacWrapper         INFO     final shutter stored in shutter cache: 0.158598
+2023-02-02T16:29:44.814 WacWrapper         INFO     filter: 2
+2023-02-02T16:29:46.709 WacWrapper         INFO     shutter: 0.121757
+2023-02-02T16:29:48.046 ExoFitPngXmlWriter INFO     saving image as 'band_of_rocks_wac_all_xrite_RWAC02_T00_P00_BS.png'
+2023-02-02T16:29:49.256 ExoFitPngXmlWriter INFO     creating XML sidecar metadata file
+2023-02-02T16:29:49.256 ExoFitPngXmlWriter INFO     adding image metadata tags
+2023-02-02T16:29:49.256 ExoFitPngXmlWriter WARNING  no GNC directory specified; skipping
+2023-02-02T16:29:49.257 ExoFitPngXmlWriter INFO     XML metadata saved as 'band_of_rocks_wac_all_xrite_RWAC02_T00_P00_BS.xml'
+2023-02-02T16:29:49.264 WacWrapper         INFO     final shutter stored in shutter cache: 0.078499
+2023-02-02T16:29:49.265 WacWrapper         INFO     filter: 3
+2023-02-02T16:29:51.009 WacWrapper         INFO     shutter: 0.057408
+2023-02-02T16:29:52.679 ExoFitPngXmlWriter INFO     saving image as 'band_of_rocks_wac_all_xrite_RWAC03_T00_P00_BS.png'
+2023-02-02T16:29:53.735 ExoFitPngXmlWriter INFO     creating XML sidecar metadata file
+2023-02-02T16:29:53.735 ExoFitPngXmlWriter INFO     adding image metadata tags
+2023-02-02T16:29:53.735 ExoFitPngXmlWriter WARNING  no GNC directory specified; skipping
+2023-02-02T16:29:53.735 ExoFitPngXmlWriter INFO     XML metadata saved as 'band_of_rocks_wac_all_xrite_RWAC03_T00_P00_BS.xml'
+2023-02-02T16:29:53.745 WacWrapper         INFO     final shutter stored in shutter cache: 0.042003
+2023-02-02T16:29:53.745 WacWrapper         INFO     filter: 4
+2023-02-02T16:29:55.515 WacWrapper         INFO     shutter: 0.354099
+2023-02-02T16:29:57.761 ExoFitPngXmlWriter INFO     saving image as 'band_of_rocks_wac_all_xrite_RWAC04_T00_P00_BS.png'
+2023-02-02T16:29:58.814 ExoFitPngXmlWriter INFO     creating XML sidecar metadata file
+2023-02-02T16:29:58.814 ExoFitPngXmlWriter INFO     adding image metadata tags
+2023-02-02T16:29:58.815 ExoFitPngXmlWriter WARNING  no GNC directory specified; skipping
+2023-02-02T16:29:58.815 ExoFitPngXmlWriter INFO     XML metadata saved as 'band_of_rocks_wac_all_xrite_RWAC04_T00_P00_BS.xml'
+2023-02-02T16:29:58.820 WacWrapper         INFO     final shutter stored in shutter cache: 0.265909
+2023-02-02T16:29:58.820 WacWrapper         INFO     filter: 5
+2023-02-02T16:30:00.636 WacWrapper         INFO     shutter: 0.306735
+2023-02-02T16:30:02.715 ExoFitPngXmlWriter INFO     saving image as 'band_of_rocks_wac_all_xrite_RWAC05_T00_P00_BS.png'
+2023-02-02T16:30:03.932 ExoFitPngXmlWriter INFO     creating XML sidecar metadata file
+2023-02-02T16:30:03.932 ExoFitPngXmlWriter INFO     adding image metadata tags
+2023-02-02T16:30:03.932 ExoFitPngXmlWriter WARNING  no GNC directory specified; skipping
+2023-02-02T16:30:03.933 ExoFitPngXmlWriter INFO     XML metadata saved as 'band_of_rocks_wac_all_xrite_RWAC05_T00_P00_BS.xml'
+2023-02-02T16:30:03.938 WacWrapper         INFO     final shutter stored in shutter cache: 0.222622
+2023-02-02T16:30:03.939 WacWrapper         INFO     filter: 6
+2023-02-02T16:30:05.755 WacWrapper         INFO     shutter: 0.479303
+2023-02-02T16:30:08.035 ExoFitPngXmlWriter INFO     saving image as 'band_of_rocks_wac_all_xrite_RWAC06_T00_P00_BS.png'
+2023-02-02T16:30:09.276 ExoFitPngXmlWriter INFO     creating XML sidecar metadata file
+2023-02-02T16:30:09.277 ExoFitPngXmlWriter INFO     adding image metadata tags
+2023-02-02T16:30:09.277 ExoFitPngXmlWriter WARNING  no GNC directory specified; skipping
+2023-02-02T16:30:09.277 ExoFitPngXmlWriter INFO     XML metadata saved as 'band_of_rocks_wac_all_xrite_RWAC06_T00_P00_BS.xml'
+2023-02-02T16:30:09.288 WacWrapper         INFO     final shutter stored in shutter cache: 0.334262
+2023-02-02T16:30:09.288 WacWrapper         INFO     filter: 7
+2023-02-02T16:30:11.080 WacWrapper         INFO     shutter: 0.825331
+2023-02-02T16:30:14.593 ExoFitPngXmlWriter INFO     saving image as 'band_of_rocks_wac_all_xrite_RWAC07_T00_P00_BS.png'
+2023-02-02T16:30:15.863 ExoFitPngXmlWriter INFO     creating XML sidecar metadata file
+2023-02-02T16:30:15.863 ExoFitPngXmlWriter INFO     adding image metadata tags
+2023-02-02T16:30:15.863 ExoFitPngXmlWriter WARNING  no GNC directory specified; skipping
+2023-02-02T16:30:15.864 ExoFitPngXmlWriter INFO     XML metadata saved as 'band_of_rocks_wac_all_xrite_RWAC07_T00_P00_BS.xml'
+2023-02-02T16:30:15.869 WacWrapper         INFO     final shutter stored in shutter cache: 0.542111
+2023-02-02T16:30:15.869 WacWrapper         INFO     filter: 8
+2023-02-02T16:30:17.634 WacWrapper         INFO     shutter: 0.788206
+2023-02-02T16:30:20.734 ExoFitPngXmlWriter INFO     saving image as 'band_of_rocks_wac_all_xrite_RWAC08_T00_P00_BS.png'
+2023-02-02T16:30:22.117 ExoFitPngXmlWriter INFO     creating XML sidecar metadata file
+2023-02-02T16:30:22.118 ExoFitPngXmlWriter INFO     adding image metadata tags
+2023-02-02T16:30:22.118 ExoFitPngXmlWriter WARNING  no GNC directory specified; skipping
+2023-02-02T16:30:22.118 ExoFitPngXmlWriter INFO     XML metadata saved as 'band_of_rocks_wac_all_xrite_RWAC08_T00_P00_BS.xml'
+2023-02-02T16:30:22.126 WacWrapper         INFO     final shutter stored in shutter cache: 0.522836
+2023-02-02T16:30:22.126 WacWrapper         INFO     filter: 9
+2023-02-02T16:30:23.814 WacWrapper         INFO     shutter: 1.592211
+2023-02-02T16:30:29.338 ExoFitPngXmlWriter INFO     saving image as 'band_of_rocks_wac_all_xrite_RWAC09_T00_P00_BS.png'
+2023-02-02T16:30:30.636 ExoFitPngXmlWriter INFO     creating XML sidecar metadata file
+2023-02-02T16:30:30.636 ExoFitPngXmlWriter INFO     adding image metadata tags
+2023-02-02T16:30:30.636 ExoFitPngXmlWriter WARNING  no GNC directory specified; skipping
+2023-02-02T16:30:30.636 ExoFitPngXmlWriter INFO     XML metadata saved as 'band_of_rocks_wac_all_xrite_RWAC09_T00_P00_BS.xml'
+2023-02-02T16:30:30.645 WacWrapper         INFO     final shutter stored in shutter cache: 1.080214
+2023-02-02T16:30:30.645 ShutterCache       INFO     writing shutter cache to disk
+2023-02-02T16:30:30.646 aupe_connect       INFO     disconnecting from AUPE
+2023-02-02T16:30:30.648 cli                INFO     success
