@@ -1,3 +1,5 @@
+import warnings
+
 import pcot
 from pcot.datum import Datum
 from pcot.document import Document
@@ -169,28 +171,27 @@ def test_marksat():
     img = r.get(Datum.IMG)
     assert img.channels == 3
     assert img.shape == (256, 256, 3)
-    assert img.countBadPixels() == 65536  # all pixels will be bad!
+    assert img.countBadPixels() == 33023  # just over half
 
-    # top left corner is all zeroes, so error.
-    assert np.all(img.dq[0, 0] == [dq.ERROR | dq.NOUNCERTAINTY] * 3)
+    # top left corner has B zero
+    assert np.all(img.dq[3, 3] == [dq.NOUNCERTAINTY, dq.NOUNCERTAINTY, dq.NOUNCERTAINTY|dq.ZERO])
 
-    # bottom left corner (0,1,1)
-    dqs = [x.dq for x in img[0, 255]]
-    assert dqs == [dq.ERROR | dq.NOUNCERTAINTY,
-                   dq.SAT | dq.NOUNCERTAINTY,
+    # bottom left corner
+    dqs = [x.dq for x in img[3, 250]]
+    assert dqs == [dq.NOUNCERTAINTY,
+                   dq.NOUNCERTAINTY,
                    dq.SAT | dq.NOUNCERTAINTY]
 
-    # bottom right corner (1,1,0)
-    dqs = [x.dq for x in img[255, 255]]
-    assert dqs == [dq.SAT | dq.NOUNCERTAINTY,
-                   dq.SAT | dq.NOUNCERTAINTY,
-                   dq.ERROR | dq.NOUNCERTAINTY]
+    # bottom right corner
+    dqs = [x.dq for x in img[250, 250]]
+    assert dqs == [dq.NOUNCERTAINTY,
+                   dq.NOUNCERTAINTY,
+                   dq.ZERO | dq.NOUNCERTAINTY]
 
-    dqs = [x.dq for x in img[130, 130]]
-    assert dqs == [dq.NOUNCERTAINTY, dq.NOUNCERTAINTY, dq.NOUNCERTAINTY | dq.ERROR]
-
-    dqs = [x.dq for x in img[130, 126]]
-    assert dqs == [dq.NOUNCERTAINTY, dq.NOUNCERTAINTY, dq.NOUNCERTAINTY | dq.SAT]
+    dqs = [x.dq for x in img[250, 255]]  # right on the bottom line green is sat
+    assert dqs == [dq.NOUNCERTAINTY,
+                   dq.NOUNCERTAINTY | dq.SAT,
+                   dq.ZERO | dq.NOUNCERTAINTY]
 
     # now mask off an area with an ROI
     rect = Datum(Datum.ROI, ROICircle(128, 128, 10), sources=nullSourceSet)
@@ -203,7 +204,7 @@ def test_marksat():
 
     # but changed inside the ROI
     dqs = [x.dq for x in img[130, 130]]
-    assert dqs == [dq.NOUNCERTAINTY, dq.NOUNCERTAINTY, dq.NOUNCERTAINTY | dq.ERROR]
+    assert dqs == [dq.NOUNCERTAINTY, dq.NOUNCERTAINTY, dq.NOUNCERTAINTY | dq.ZERO]
 
     dqs = [x.dq for x in img[130, 126]]
     assert dqs == [dq.NOUNCERTAINTY, dq.NOUNCERTAINTY, dq.NOUNCERTAINTY | dq.SAT]
@@ -218,11 +219,11 @@ def test_marksat_masked():
 
     # create a node which brings in that same image
     node1 = doc.graph.create("expr")
-    node1.expr = "testimg(1)"
+    node1.params.expr = "testimg(1)"
 
     # create a node which marksat's the image as a quick check
     node2 = doc.graph.create("expr")
-    node2.expr = "marksat(a)"
+    node2.params.expr = "marksat(a)"
     node2.connect(0, node1, 0)
 
     doc.run()
@@ -231,7 +232,7 @@ def test_marksat_masked():
     # previous test
     img = node2.getOutput(0, Datum.IMG)
     dqs = [x.dq for x in img[130, 130]]
-    assert dqs == [dq.NOUNCERTAINTY, dq.NOUNCERTAINTY, dq.NOUNCERTAINTY | dq.ERROR]
+    assert dqs == [dq.NOUNCERTAINTY, dq.NOUNCERTAINTY, dq.NOUNCERTAINTY | dq.ZERO]
 
     dqs = [x.dq for x in img[130, 126]]
     assert dqs == [dq.NOUNCERTAINTY, dq.NOUNCERTAINTY, dq.NOUNCERTAINTY | dq.SAT]
@@ -246,13 +247,13 @@ def test_marksat_masked():
 
     node4 = doc.graph.create("dqmod")
     node4.connect(0, node3, 0)
+    params = node4.params
     # we're going to set DQ in band zero if the nominal value is >= -1
-    node4.band = None  # All bands
-    node4.mod = "Set"  # set DQ bits
-    node4.data = "Nominal"
-    node4.test = "Greater than or equal to"
-    node4.value = -1
-    node4.dq = dq.DIVZERO  # an arbitrary "BAD" bit to set
+    params.band = None  # All bands
+    params.mod = "set"  # set DQ bits
+    params.data = "nominal"
+    params.test = "ge"
+    params.dq = dq.DIVZERO  # an arbitrary "BAD" bit to set
 
     # pass that into a node to strip the ROIs
     node5 = doc.graph.create("striproi")
@@ -279,7 +280,7 @@ def test_marksat_masked():
     dqs = [x.dq for x in img[255, 255]]
     assert dqs == [dq.SAT | dq.NOUNCERTAINTY,
                    dq.SAT | dq.NOUNCERTAINTY,
-                   dq.ERROR | dq.NOUNCERTAINTY]
+                   dq.ZERO | dq.NOUNCERTAINTY]
 
 
 def test_marksat_args():
@@ -291,14 +292,14 @@ def test_marksat_args():
 
     img = r.get(Datum.IMG)
     # top left corner is all zeroes, so error.
-    assert [x.dq for x in img[0, 0]] == [dq.ERROR | dq.NOUNCERTAINTY] * 3
-    assert [x.dq for x in img[20, 0]] == [dq.ERROR | dq.NOUNCERTAINTY] * 3
-    assert [x.dq for x in img[127, 0]] == [dq.ERROR | dq.NOUNCERTAINTY] * 3
-    assert [x.dq for x in img[128, 0]] == [dq.NOUNCERTAINTY, dq.ERROR | dq.NOUNCERTAINTY, dq.SAT | dq.NOUNCERTAINTY]
-    assert [x.dq for x in img[200, 0]] == [dq.NOUNCERTAINTY, dq.ERROR | dq.NOUNCERTAINTY, dq.SAT | dq.NOUNCERTAINTY]
-    assert [x.dq for x in img[205, 0]] == [dq.SAT | dq.NOUNCERTAINTY, dq.ERROR | dq.NOUNCERTAINTY,
+    assert [x.dq for x in img[0, 0]] == [dq.ZERO | dq.NOUNCERTAINTY] * 3
+    assert [x.dq for x in img[20, 0]] == [dq.ZERO | dq.NOUNCERTAINTY] * 3
+    assert [x.dq for x in img[127, 0]] == [dq.ZERO | dq.NOUNCERTAINTY] * 3
+    assert [x.dq for x in img[128, 0]] == [dq.NOUNCERTAINTY, dq.ZERO | dq.NOUNCERTAINTY, dq.SAT | dq.NOUNCERTAINTY]
+    assert [x.dq for x in img[200, 0]] == [dq.NOUNCERTAINTY, dq.ZERO | dq.NOUNCERTAINTY, dq.SAT | dq.NOUNCERTAINTY]
+    assert [x.dq for x in img[205, 0]] == [dq.SAT | dq.NOUNCERTAINTY, dq.ZERO | dq.NOUNCERTAINTY,
                                            dq.SAT | dq.NOUNCERTAINTY]
-    assert [x.dq for x in img[255, 0]] == [dq.SAT | dq.NOUNCERTAINTY, dq.ERROR | dq.NOUNCERTAINTY,
+    assert [x.dq for x in img[255, 0]] == [dq.SAT | dq.NOUNCERTAINTY, dq.ZERO | dq.NOUNCERTAINTY,
                                            dq.SAT | dq.NOUNCERTAINTY]
 
 
@@ -408,8 +409,10 @@ def test_clamp_multiply():
     # and compare with the original image - at 50,50 the new image should be double the original.
     pixb = b.get(Datum.IMG)[50, 50]
     pixr = r.get(Datum.IMG)[50, 50]
-    rat = [x.n / y.n for x, y in zip(pixb, pixr)]
-    urat = [x.u / y.u for x, y in zip(pixb, pixr)]
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=RuntimeWarning)  # ignore the divide by zero
+        rat = [x.n / y.n for x, y in zip(pixb, pixr)]
+        urat = [x.u / y.u for x, y in zip(pixb, pixr)]
     # just look at RG because B will be zero and we'd get a divide by zero
     assert np.allclose(rat[:2], [2, 2])
     assert np.allclose(urat[:2], [2, 2])

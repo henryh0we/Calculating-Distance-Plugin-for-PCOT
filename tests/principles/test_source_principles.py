@@ -78,7 +78,7 @@ def test_greyscale_sources_expr(envi_image_1):
 
     inputNode = doc.graph.create("input 0")
     exprNode = doc.graph.create("expr")
-    exprNode.expr = "grey(a,0)"
+    exprNode.params.expr = "grey(a,0)"
     # connect input 0 on self to output 0 in the input node
     exprNode.connect(0, inputNode, 0)
 
@@ -117,7 +117,7 @@ def test_extract_sources(envi_image_1):
 
     inputNode = doc.graph.create("input 0")
     exprNode = doc.graph.create("expr")
-    exprNode.expr = "a$640"
+    exprNode.params.expr = "a$640"
     # connect input 0 on self to output 0 in the input node
     exprNode.connect(0, inputNode, 0)
 
@@ -137,11 +137,11 @@ def test_extract_by_band():
 
     pcot.setup()
     doc = Document()
-    img = genrgb(50, 50, 0.1, 0.2, 0.3, doc=doc, inpidx=0)
+    img = genrgb(50, 50, 0.1, 0.2, 0.3, inpidx=0)
     assert doc.setInputDirectImage(0, img) is None
     inp = doc.graph.create("input 0")
     expr = doc.graph.create("expr")
-    expr.expr = "a$_0"
+    expr.params.expr = "a$_0"
     expr.connect(0,inp,0)
     doc.run()
 
@@ -149,7 +149,7 @@ def test_extract_by_band():
     assert img is not None
     assert np.allclose(img.img[0][0], 0.1)
 
-    expr.expr = "a$_4"
+    expr.params.expr = "a$_4"
     doc.run()
     img = expr.getOutputDatum(0)
     assert img is Datum.null
@@ -167,7 +167,7 @@ def test_binop_2images(envi_image_1, envi_image_2):
     inputNode1 = doc.graph.create("input 0")
     inputNode2 = doc.graph.create("input 1")
     exprNode = doc.graph.create("expr")
-    exprNode.expr = "a+b"
+    exprNode.params.expr = "a+b"
     exprNode.connect(0, inputNode1, 0)  # expr:0 <- input1:0
     exprNode.connect(1, inputNode2, 0)  # expr:1 <- input2:0
 
@@ -188,9 +188,10 @@ def test_binop_2images(envi_image_1, envi_image_2):
         assert channelFreqs[1] == b
 
 
-def test_binop_number_and_number(envi_image_1, envi_image_2):
+def test_binop_vector_and_vector_img_derived(envi_image_1, envi_image_2):
     """Make sure that sources work with two images combined in an expr node, but where both images are converted
-    to numbers (using mean). We should get a single source set made up of all the sources."""
+    to numbers (using mean). Those mean vectors should have a source for each band (i.e. MultiBandSource) so the
+    result should have a similar MBS, made up of bandwise unions of the origin source MBSs"""
     pcot.setup()
     doc = Document()
     assert doc.setInputENVI(0, envi_image_1) is None
@@ -199,27 +200,26 @@ def test_binop_number_and_number(envi_image_1, envi_image_2):
     inputNode1 = doc.graph.create("input 0")
     inputNode2 = doc.graph.create("input 1")
     exprNode = doc.graph.create("expr")
-    exprNode.expr = "mean(a)*mean(b)"  # multiply mean of image A by the mean of image B
+    exprNode.params.expr = "mean(a)*mean(b)"  # multiply mean of image A by the mean of image B
     exprNode.connect(0, inputNode1, 0)  # expr:0 <- input1:0
     exprNode.connect(1, inputNode2, 0)  # expr:1 <- input2:0
 
     doc.run()
     datum = exprNode.getOutputDatum(0)  # don't actually care what the answer is - we just want to check the sources.
-    assert isinstance(datum.sources, SourceSet)
-    assert len(datum.sources) == 8  # 2 images with 4 bands
+    assert isinstance(datum.sources, MultiBandSource)
+    assert len(datum.sources.sourceSets) == 4  # 4 bands in result
 
-    # split into sources which came from each input - each should have 4 members
-    fromImage1 = [x for x in datum.sources if x.inputIdx == 0]
-    fromImage2 = [x for x in datum.sources if x.inputIdx == 1]
+    # have a look at the sources in each channel - it's just easier to do this via the brief descriptions
+    ss = datum.sources.sourceSets
+    assert ss[0].brief() == "0:ENVI:800&1:ENVI:1000"
+    assert ss[1].brief() == "0:ENVI:640&1:ENVI:2000"
+    assert ss[2].brief() == "0:ENVI:550&1:ENVI:3000"
+    assert ss[3].brief() == "0:ENVI:440&1:ENVI:4000"
 
-    # and check the sets have the right frequencies
-    assert set([x.getFilter().cwl for x in fromImage1]) == {800, 640, 550, 440}
-    assert set([x.getFilter().cwl for x in fromImage2]) == {1000, 2000, 3000, 4000}
 
-
-def test_binop_image_and_number(envi_image_1, envi_image_2):
-    """Make sure that sources work with two images combined in an expr node, but where both images are converted
-    to numbers (using mean). We should get a single source set made up of all the sources."""
+def test_binop_image_and_vector_img_derived(envi_image_1, envi_image_2):
+    """A image and a vector derived from an image. The image should have a source for each band, and the vector
+    likewise. Thus the result should have a MultiBandSource made up of bandwise unions of the origin source MBSs"""
     pcot.setup()
     doc = Document()
     assert doc.setInputENVI(0, envi_image_1) is None
@@ -228,7 +228,7 @@ def test_binop_image_and_number(envi_image_1, envi_image_2):
     inputNode1 = doc.graph.create("input 0")
     inputNode2 = doc.graph.create("input 1")
     exprNode = doc.graph.create("expr")
-    exprNode.expr = "a*mean(b)"  # multiply image A by the mean of image B
+    exprNode.params.expr = "a*mean(b)"  # multiply image A by the mean of image B
     exprNode.connect(0, inputNode1, 0)  # expr:0 <- input1:0
     exprNode.connect(1, inputNode2, 0)  # expr:1 <- input2:0
 
@@ -239,17 +239,12 @@ def test_binop_image_and_number(envi_image_1, envi_image_2):
 
     assert isinstance(img.sources, MultiBandSource)
     assert len(img.sources) == 4  # 4 bands in the output
+    ss = img.sources.sourceSets
+    assert ss[0].brief() == "0:ENVI:800&1:ENVI:1000"
+    assert ss[1].brief() == "0:ENVI:640&1:ENVI:2000"
+    assert ss[2].brief() == "0:ENVI:550&1:ENVI:3000"
+    assert ss[3].brief() == "0:ENVI:440&1:ENVI:4000"
 
-    for freq, channelSourceSet in zip((800, 640, 550, 440), img.sources):
-        # each channel's sources should be the relevant channel of A plus all the channels of B.
-        assert len(channelSourceSet) == 5
-        # split into sources which came from each input - each should have 4 members
-        fromImage1 = [x for x in channelSourceSet if x.inputIdx == 0]
-        fromImage2 = [x for x in channelSourceSet if x.inputIdx == 1]
-        assert len(fromImage1) == 1
-        assert len(fromImage2) == 4
-        assert fromImage1[0].getFilter().cwl == freq
-        assert set([x.getFilter().cwl for x in fromImage2]) == {1000, 2000, 3000, 4000}
 
 
 def test_binop_image_and_number2(envi_image_1, envi_image_2):
@@ -262,7 +257,7 @@ def test_binop_image_and_number2(envi_image_1, envi_image_2):
     inputNode1 = doc.graph.create("input 0")
     inputNode2 = doc.graph.create("input 1")
     exprNode = doc.graph.create("expr")
-    exprNode.expr = "mean(a)-b"  # subtract image B from the mean of image A
+    exprNode.params.expr = "mean(a)-b"  # subtract image B from the mean of image A
     exprNode.connect(0, inputNode1, 0)  # expr:0 <- input1:0
     exprNode.connect(1, inputNode2, 0)  # expr:1 <- input2:0
 
@@ -272,18 +267,12 @@ def test_binop_image_and_number2(envi_image_1, envi_image_2):
     assert img is not None
 
     assert isinstance(img.sources, MultiBandSource)
-    assert len(img.sources) == 4  # 4 bands in the output
-
-    for freq, channelSourceSet in zip((1000, 2000, 3000, 4000), img.sources):
-        # each channel's sources should be the relevant channel of A plus all the channels of B.
-        assert len(channelSourceSet) == 5
-        # split into sources which came from each input - each should have 4 members
-        fromImage1 = [x for x in channelSourceSet if x.inputIdx == 0]
-        fromImage2 = [x for x in channelSourceSet if x.inputIdx == 1]
-        assert len(fromImage1) == 4
-        assert len(fromImage2) == 1
-        assert fromImage2[0].getFilter().cwl == freq
-        assert set([x.getFilter().cwl for x in fromImage1]) == {800, 640, 550, 440}
+    assert len(img.sources) == 4
+    ss = img.sources.sourceSets
+    assert ss[0].brief() == "0:ENVI:800&1:ENVI:1000"
+    assert ss[1].brief() == "0:ENVI:640&1:ENVI:2000"
+    assert ss[2].brief() == "0:ENVI:550&1:ENVI:3000"
+    assert ss[3].brief() == "0:ENVI:440&1:ENVI:4000"
 
 
 def test_binop_image_and_number_literal(envi_image_1, envi_image_2):
@@ -295,7 +284,7 @@ def test_binop_image_and_number_literal(envi_image_1, envi_image_2):
 
     inputNode1 = doc.graph.create("input 0")
     exprNode = doc.graph.create("expr")
-    exprNode.expr = "a-20"  # subtract literal 20 from the mean of image A
+    exprNode.params.expr = "a-20"  # subtract literal 20 from the mean of image A
     exprNode.connect(0, inputNode1, 0)  # expr:0 <- input1:0
 
     doc.run()
@@ -325,7 +314,7 @@ def test_unop_image(envi_image_1):
 
     inputNode1 = doc.graph.create("input 0")
     exprNode = doc.graph.create("expr")
-    exprNode.expr = "-a"  # negate image
+    exprNode.params.expr = "-a"  # negate image
     exprNode.connect(0, inputNode1, 0)  # expr:0 <- input1:0
 
     doc.run()
@@ -349,7 +338,7 @@ def test_unop_number_from_image(envi_image_1):
 
     inputNode1 = doc.graph.create("input 0")
     exprNode = doc.graph.create("expr")
-    exprNode.expr = "-mean(a)"  # negate image mean
+    exprNode.params.expr = "-mean(a)"  # negate image mean
     exprNode.connect(0, inputNode1, 0)  # expr:0 <- input1:0
 
     doc.run()

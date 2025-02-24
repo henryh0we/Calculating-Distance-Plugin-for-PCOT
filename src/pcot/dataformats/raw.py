@@ -9,6 +9,7 @@ from pcot.ui import uiloader
 
 logger = logging.getLogger(__name__)
 
+
 class RawLoader:
     """Class for loading raw files."""
 
@@ -17,6 +18,11 @@ class RawLoader:
     UINT16 = 1
     UINT8 = 2
     FORMAT_NAMES = ['f32', 'u16', 'u8']
+
+    @staticmethod
+    def formatByName(s: str) -> int:
+        """Get the format by name."""
+        return RawLoader.FORMAT_NAMES.index(s)
 
     # we currently assume that the image is a single channel, but this could be extended to multiple channels.
     # We'd have to add depth and interleaving parameters to the constructor.
@@ -59,7 +65,7 @@ class RawLoader:
         for k, v in self.SERIALISE:
             setattr(self, k, d.get(k, v))
 
-    def load(self, filename: str) -> np.ndarray:
+    def load(self, filename: str, bitdepth=None) -> np.ndarray:
         """Loads the raw file and returns an array object."""
         if self.format == RawLoader.FLOAT32:
             dtype = np.float32
@@ -72,11 +78,16 @@ class RawLoader:
             scale = 1.0 / 255.0
         else:
             raise ValueError(f"Unknown format {self.format}")
+
+        # override the scale if we have an explicit bit depth
+        if bitdepth is not None:
+            scale = 1.0 / ((1 << bitdepth) - 1)
+
         data = np.fromfile(filename, dtype=dtype, offset=self.offset)
         if self.bigendian:
             data.byteswap(True)
         data = data.reshape(self.height, self.width)
-        data = np.rot90(data, int(self.rot/90))
+        data = np.rot90(data, int(self.rot / 90))
         if self.horzflip:
             data = np.fliplr(data)
         if self.vertflip:
@@ -84,9 +95,10 @@ class RawLoader:
 
         # convert to float32 if necessary, dividing down to the range 0-1
         if dtype != np.float32:
-            logger.info(f"Loading data, currently the range is {data.min()} to {data.max()}, format is {dtype}")
+            logger.debug(f"Loading data, currently the range is {data.min()} to {data.max()}, format is {dtype}")
             data = data.astype(np.float32) * scale
-            logger.info(f"Loaded as F32. Range is now {data.min()} to {data.max()}")
+            logger.debug(f"Loaded as F32. Range is now {data.min()} to {data.max()}")
+        logger.info(f"Image loaded into multifile - size is {data.shape}")
         return data
 
     @staticmethod
@@ -95,7 +107,7 @@ class RawLoader:
         or the standard RGB loader in ImageCube"""
         ext = os.path.splitext(path)[1].lower()
         return ext in ('.raw', '.bin')
-    
+
     def __str__(self):
         """Produce a string representation of the loader."""
         formatname = self.FORMAT_NAMES[self.format]
@@ -114,6 +126,7 @@ class RawLoader:
 
 class RawLoaderDialog(QDialog):
     """Dialog to set the parameters for the raw loader."""
+
     def __init__(self, parent, loader):
         super().__init__(parent)
         uiloader.loadUi('rawloader.ui', self)
