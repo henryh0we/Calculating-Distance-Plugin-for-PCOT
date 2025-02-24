@@ -9,7 +9,7 @@ from pcot.datum import Datum
 from pcot.datumtypes import Type
 from pcot.imagecube import ImageCube
 from pcot.rois import BadOpException, ROI
-from pcot.sources import MultiBandSource, SourceSet, nullSourceSet
+from pcot.sources import MultiBandSource, SourceSet, nullSourceSet, SourcesObtainable
 from pcot.value import Value
 
 
@@ -139,6 +139,21 @@ def numberUnop(d: Datum, f: Callable[[Value], Value]) -> Datum:
     return Datum(Datum.NUMBER, f(d.val), d.getSources())
 
 
+def combineSources(a: SourcesObtainable, b: SourcesObtainable) -> SourcesObtainable:
+    if isinstance(a, MultiBandSource) and isinstance(b, MultiBandSource):
+        # if both sources are multiband, do a bandwise union
+        return MultiBandSource.createBandwiseUnion([a, b])
+    elif isinstance(a, MultiBandSource) and not isinstance(b, MultiBandSource):
+        # if one source is multiband, add the other to each band
+        return MultiBandSource([SourceSet(x.sourceSet.union(b.getSources())) for x in a.sourceSets])
+    elif not isinstance(a, MultiBandSource) and isinstance(b, MultiBandSource):
+        # same again but other way round
+        return MultiBandSource([SourceSet(x.sourceSet.union(a.getSources())) for x in b.sourceSets])
+    else:
+        # neither is multiband, just union them
+        return SourceSet(a.getSources().sourceSet.union(b.getSources().sourceSet))
+
+
 def imageBinop(dx: Datum, dy: Datum, f: Callable[[Value, Value], Value]) -> Datum:
     """This wraps binary operations on imagecubes"""
     imga = dx.val
@@ -189,7 +204,7 @@ def numberImageBinop(dx: Datum, dy: Datum, f: Callable[[Value, Value], Value]) -
     img = img.modifyWithSub(subimg, r.n, uncertainty=r.u, dqv=r.dq)
     # handle ROIs and sources
     img.rois = dy.val.rois.copy()
-    img.sources = combineImageWithNumberSources(img, dx.getSources())
+    img.sources = combineSources(img.sources, dx.sources)
     return Datum(Datum.IMG, img)
 
 
@@ -201,41 +216,48 @@ def imageNumberBinop(dx: Datum, dy: Datum, f: Callable[[Value, Value], Value]) -
     r = f(a, dy.val)
     img = img.modifyWithSub(subimg, r.n, uncertainty=r.u, dqv=r.dq)
     img.rois = dx.val.rois.copy()
-    img.sources = combineImageWithNumberSources(img, dy.getSources())
+    img.sources = combineSources(img.sources, dy.sources)
     return Datum(Datum.IMG, img)
 
 
 def numberBinop(dx: Datum, dy: Datum, f: Callable[[Value, Value], Value]) -> Datum:
     """Wraps number x number -> number"""
     r = f(dx.val, dy.val)
-    return Datum(Datum.NUMBER, r, SourceSet([dx.getSources(), dy.getSources()]))
+    sources = combineSources(dx.sources, dy.sources)
+    return Datum(Datum.NUMBER, r, sources)
 
 
 def ROIBinop(dx: Datum, dy: Datum, f: Callable[[ROI, ROI], ROI]) -> Datum:
     """wraps ROI x ROI -> ROI"""
     r = f(dx.val, dy.val)
-    return Datum(Datum.ROI, r, SourceSet([dx.getSources(), dy.getSources()]))
+    sources = combineSources(dx.sources, dy.sources)
+    return Datum(Datum.ROI, r, sources)
 
 # end of binop semantics wrappers
 
 
-def extractChannelByName(a: Datum, b: Datum) -> Datum:
+def extractChannel(a: Datum, b: Datum) -> Datum:
     """Extract a channel by name from an image, used for the $ operator.
     a: a Datum which must be an image
     b: a Datum which must be an identifier or numeric wavelength
     return: a new single-channel image datum
     """
     img = a.val
+    is_scalar = True
 
     if b.tp == Datum.NUMBER:
         img = img.getChannelImageByFilter(b.val.n)
+        is_scalar = b.val.isscalar()
     elif b.tp == Datum.IDENT:
         img = img.getChannelImageByFilter(b.val)
     else:
-        raise OperatorException("channel extract operator '$' requires ident or numeric wavelength RHS")
+        raise OperatorException("band extract operator '$' requires ident or numeric wavelength RHS")
 
     if img is None:
         raise OperatorException("unable to get this wavelength from an image: " + str(b))
+
+    if img.channels > 1 and is_scalar:
+        raise OperatorException("'$' has multiple bands in result from a single requested band - does the image have more than one band with the same wavelength/name?")
 
     img.rois = a.val.rois.copy()
     return Datum(Datum.IMG, img)
@@ -283,8 +305,8 @@ def initOps():
     registerUnopSemantics(Operator.NEG, Datum.ROI,
                           lambda d: Datum(Datum.ROI, -d.get(Datum.ROI), d.getSources()))
 
-    registerBinopSemantics(Operator.DOLLAR, Datum.IMG, Datum.NUMBER, extractChannelByName)
-    registerBinopSemantics(Operator.DOLLAR, Datum.IMG, Datum.IDENT, extractChannelByName)
+    registerBinopSemantics(Operator.DOLLAR, Datum.IMG, Datum.NUMBER, extractChannel)
+    registerBinopSemantics(Operator.DOLLAR, Datum.IMG, Datum.IDENT, extractChannel)
 
 
 initOps()

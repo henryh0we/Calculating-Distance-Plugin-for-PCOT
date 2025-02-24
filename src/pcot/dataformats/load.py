@@ -1,23 +1,21 @@
 import errno
+import logging
 import os
 from typing import List, Tuple, Optional, Union, Dict, Any
 
 import numpy as np
-import logging
-from dateutil import parser
 from proctools.products import DataProduct
 
 from pcot import ui
-from pcot.dataformats.pds4 import PDS4Product, PDS4ImageProduct, ProductList
+from pcot.dataformats.pds4 import ProductList
 from pcot.dataformats.raw import RawLoader
 from pcot.datum import Datum
-from pcot.filters import getFilter, Filter
+from pcot.cameras.filters import getFilter
 from pcot.imagecube import ChannelMapping, ImageCube, load_rgb_image
-from pcot.inputs.multifile import presetModel
 from pcot.sources import StringExternal, MultiBandSource, Source
 from pcot.ui.presetmgr import PresetOwner
-
 from pcot.utils import image
+from pcot.utils.datumstore import readParc
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +72,7 @@ def multifile(directory: str,
               fnames: List[str],
               preset: Optional[str] = None,
               filterpat: str = None,
-              mult: np.float32 = None,
+              bitdepth: int = None,
               filterset: str = None,
               rawloader: Optional[RawLoader] = None,
               inpidx: int = None,
@@ -95,7 +93,8 @@ def multifile(directory: str,
       the multifile input method in the UI and are stored in a file in the user's home directory.
       Other settings passed into this function will override the settings in the preset.
     - filterpat: a regular expression pattern that extracts the filter name from the filename
-    - mult: a multiplier to apply to the image data (which is often a very low intensity)
+    - bitdepth: how many bits are actually used in the image - we divide by 2^bitdepth-1 to normalise. If none,
+        we use the "nominal" depth (8 or 16).
     - inpidx: the input index to use or None if not connected to a graph input
     - mapping: the channel mapping to use or None if the default
     - filterset: the name of the filter set to use for filter name lookup
@@ -124,6 +123,8 @@ def multifile(directory: str,
 
     """
 
+    from pcot.inputs.multifile import presetModel
+    logger.debug(f"Multifile load from directory {directory}")
     if rawloader is None:
         class RawPresets(PresetOwner):
             """
@@ -135,7 +136,7 @@ def multifile(directory: str,
                 # initialise with the settings passed into the containing function
                 self.filterset = filterset
                 self.filterpat = filterpat
-                self.mult = mult
+                self.bitdepth = bitdepth
                 self.rawloader = rawloader
 
             def applyPreset(self, d: Dict[str, Any]):
@@ -143,7 +144,7 @@ def multifile(directory: str,
                 # only if they haven't been set already
                 self.filterset = self.filterset or d['filterset']
                 self.filterpat = self.filterpat or d['filterpat']
-                self.mult = self.mult or d['mult']
+                self.bitdepth = self.bitdepth or (None if d is None else d.get('bitdepth', None))
                 if self.rawloader is None:
                     self.rawloader = RawLoader()
                     self.rawloader.deserialise(d['rawloader'])
@@ -158,9 +159,8 @@ def multifile(directory: str,
         # now we can use the settings in r
         filterpat = r.filterpat or r'.*(?P<lens>L|R)WAC(?P<n>[0-9][0-9]).*'
         filterset = r.filterset or 'PANCAM'
-        mult = r.mult or 1.0
         rawloader = r.rawloader
-
+        
     def getFilterSearchParam(p) -> Tuple[Optional[Union[str, int]], Optional[str]]:
         """Returns the thing to search for to match a filter to a path and the type of the search"""
         if filterre is None:
@@ -168,7 +168,9 @@ def multifile(directory: str,
         else:
             m = filterre.match(p)
             if m is None:
+                logger.critical(f"NO MATCH FOUND FOR path {p}, regex {filterre}")
                 return None, None
+        
             m = m.groupdict()
             if '<lens>' in filterpat:
                 if '<n>' not in filterpat:
@@ -218,9 +220,9 @@ def multifile(directory: str,
 
             def load(path: str) -> np.ndarray:
                 if rawloader is not None and rawloader.is_raw_file(path):
-                    return rawloader.load(path)
+                    return rawloader.load(path, bitdepth=bitdepth)
                 else:
-                    return load_rgb_image(path)
+                    return load_rgb_image(path, bitdepth=bitdepth)
 
             if cache is None:
                 img = load(path)
@@ -242,7 +244,7 @@ def multifile(directory: str,
             # that takes human perception into account. We want to keep the
             # original values, so we just take the mean of the three channels.
             if len(img.shape) == 3:
-                img = np.mean(img, axis=2).astype(np.float)
+                img = np.mean(img, axis=2).astype(np.float32)
 
             # build source data for this image
             filtpos, searchtype = getFilterSearchParam(path)
@@ -260,7 +262,7 @@ def multifile(directory: str,
         if len(set([x.shape for x in imgs])) != 1:
             raise Exception("all images must be the same size in a multifile")
         img = image.imgmerge(imgs).astype(np.float32)
-        img = ImageCube(img * mult, mapping, MultiBandSource(sources))
+        img = ImageCube(img, mapping, MultiBandSource(sources))
     else:
         img = None
 
@@ -309,3 +311,23 @@ def pds4(inputlist: Union[ProductList, List[Union[DataProduct, str]]],
             raise ValueError("All elements of the list must be DataProducts or strings")
 
     return inputlist.toDatum(multValue=multValue, mapping=mapping, selection=selection, inpidx=inpidx)
+
+
+def parc(fname: str, itemname: str, inpidx: int = None) -> Optional[Datum]:
+    """Load a Datum from a PCOT datum archive (PARC) file. We also patch the sources, overwriting the source data
+    in the archive because we want the data to look like it came from the archive and not whatever
+    the archive was created from. This may seem a bit rude - and that we're losing a record of something
+    that might be important - but otherwise we could get bogged down with references to data on other systems.
+    # Later we may revise this to avoid lossy source loading for (say) PDS4 products.
+
+    - fname: the name of the archive file
+    - itemname: the name of the item in the archive
+    - inpidx: the input index to use or None if not connected to a graph input
+    """
+
+    try:
+        return readParc(fname, itemname, inpidx)    # delegated to the datumstore module
+    except FileNotFoundError as e:
+        # we throw this to be consistent with the other methods
+        raise Exception(f"Cannot read file {fname}") from e
+

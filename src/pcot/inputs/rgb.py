@@ -8,6 +8,7 @@ from pcot.ui.inputs import TreeMethodWidget
 from .inputmethod import InputMethod
 from ..dataformats import load
 from ..datum import Datum
+from ..parameters.taggedaggregates import TaggedDict
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,7 @@ class RGBInputMethod(InputMethod):
 
     def loadImg(self):
         # will throw exception if load failed
-        logger.info("RGB PERFORMING FILE READ")
+        logger.debug("RGB PERFORMING FILE READ")
         self.img = load.rgb(self.fname,
                             self.input.idx if self.input else None,
                             self.mapping)
@@ -65,6 +66,12 @@ class RGBInputMethod(InputMethod):
             self.img = None   # ensure image is reloaded
         Canvas.deserialise(self, data)
 
+    def modifyWithParameterDict(self, d: TaggedDict) -> bool:
+        if d.rgb.filename is not None:
+            self.fname = d.rgb.filename
+            return True
+        return False
+
 
 class RGBMethodWidget(TreeMethodWidget):
     def __init__(self, m):
@@ -72,9 +79,9 @@ class RGBMethodWidget(TreeMethodWidget):
                          ["*.jpg", "*.png", "*.ppm", "*.tga", "*.tif"])
 
     def onInputChanged(self):
-        self.invalidate()  # input has changed, invalidate so the cache is dirtied
         # we don't do this when the window is opening, otherwise it happens a lot!
         if not self.method.openingWindow:
+            self.invalidate()  # input has changed, invalidate so the cache is dirtied
             self.method.input.performGraph()
         self.canvas.display(self.method.img)
 

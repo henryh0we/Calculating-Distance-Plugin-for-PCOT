@@ -1,27 +1,24 @@
+import fnmatch
 import logging
 import os
+import re
 from pathlib import Path
-from typing import Optional, List, Dict
+from typing import Optional, List
 
-import numpy as np
-import proctools
 from PySide2 import QtWidgets
 from PySide2.QtCore import Qt
 from PySide2.QtGui import QPen
 from PySide2.QtWidgets import QMessageBox, QTableWidgetItem
-from dateutil import parser
 from proctools.products import ProductDepot, DataProduct
 
 import pcot
 import pcot.dq
 import pcot.ui as ui
-from pcot.dataformats import pds4
-from pcot.dataformats.pds4 import PDS4ImageProduct, PDS4Product, PDS4External, ProductList
+from pcot.dataformats.pds4 import PDS4ImageProduct, ProductList
 from pcot.datum import Datum
-from pcot.filters import Filter
-from pcot.imagecube import ImageCube, ChannelMapping
+from pcot.imagecube import ChannelMapping
 from pcot.inputs.inputmethod import InputMethod
-from pcot.sources import Source, MultiBandSource
+from pcot.parameters.taggedaggregates import TaggedDict
 from pcot.ui import uiloader
 from pcot.ui.canvas import Canvas
 from pcot.ui.help import HelpWindow
@@ -175,6 +172,16 @@ class PDS4InputMethod(InputMethod):
         except KeyError as e:
             ui.error(f"can't read '{e}' from serialised PDS4 input data")
 
+    def modifyWithParameterDict(self, d: TaggedDict) -> bool:
+        m = d.pds4
+        if m.directory is None:
+            return False  # no change to this input (directory must be provided)
+
+        self._getFilesFromParameterDict(m)
+
+        plist = [DataProduct.from_file(Path(os.path.join(self.dir, f))) for f in self.files]
+        self.setProducts(plist)
+        return True
 
 class ImageMarkerItem(QtWidgets.QGraphicsRectItem):
     """Marker for images"""
@@ -221,7 +228,6 @@ class PDS4ImageMethodWidget(MethodWidget):
 
         self.recurseBox.setCheckState(Qt.Checked if self.method.recurse else Qt.Unchecked)
 
-        self.canvas.setMapping(m.mapping)
         self.canvas.setGraph(self.method.input.mgr.doc.graph)
         self.canvas.setPersister(m)
 
@@ -460,8 +466,8 @@ class PDS4ImageMethodWidget(MethodWidget):
                 f"setting multiplier combo index to 0, because I don't know about multiplier {self.method.multValue}!")
 
         logger.debug("Displaying data {}, mapping {}".format(self.method.out, self.method.mapping))
-        self.invalidate()  # input has changed, invalidate so the cache is dirtied
         # we don't do this when the window is opening, otherwise it happens a lot!
         if not self.method.openingWindow:
+            self.invalidate()  # input has changed, invalidate so the cache is dirtied
             self.method.input.performGraph()
         self.updateDisplay()

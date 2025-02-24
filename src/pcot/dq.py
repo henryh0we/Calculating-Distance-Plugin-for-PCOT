@@ -6,7 +6,9 @@ import numpy as np
 from pcot.utils.table import Table
 
 DQs = dict()  # dictionary of name->poweroftwo gets created by calls to reg
+
 defs = dict()  # poweroftwo->data
+charmap = dict() # character -> data
 
 NUMBITS = 16
 
@@ -18,14 +20,15 @@ class DQDefinition:
     char: str
 
 
-def reg(name, bit, char, desc):
+def reg(name, poweroftwo, char, desc):
     global DQs, defs
-    b = np.uint16(1 << bit)
+    b = np.uint16(1 << poweroftwo)
 
     d = DQDefinition(name, b, desc, char)
 
     DQs[name] = b
     defs[b] = d
+    charmap[char] = d
     return b        # return bit value
 
 
@@ -53,6 +56,15 @@ def chars(bits, shownone=False):
     return out
 
 
+def fromChars(s):
+    """Inverse of chars: given a string of characters, return the corresponding bit field"""
+    out = 0
+    for c in s:
+        if c in charmap:
+            out |= charmap[c].bit
+    return out
+
+
 def listBits():
     global defs
     t = Table()
@@ -76,6 +88,7 @@ DIVZERO = reg('divzero', 3, 'Z', "Pixel data is result of divided by zero")
 UNDEF = reg('undefined', 4, '?', "Pixel data is undefined result")
 COMPLEX = reg('complex', 5, 'C', "Pixel data is result of calculation with complex result")
 ERROR = reg('error', 6, 'E', "Pixel data has unspecified error")
+ZERO = reg('zero', 7, '0', "Pixel data is zero")
 
 NONE = np.uint16(0)
 
