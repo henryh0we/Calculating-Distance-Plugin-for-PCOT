@@ -34,6 +34,7 @@ def calibration(images):
 			cv.imshow('img', dst)
 			cv.waitKey(500)
 	cv.destroyAllWindows()
+	print("====== Camera Matrices ======")
 	print(np.mean(np.array(camera_mats), axis=0))
  
 tut_images = glob.glob(os.path.join('HenryFiles/Camera Calibration/Tutorial/Tutorial images', '*.jpg'))
