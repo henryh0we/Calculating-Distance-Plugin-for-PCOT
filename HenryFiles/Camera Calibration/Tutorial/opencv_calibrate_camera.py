@@ -12,7 +12,7 @@ objpoints = [] # 3d point in real world space
 imgpoints = [] # 2d points in image plane.
 
 # images = glob.glob('*.jpg')
-images = glob.glob(os.path.join('C:/Users/henry/pcot-exomars-pancam-major-project/HenryFiles/Camera Calibration/Tutorial/Tutorial images', '*.jpg'))
+images = glob.glob(os.path.join('Camera Calibration\Tutorial\Tutorial images', '*.jpg'))
 print(len(images))
 camera_mats = []
 for fname in images:
