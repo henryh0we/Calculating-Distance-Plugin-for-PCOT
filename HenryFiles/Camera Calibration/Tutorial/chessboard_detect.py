@@ -47,9 +47,10 @@ def find_chessboards(image_files):
     cv.destroyAllWindows()
     return detected_images
 
+file_path = "HenryFiles/Camera Calibration/right images/"
 
 # Get the list of PNG files in the directory
-image_files = glob.glob("HenryFiles/Camera Calibration/right images/*.png")
+image_files = glob.glob(file_path + "*.png")
 found_boards = find_chessboards(image_files)
 
 print(len(found_boards), "Chessboards found:")
