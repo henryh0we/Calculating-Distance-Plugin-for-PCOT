@@ -12,12 +12,12 @@ def find_chessboards(image_files):
         
         gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
         
-        ret1,gray = cv.threshold(gray, 200, 255, cv.THRESH_BINARY)
+        ret1,gray = cv.threshold(gray, 127, 255, cv.THRESH_BINARY)
 
 
         # Find the chessboard corners
         # ret, corners = cv.findChessboardCorners(gray, chessboard_size, cv.CALIB_CB_ADAPTIVE_THRESH + cv.CALIB_CB_NORMALIZE_IMAGE + cv.CALIB_CB_FAST_CHECK)
-        ret, corners = cv.findChessboardCorners(gray, chessboard_size, cv.CALIB_CB_ADAPTIVE_THRESH)
+        ret, corners = cv.findChessboardCorners(gray, chessboard_size, None)
 
         if ret:
             detected_images.append(file)
