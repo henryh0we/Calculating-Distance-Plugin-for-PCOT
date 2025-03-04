@@ -93,7 +93,9 @@ def find_chessboards_threshold(image_files):
         gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
         # gray = img.copy()
         
-        gray = cv.adaptiveThreshold(gray, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 11, 2)
+        # gray = cv.adaptiveThreshold(gray, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 11, 2)
+        
+        gray = cv.threshold(gray, 177, 255, cv.THRESH_BINARY)
         
         # gray = adjust_contrast(gray)
         
@@ -123,9 +125,9 @@ image_files = glob.glob(file_path + "*.png")
 
 # found_boards = find_chessboards_1(image_files)
 
-# found_boards = find_chessboards_2(image_files)
+found_boards = find_chessboards_2(image_files)
 
-found_boards = find_chessboards_threshold(image_files)
+# found_boards = find_chessboards_threshold(image_files)
 
 
 
