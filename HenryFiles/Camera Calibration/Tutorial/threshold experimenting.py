@@ -1,7 +1,9 @@
 import cv2 as cv
 import numpy as np
 from matplotlib import pyplot as plt
-img = cv.imread('gradient.png', cv.IMREAD_GRAYSCALE)
+# file_path = 'P:\CS39440 Major Project\pcot-exomars-pancam-major-project\HenryFiles\Camera Calibration\Tutorial\gradient.png'
+file_path = 'HenryFiles/Camera Calibration/right images/aupe-cal_c25_RWAC01_T00_P00_BS.png'
+img = cv.imread(file_path, cv.IMREAD_GRAYSCALE)
 assert img is not None, "file could not be read, check with os.path.exists()"
 ret,thresh1 = cv.threshold(img,127,255,cv.THRESH_BINARY)
 ret,thresh2 = cv.threshold(img,127,255,cv.THRESH_BINARY_INV)
