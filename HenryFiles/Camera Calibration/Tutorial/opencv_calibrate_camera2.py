@@ -18,8 +18,8 @@ objp[:,:2] = np.mgrid[0:chessboard_left,0:chessboard_right].T.reshape(-1,2)
 objpoints = [] # 3d point in real world space
 imgpoints = [] # 2d points in image plane.
 
-# images = glob.glob(os.path.join('HenryFiles/Camera Calibration/left images', '*.png'))
-images = glob.glob(os.path.join('HenryFiles/Camera Calibration/right images', '*.png'))
+images = glob.glob(os.path.join('HenryFiles/Camera Calibration/left images', '*.png'))
+# images = glob.glob(os.path.join('HenryFiles/Camera Calibration/right images', '*.png'))
 
 # images = glob.glob(os.path.join('HenryFiles/Camera Calibration/Tutorial/Tutorial images', '*.jpg'))
 
@@ -36,7 +36,7 @@ for fname in images:
 		imgpoints.append(corners)
 		# Draw and display the corners
 		cv.drawChessboardCorners(img, chessboard_size, corners2, ret)
-		cv.imshow('img', img)
+		cv.imshow('Original', img)
 		cv.waitKey(500)
 		ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
 		camera_mats.append(mtx)
@@ -45,7 +45,7 @@ for fname in images:
 		dst = cv.undistort(img, mtx, dist, None, newcameramtx)
 		x, y, w, h = roi
 		dst = dst[y:y+h, x:x+w]
-		cv.imshow('img', dst)
+		cv.imshow('Result', dst)
 		cv.waitKey(500)
 cv.destroyAllWindows()
 print(np.mean(np.array(camera_mats), axis=0))
