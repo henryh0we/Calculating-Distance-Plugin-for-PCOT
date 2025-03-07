@@ -18,8 +18,8 @@ objp[:,:2] = np.mgrid[0:chessboard_left,0:chessboard_right].T.reshape(-1,2)
 objpoints = [] # 3d point in real world space
 imgpoints = [] # 2d points in image plane.
 
-
-images = glob.glob(os.path.join('HenryFiles/Camera Calibration/left images', '*.png'))
+# images = glob.glob(os.path.join('HenryFiles/Camera Calibration/left images', '*.png'))
+images = glob.glob(os.path.join('HenryFiles/Camera Calibration/right images', '*.png'))
 
 # images = glob.glob(os.path.join('HenryFiles/Camera Calibration/Tutorial/Tutorial images', '*.jpg'))
 
