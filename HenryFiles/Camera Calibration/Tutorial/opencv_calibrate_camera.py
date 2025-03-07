@@ -39,19 +39,24 @@ def calibration(images):
 			cv.drawChessboardCorners(img, (7,6), corners2, ret)
 			cv.imshow('img', img)
 			cv.waitKey(500)
+   
+		# Check if the number of object points and image points are equal before calibrating
+		if len(objpoints) == len(imgpoints):
 			ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
 			camera_mats.append(mtx)
-			h,  w = img.shape[:2]
+			h, w = img.shape[:2]
 			newcameramtx, roi = cv.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
 			dst = cv.undistort(img, mtx, dist, None, newcameramtx)
 			x, y, w, h = roi
 			dst = dst[y:y+h, x:x+w]
 			cv.imshow('img', dst)
 			cv.waitKey(500)
-	cv.destroyAllWindows()
-	print("====== Camera Matrices ======")
-	print(len(camera_mats))
-	print(np.mean(np.array(camera_mats), axis=0))
+		else:
+			print(f"Skipping calibration for {fname} due to unequal object and image points")
+			cv.destroyAllWindows()
+			print("====== Camera Matrices ======")
+			print(len(camera_mats))
+			print(np.mean(np.array(camera_mats), axis=0))
  
 tut_images = glob.glob(os.path.join('HenryFiles/Camera Calibration/Tutorial/Tutorial images', '*.jpg'))
 print(len(tut_images))
