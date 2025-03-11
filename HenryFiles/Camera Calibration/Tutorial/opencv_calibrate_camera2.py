@@ -18,34 +18,70 @@ objp[:,:2] = np.mgrid[0:chessboard_left,0:chessboard_right].T.reshape(-1,2)
 objpoints = [] # 3d point in real world space
 imgpoints = [] # 2d points in image plane.
 
-images = glob.glob(os.path.join('HenryFiles/Camera Calibration/left images', '*.png'))
-# images = glob.glob(os.path.join('HenryFiles/Camera Calibration/right images', '*.png'))
+images = glob.glob(os.path.join('Camera Calibration\left images', '*.png'))
+# images = glob.glob(os.path.join('Camera Calibration/right images', '*.png'))
 
 # images = glob.glob(os.path.join('HenryFiles/Camera Calibration/Tutorial/Tutorial images', '*.jpg'))
 
+# List storing the camera calibration matrices
 camera_mats = []
+
+# Loop through the images
 for fname in images:
+	# Load the image
 	img = cv.imread(fname)
+	#  Convert to grayscale
 	gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 	# Find the chess board corners
 	ret, corners = cv.findChessboardCorners(gray, chessboard_size, None)
-	# If found, add object points, image points (after refining them)
 	if ret == True:
+
+		# If found, add object points, these are the points (corners of the chessboard squares)
+		# in real world space
 		objpoints.append(objp)
+
+		# Refine the corner location by subpixel accuracy
+		# This works by taking each corner, taking a small window around it
+		# checking the gradient of brightness of the window
+		# the subpixel will then be represented by a floating point average, 
+		# rather than a set pixel position.
 		corners2 = cv.cornerSubPix(gray,corners, (11,11), (-1,-1), criteria)
+		# Add these new image points to imgpoints
 		imgpoints.append(corners)
+  
 		# Draw and display the corners
 		cv.drawChessboardCorners(img, chessboard_size, corners2, ret)
 		cv.imshow('Original', img)
 		cv.waitKey(500)
+
+		# Calibrate the camera
+		# This is achieved by comparing the placement of the chessboard corners in the image
+		# to those of the real world.
+		# The discrepency between the two is used to calculate the camera matrix
 		ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+		
+		# Add the camera matric to a list
 		camera_mats.append(mtx)
+
+		# Get the height and width of the image
 		h,  w = img.shape[:2]
+
+		# getOptimalNewCameraMatrix creates a matrix which is specifically useful for 
+		# undistorting the image.
 		newcameramtx, roi = cv.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
+		
+		# Undistorting the image
 		dst = cv.undistort(img, mtx, dist, None, newcameramtx)
+
+		# Crops the image
 		x, y, w, h = roi
 		dst = dst[y:y+h, x:x+w]
+
+		# Shows the image
 		cv.imshow('Result', dst)
 		cv.waitKey(500)
+
 cv.destroyAllWindows()
-print(np.mean(np.array(camera_mats), axis=0))
+
+# Generate the average camera matrix
+print(np.mean(np.array(camera_mats), axis=0)) 
