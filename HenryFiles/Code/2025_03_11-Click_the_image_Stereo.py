@@ -2,6 +2,7 @@ import numpy as np
 import cv2 as cv
 import glob
 import os
+import math
 
 # Load the images
 imgL_path = r'AUPE Images/distance/pctset-1m-8bit/distance_pctset-1m-8bit_LWAC01_T00_P00_BS.png'
@@ -54,7 +55,23 @@ focal_length_mm = 12
 sensor_width_mm = 8.8
 image_width_pixels = 1024
 
-baseline = 0.5  # Distance between the two cameras in meters
+baseline = 500  # Distance between the two cameras in mm
+
+camera_rotation = 2.8 # Inwards rotation of the cameras in degrees
+total_camera_rotation = camera_rotation * 2
+tcr_radians = math.radians(total_camera_rotation)
+
+T = np.array([
+    baseline, 0, 0
+])
+
+R = np.array([
+    [math.cos(tcr_radians), 0, math.sin(tcr_radians)],
+    [0, 1, 0],
+    [-math.sin(tcr_radians), 0, math.cos(tcr_radians)]
+])
+
+
 
 left_point = None
 right_point = None
