@@ -2,8 +2,8 @@ import cv2
 import numpy as np
 
 # Load stereo images
-imgL = cv2.imread('HenryFiles\AUPE Images\distance\pctset-1m-8bit\distance_pctset-1m-8bit_LWAC01_T00_P00_BS.png', 0)  # Left image
-imgR = cv2.imread('HenryFiles\AUPE Images\distance\pctset-1m-8bit\distance_pctset-1m-8bit_RWAC01_T00_P00_BS.png', 0)  # Right image
+imgL = cv2.imread('AUPE Images\distance\pctset-1m-8bit\distance_pctset-1m-8bit_LWAC01_T00_P00_BS.png', 0)  # Left image
+imgR = cv2.imread('AUPE Images\distance\pctset-1m-8bit\distance_pctset-1m-8bit_RWAC01_T00_P00_BS.png', 0)  # Right image
 
 # Camera parameters
 # focal_length = 700  # Example focal length in pixels
