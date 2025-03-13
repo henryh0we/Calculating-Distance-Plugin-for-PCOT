@@ -75,13 +75,27 @@ R_left = np.array([
     [-np.sin(cr_radians), 0, np.cos(cr_radians)]
 ], dtype=np.float32)
 
+R_Hard_left = np.array([
+    [ 0.9988061373414341, 0, -0.04884976979561326 ], 
+    [0, 1, 0],
+    [ 0.04884976979561326, 0, 0.9988061373414341 ]
+])
+
 R_right = np.array([
     [np.cos(-cr_radians), 0, np.sin(-cr_radians)],
     [0, 1, 0],
     [-np.sin(-cr_radians), 0, np.cos(-cr_radians)]
 ], dtype=np.float32)
 
-R = np.matmul(R_right, R_left.T)
+R_Hard_right = np.array([
+    [ 0.9988061373414341, 0, -0.04884976979561326 ], 
+    [0,1,0],
+    [ 0.04884976979561326, 0, 0.9988061373414341 ]
+])
+
+R = np.matmul(R_Hard_left, R_Hard_right.T)
+
+# R = np.matmul(R_right, R_left.T)
 # R = R_right @ np.linalg.inv(R_left)
 
 # R = np.array([
