@@ -59,23 +59,25 @@ c_y_right = right_matrix[1][2]
 focal_length_mm = 12
 sensor_width_mm = 8.8
 image_width_pixels = 1024
+img_size = (1024, 1024)
 
 
 camera_rotation = 2.8 # Inwards rotation of the cameras in degrees
 total_camera_rotation = camera_rotation * 2
-tcr_radians = math.radians(total_camera_rotation)
+tcr_radians = np.deg2rad(total_camera_rotation)
+# tcr_radians = np.deg2rad(camera_rotation)
 print("tcr_radians: ", tcr_radians)
 
 R_left = np.array([
-    [math.cos(tcr_radians), 0, math.sin(tcr_radians)],
+    [np.cos(tcr_radians), 0, np.sin(tcr_radians)],
     [0, 1, 0],
-    [-math.sin(tcr_radians), 0, math.cos(tcr_radians)]
+    [-np.sin(tcr_radians), 0, np.cos(tcr_radians)]
 ], dtype=np.float32)
 
 R_right = np.array([
-    [math.cos(-tcr_radians), 0, math.sin(-tcr_radians)],
+    [np.cos(-tcr_radians), 0, np.sin(-tcr_radians)],
     [0, 1, 0],
-    [-math.sin(-tcr_radians), 0, math.cos(-tcr_radians)]
+    [-np.sin(-tcr_radians), 0, np.cos(-tcr_radians)]
 ], dtype=np.float32)
 
 R = np.matmul(R_right, R_left.T)
@@ -89,9 +91,12 @@ R = np.matmul(R_right, R_left.T)
 
 baseline = 500  # Distance between the two cameras in mm
 toe_in_angle = baseline * math.tan(tcr_radians)
+print("toe in: ", toe_in_angle)
 
 T = np.array([
-    [baseline], [0], [toe_in_angle]
+    [baseline], [0], 
+    # [toe_in_angle]
+    [0]
 ], dtype=np.float32)
 
 # , dtype=np.float32
@@ -105,12 +110,22 @@ T = np.array([
 # print(R)
 # print(T)
 
-left_matrix = np.float32(left_matrix)
-left_dist = np.float32(left_dist)
-right_matrix = np.float32(right_matrix)
-right_dist = np.float32(right_dist)
-R = np.float32(R)
-T = np.float32(T)
+# left_matrix = np.float32(left_matrix)
+# left_dist = np.float32(left_dist)
+# right_matrix = np.float32(right_matrix)
+# right_dist = np.float32(right_dist)
+# R = np.float32(R)
+# T = np.float32(T)
+
+left_matrix = np.asarray(left_matrix, dtype=np.float64)
+left_dist = np.asarray(left_dist, dtype=np.float64)
+right_matrix = np.asarray(right_matrix, dtype=np.float64)
+right_dist = np.asarray(right_dist, dtype=np.float64)
+R = np.asarray(R, dtype=np.float64)
+T = np.asarray(T, dtype=np.float64)
+
+img_size = (int(img_size[0]), int(img_size[1]))
+
 
 print(left_matrix)
 print(left_dist)
@@ -134,31 +149,64 @@ print("right_dist shape:", right_dist.shape)
 print("R shape:", R.shape)
 print("T shape:", T.shape)
 
-LR, RR, p1, p2, q = cv.stereoRectify(left_matrix, left_dist, right_matrix, right_dist, (1024, 1024), R, T)
+LR, RR, p1, p2, q, roi1, roi2 = cv.stereoRectify(
+    left_matrix, left_dist, 
+    right_matrix, right_dist, 
+    img_size, 
+    R, T)
 
-left_point = None
-right_point = None
+left_map1, left_map2 = cv.initUndistortRectifyMap(
+    left_matrix, left_dist, LR, p1, img_size, cv.CV_32FC1)
+right_map1, right_map2 = cv.initUndistortRectifyMap(
+    right_matrix, right_dist, RR, p2, img_size, cv.CV_32FC1)
 
-def click_event_left(event, x, y, flags, param):
-    global left_point
-    if event == cv.EVENT_LBUTTONDOWN:
-        left_point = (x, y)
-        cv.circle(imgL, left_point, 5, (255, 0, 0), -1)
-        cv.imshow('Left Image', imgL)
+left_rectified = cv.remap(imgL, left_map1, left_map2, cv.INTER_LINEAR)
+right_rectified = cv.remap(imgR, right_map1, right_map2, cv.INTER_LINEAR)
 
-def click_event_right(event, x, y, flags, param):
-    global right_point
-    if event == cv.EVENT_LBUTTONDOWN:
-        right_point = (x, y)
-        cv.circle(imgR, right_point, 5, (255, 0, 0), -1)
-        cv.imshow('Right Image', imgR)
+combined_image = np.hstack((left_rectified, right_rectified))
 
-# Display images and set mouse callbacks
-cv.imshow('Left Image', imgL)
-cv.imshow('Right Image', imgR)
-cv.setMouseCallback('Left Image', click_event_left)
-cv.setMouseCallback('Right Image', click_event_right)
+# line_color = (0, 255, 0)  
+# line_thickness = 1
+# num_lines = 20  
+# spacing = combined_image.shape[0] // num_lines
 
+# for i in range(0, combined_image.shape[0], spacing):
+#     cv.line(combined_image, (0, i), (combined_image.shape[1], i), line_color, line_thickness)
+
+cv.namedWindow("Rectified Images", cv.WINDOW_NORMAL)
+cv.resizeWindow("Rectified Images", 1200, 600)
+cv.imshow("Rectified Images", combined_image)
 cv.waitKey(0)
 cv.destroyAllWindows()
+
+# cv.imshow("Left Rectified", left_rectified)
+# cv.imshow("Right Rectified", right_rectified)
+# cv.waitKey(0)
+# cv.destroyAllWindows()
+
+# left_point = None
+# right_point = None
+
+# def click_event_left(event, x, y, flags, param):
+#     global left_point
+#     if event == cv.EVENT_LBUTTONDOWN:
+#         left_point = (x, y)
+#         cv.circle(imgL, left_point, 5, (255, 0, 0), -1)
+#         cv.imshow('Left Image', imgL)
+
+# def click_event_right(event, x, y, flags, param):
+#     global right_point
+#     if event == cv.EVENT_LBUTTONDOWN:
+#         right_point = (x, y)
+#         cv.circle(imgR, right_point, 5, (255, 0, 0), -1)
+#         cv.imshow('Right Image', imgR)
+
+# # Display images and set mouse callbacks
+# cv.imshow('Left Image', imgL)
+# cv.imshow('Right Image', imgR)
+# cv.setMouseCallback('Left Image', click_event_left)
+# cv.setMouseCallback('Right Image', click_event_right)
+
+# cv.waitKey(0)
+# cv.destroyAllWindows()
 
