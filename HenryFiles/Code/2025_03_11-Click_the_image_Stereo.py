@@ -63,21 +63,22 @@ img_size = (1024, 1024)
 
 
 camera_rotation = 2.8 # Inwards rotation of the cameras in degrees
+cr_radians = np.deg2rad(camera_rotation)
 total_camera_rotation = camera_rotation * 2
 tcr_radians = np.deg2rad(total_camera_rotation)
 # tcr_radians = np.deg2rad(camera_rotation)
 print("tcr_radians: ", tcr_radians)
 
 R_left = np.array([
-    [np.cos(tcr_radians), 0, np.sin(tcr_radians)],
+    [np.cos(cr_radians), 0, np.sin(cr_radians)],
     [0, 1, 0],
-    [-np.sin(tcr_radians), 0, np.cos(tcr_radians)]
+    [-np.sin(cr_radians), 0, np.cos(cr_radians)]
 ], dtype=np.float32)
 
 R_right = np.array([
-    [np.cos(-tcr_radians), 0, np.sin(-tcr_radians)],
+    [np.cos(-cr_radians), 0, np.sin(-cr_radians)],
     [0, 1, 0],
-    [-np.sin(-tcr_radians), 0, np.cos(-tcr_radians)]
+    [-np.sin(-cr_radians), 0, np.cos(-cr_radians)]
 ], dtype=np.float32)
 
 R = np.matmul(R_right, R_left.T)
@@ -97,7 +98,7 @@ T = np.array([
     [baseline], [0], 
     # [toe_in_angle]
     [0]
-], dtype=np.float32)
+], dtype=np.float64)
 
 # , dtype=np.float32
 
