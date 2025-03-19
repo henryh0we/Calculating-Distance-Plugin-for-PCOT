@@ -1,0 +1,138 @@
+import numpy as np
+import cv2 as cv
+import glob
+import os
+import math
+
+# from Camera_Calibration.Tutorial.opencv_calibrate_camera_function import calibrate_camera
+
+# Load the images
+imgL_path = r'AUPE Images/distance/pctset-1m-8bit/distance_pctset-1m-8bit_LWAC01_T00_P00_BS.png'
+imgR_path = r'AUPE Images/distance/pctset-1m-8bit/distance_pctset-1m-8bit_RWAC01_T00_P00_BS.png'
+
+# Check if the files exist
+if not os.path.exists(imgL_path) or not os.path.exists(imgR_path):
+    print("One or both image files not found. Please check the file paths.")
+    exit()
+
+imgL = cv.imread(imgL_path, 0)
+imgR = cv.imread(imgR_path, 0)
+
+if imgL is None or imgR is None:
+    print("One or both images could not be loaded. Please check the file paths and file integrity.")
+    exit()
+    
+# Camera parameters
+
+left_matrix = np.array([
+    [1.93479347e+03, 0.00000000e+00, 4.94465690e+02], 
+    [0.00000000e+00, 1.92439346e+03, 4.16565813e+02], 
+    [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]
+    ], dtype=np.float64)
+
+left_dist = np.array([
+    [-4.92069166e-02, -8.97949590e-01, -1.33405070e-02, -4.44237271e-03, 2.39096813e+01]
+    ], dtype=np.float64)
+
+f_x_left = left_matrix[0][0]
+f_y_left = left_matrix[1][1]
+c_x_left = left_matrix[0][2]
+c_y_left = left_matrix[1][2]
+
+right_matrix = np.array([
+    [1.93490723e+03, 0.00000000e+00, 5.26855083e+02],
+    [0.00000000e+00, 1.92810886e+03, 5.05013225e+02],
+    [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]
+ ], dtype=np.float64)
+
+right_dist = np.array([
+    [-1.49167371e-01, 1.24309868e+00, -4.14581848e-04, -3.06654869e-03, -7.74292242e+00]
+    ], dtype=np.float64)
+
+f_x_right = right_matrix[0][0]
+f_y_right = right_matrix[1][1]
+c_x_right = right_matrix[0][2]
+c_y_right = right_matrix[1][2]
+
+img_size = (1024, 1024)
+
+camera_rotation = 2.8 # Inwards rotation of the cameras in degrees
+total_camera_rotation = camera_rotation * 2
+tcr_radians = np.deg2rad(total_camera_rotation)
+
+R = np.array([
+    [np.cos(tcr_radians), 0, np.sin(tcr_radians)],
+    [0, 1, 0],
+    [-np.sin(tcr_radians), 0, np.cos(tcr_radians)]
+], dtype=np.float64)
+
+# baseline = 500 # Millimeters
+baseline = 0.5 # Meters
+# baseline = 1 # As units instead
+
+toe_in_angle = baseline * math.tan(tcr_radians)
+
+T = np.array([
+    [baseline], [0], 
+    # [toe_in_angle]
+    [0]
+], dtype=np.float64)
+
+print(left_matrix)
+print(left_dist)
+print(right_matrix)
+print(right_dist)
+
+print(R)
+print(T)
+
+print("left_matrix:", left_matrix.dtype)
+print("left_dist:", left_dist.dtype)
+print("right_matrix:", right_matrix.dtype)
+print("right_dist:", right_dist.dtype)
+print("R:", R.dtype)
+print("T:", T.dtype)
+
+print("left_matrix shape:", left_matrix.shape)
+print("left_dist shape:", left_dist.shape)
+print("right_matrix shape:", right_matrix.shape)
+print("right_dist shape:", right_dist.shape)
+print("R shape:", R.shape)
+print("T shape:", T.shape)
+
+LR, RR, p1, p2, q, roi1, roi2 = cv.stereoRectify(
+    left_matrix, left_dist, 
+    right_matrix, right_dist, 
+    img_size, 
+    R, T)
+
+# ADJUSTING BASED ON STACK OVERFLOW ANSWER
+
+LR_fix = LR.dot(np.linalg.inv(left_matrix))
+RR_fix = RR.dot(np.linalg.inv(right_matrix))
+
+LR = LR_fix.copy()
+RR = RR_fix.copy()
+
+left_map1, left_map2 = cv.initUndistortRectifyMap(
+    left_matrix, left_dist, 
+    # LR, 
+    None,
+    p1, img_size, cv.CV_32FC1)
+right_map1, right_map2 = cv.initUndistortRectifyMap(
+    right_matrix, right_dist, 
+    # RR, 
+    None,
+    p2, img_size, cv.CV_32FC1)
+
+left_rectified = cv.remap(imgL, left_map1, left_map2, cv.INTER_LINEAR)
+right_rectified = cv.remap(imgR, right_map1, right_map2, cv.INTER_LINEAR)
+
+combined_image = np.hstack((left_rectified, right_rectified))
+
+cv.namedWindow("Rectified Images", cv.WINDOW_NORMAL)
+cv.resizeWindow("Rectified Images", 1200, 600)
+cv.imshow("Rectified Images", combined_image)
+# cv.setMouseCallback('Rectified Images', click_event_combined)
+cv.waitKey(0)
+cv.destroyAllWindows()
