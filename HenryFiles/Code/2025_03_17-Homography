@@ -62,11 +62,24 @@ camera_rotation = 2.8 # Inwards rotation of the cameras in degrees
 total_camera_rotation = camera_rotation * 2
 tcr_radians = np.deg2rad(total_camera_rotation)
 
-R = np.array([
+# R = np.array([ # X
+#     [1, 0, 0],
+#     [0, np.cos(tcr_radians), -np.sin(tcr_radians)],
+#     [0, np.sin(tcr_radians), np.cos(tcr_radians)]
+# ], dtype=type_data)
+
+R = np.array([ # Y
     [np.cos(tcr_radians), 0, np.sin(tcr_radians)],
     [0, 1, 0],
     [-np.sin(tcr_radians), 0, np.cos(tcr_radians)]
 ], dtype=type_data)
+
+# R = np.array([ # Z
+#     [np.cos(tcr_radians), -np.sin(tcr_radians), 0],
+#     [np.sin(tcr_radians), np.cos(tcr_radians), 0],
+#     [0, 0, 1]
+# ], dtype=type_data)
+
 
 # baseline = 500 # Millimeters
 baseline = 0.5 # Meters
@@ -142,6 +155,18 @@ print("right_opt_matrix shape:", right_opt_matrix.shape)
 print("R shape:", R.shape)
 print("T shape:", T.shape)
 
+def has_nan_or_inf(matrix):
+    return np.isnan(matrix).any() or np.isinf(matrix).any()
+
+print("left_matrix has NaN or Inf:", has_nan_or_inf(left_matrix))
+print("left_dist has NaN or Inf:", has_nan_or_inf(left_dist))
+print("left_opt_matrix has NaN or Inf:", has_nan_or_inf(left_opt_matrix))
+print("right_matrix has NaN or Inf:", has_nan_or_inf(right_matrix))
+print("right_dist has NaN or Inf:", has_nan_or_inf(right_dist))
+print("right_opt_matrix has NaN or Inf:", has_nan_or_inf(right_opt_matrix))
+print("R has NaN or Inf:", has_nan_or_inf(R))
+print("T has NaN or Inf:", has_nan_or_inf(T))
+
 # LR, RR, p1, p2, q, roi1, roi2 = cv.stereoRectify(
 #     left_matrix, left_dist, 
 #     right_matrix, right_dist, 
@@ -151,11 +176,22 @@ print("T shape:", T.shape)
 # ===================================
 # USING OPTIMAL MATRIX for stereoRectify
 # ===================================
+
 LR, RR, p1, p2, q, roi1, roi2 = cv.stereoRectify(
     left_opt_matrix, left_dist, 
     right_opt_matrix, right_dist, 
     img_size, 
     R, T)
+
+# try:
+#     LR, RR, p1, p2, q, roi1, roi2 = cv.stereoRectify(
+#         left_matrix.astype(type_data), left_dist.astype(type_data), 
+#         right_matrix.astype(type_data), right_dist.astype(type_data), 
+#         img_size, 
+#         R.astype(type_data), T.astype(type_data))
+#     print("Stereo rectification successful")
+# except cv.error as e:
+#     print("Stereo rectification error:", e)
 
 # ===================================
 # Looking at using undistort based on info from openCV calibrate_camera_function
