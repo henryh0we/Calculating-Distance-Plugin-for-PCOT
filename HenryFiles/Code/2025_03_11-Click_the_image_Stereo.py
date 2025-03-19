@@ -6,8 +6,6 @@ import math
 
 # from Camera_Calibration.Tutorial.opencv_calibrate_camera_function import calibrate_camera
 
-
-
 # Load the images
 imgL_path = r'AUPE Images/distance/pctset-1m-8bit/distance_pctset-1m-8bit_LWAC01_T00_P00_BS.png'
 imgR_path = r'AUPE Images/distance/pctset-1m-8bit/distance_pctset-1m-8bit_RWAC01_T00_P00_BS.png'
@@ -104,7 +102,8 @@ R = np.matmul(R_Hard_left, R_Hard_right.T)
 #     [-math.sin(tcr_radians), 0, math.cos(tcr_radians)]
 # ])
 
-baseline = 500  # Distance between the two cameras in mm
+# baseline = 500  # Distance between the two cameras in mm
+baseline = 0.5 # Distance between the two cameras in meters
 toe_in_angle = baseline * math.tan(tcr_radians)
 print("toe in: ", toe_in_angle)
 
@@ -171,9 +170,15 @@ LR, RR, p1, p2, q, roi1, roi2 = cv.stereoRectify(
     R, T)
 
 left_map1, left_map2 = cv.initUndistortRectifyMap(
-    left_matrix, left_dist, LR, p1, img_size, cv.CV_32FC1)
+    left_matrix, left_dist, 
+    # LR, 
+    None,
+    p1, img_size, cv.CV_32FC1)
 right_map1, right_map2 = cv.initUndistortRectifyMap(
-    right_matrix, right_dist, RR, p2, img_size, cv.CV_32FC1)
+    right_matrix, right_dist, 
+    # RR, 
+    None,
+    p2, img_size, cv.CV_32FC1)
 
 left_rectified = cv.remap(imgL, left_map1, left_map2, cv.INTER_LINEAR)
 right_rectified = cv.remap(imgR, right_map1, right_map2, cv.INTER_LINEAR)
@@ -188,11 +193,6 @@ combined_image = np.hstack((left_rectified, right_rectified))
 # for i in range(0, combined_image.shape[0], spacing):
 #     cv.line(combined_image, (0, i), (combined_image.shape[1], i), line_color, line_thickness)
 
-cv.namedWindow("Rectified Images", cv.WINDOW_NORMAL)
-cv.resizeWindow("Rectified Images", 1200, 600)
-cv.imshow("Rectified Images", combined_image)
-cv.waitKey(0)
-cv.destroyAllWindows()
 
 # cv.imshow("Left Rectified", left_rectified)
 # cv.imshow("Right Rectified", right_rectified)
@@ -217,11 +217,36 @@ cv.destroyAllWindows()
 #         cv.imshow('Right Image', imgR)
 
 # # Display images and set mouse callbacks
+# cv.namedWindow('Left Image', cv.WINDOW_NORMAL)
 # cv.imshow('Left Image', imgL)
+# # cv.resizeWindow("Left Image", 1200, 600)
+
+# cv.namedWindow('Right Image', cv.WINDOW_NORMAL)
 # cv.imshow('Right Image', imgR)
+# # cv.resizeWindow("Right Image", 1200, 600)
+
 # cv.setMouseCallback('Left Image', click_event_left)
 # cv.setMouseCallback('Right Image', click_event_right)
 
 # cv.waitKey(0)
 # cv.destroyAllWindows()
 
+# def click_event_combined(event, x, y, flags, param):
+#     global left_point, right_point
+#     img_width = combined_image.shape[1] // 2
+
+#     if event == cv.EVENT_LBUTTONDOWN:
+#         if x < img_width:
+#             left_point = (x, y)
+#             cv.circle(combined_image, left_point, 5, (255, 0, 0), -1)
+#         else:
+#             right_point = (x - img_width, y)
+#             cv.circle(combined_image, right_point, 5, (255, 0, 0), -1)
+#         cv.imshow('Rectified Images', combined_image)
+
+cv.namedWindow("Rectified Images", cv.WINDOW_NORMAL)
+cv.resizeWindow("Rectified Images", 1200, 600)
+cv.imshow("Rectified Images", combined_image)
+# cv.setMouseCallback('Rectified Images', click_event_combined)
+cv.waitKey(0)
+cv.destroyAllWindows()

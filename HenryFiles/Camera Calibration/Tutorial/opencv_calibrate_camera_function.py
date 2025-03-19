@@ -81,8 +81,8 @@ def calibrate_camera(images):
             dst = dst[y:y+h, x:x+w]
 
             # Shows the image
-            # cv.imshow('Result', dst)
-            # cv.waitKey(500)
+            cv.imshow('Result', dst)
+            cv.waitKey(500)
 
     cv.destroyAllWindows()
 
