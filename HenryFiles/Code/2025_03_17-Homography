@@ -70,13 +70,24 @@ R = np.array([
 baseline = 0.5 # Meters
 # baseline = 1 # As units instead
 
-toe_in_angle = baseline * math.tan(tcr_radians)
+# toe_in_angle = baseline * math.tan(tcr_radians)
+
+# T = np.array([
+#     [baseline], [0], [0]
+# ], dtype=np.float64)
+
+# Adjusting relative position so that that the T value is relative to the first camera
+# Imagine that the left camera is facing forwards, instead of toed in
+# By straighting this out, the right camera moves forward. 
+# Using trigulation, this adjustment can be made.
+
+adjacent = baseline * math.cos(tcr_radians)
+opposite = baseline * math.sin(tcr_radians)
 
 T = np.array([
-    [baseline], [0], 
-    # [toe_in_angle]
-    [0]
+    [adjacent], [opposite], [0]
 ], dtype=np.float64)
+
 
 print(left_matrix)
 print(left_dist)
