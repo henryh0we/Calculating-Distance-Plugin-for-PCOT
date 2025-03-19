@@ -93,9 +93,9 @@ opposite = baseline * math.sin(tcr_radians)
 #     [adjacent], [0], [opposite]
 # ], dtype=np.float64)
 
-# T = np.array([ # Perhaps best one? Everything rotated to the left, but looks lined up. ODD
-#     [adjacent], [opposite], [0]
-# ], dtype=np.float64)
+T = np.array([ # Perhaps best one? Everything rotated to the left, but looks lined up. ODD
+    [adjacent], [opposite], [0]
+], dtype=np.float64)
 
 # T = np.array([ # Left lower than right, perhaps a slight rotation to the left for both
 #     [0], [adjacent], [opposite]
