@@ -89,56 +89,130 @@ opposite = baseline * math.sin(tcr_radians)
 #        Ty is vertical displacement
 #        Tz is depth
 
-T = np.array([
-    [adjacent], [0], [opposite]
-], dtype=np.float64)
+# T = np.array([ # Left lower than right, left rotated sightly left
+#     [adjacent], [0], [opposite]
+# ], dtype=np.float64)
 
+# T = np.array([ # Perhaps best one? Everything rotated to the left, but looks lined up. ODD
+#     [adjacent], [opposite], [0]
+# ], dtype=np.float64)
+
+# T = np.array([ # Left lower than right, perhaps a slight rotation to the left for both
+#     [0], [adjacent], [opposite]
+# ], dtype=np.float64)
+
+# T = np.array([ # DUDD, left lower than right, both rotated to the right
+#     [opposite], [adjacent], [0]
+# ], dtype=np.float64)
+
+# T = np.array([ # DUDD, Black screen
+#     [opposite], [0], [adjacent]
+# ], dtype=np.float64)
+
+left_opt_matrix, lroi = cv.getOptimalNewCameraMatrix(left_matrix, left_dist, img_size, 1, img_size)
+right_opt_matrix, rroi = cv.getOptimalNewCameraMatrix(right_matrix, right_dist, img_size, 1, img_size)
 
 print(left_matrix)
 print(left_dist)
+print(left_opt_matrix)
 print(right_matrix)
 print(right_dist)
+print(right_opt_matrix)
 
 print(R)
 print(T)
 
 print("left_matrix:", left_matrix.dtype)
 print("left_dist:", left_dist.dtype)
+print("left optimal matrix:", left_opt_matrix.dtype)
 print("right_matrix:", right_matrix.dtype)
 print("right_dist:", right_dist.dtype)
+print("right optimal matrix:", right_opt_matrix.dtype)
 print("R:", R.dtype)
 print("T:", T.dtype)
 
 print("left_matrix shape:", left_matrix.shape)
 print("left_dist shape:", left_dist.shape)
+print("left_opt_matrix shape:", left_opt_matrix.shape)
 print("right_matrix shape:", right_matrix.shape)
 print("right_dist shape:", right_dist.shape)
+print("right_opt_matrix shape:", right_opt_matrix.shape)
 print("R shape:", R.shape)
 print("T shape:", T.shape)
 
+# LR, RR, p1, p2, q, roi1, roi2 = cv.stereoRectify(
+#     left_matrix, left_dist, 
+#     right_matrix, right_dist, 
+#     img_size, 
+#     R, T)
+
+# ===================================
+# USING OPTIMAL MATRIX for stereoRectify
+# ===================================
 LR, RR, p1, p2, q, roi1, roi2 = cv.stereoRectify(
-    left_matrix, left_dist, 
-    right_matrix, right_dist, 
+    left_opt_matrix, left_dist, 
+    right_opt_matrix, right_dist, 
     img_size, 
     R, T)
 
+# ===================================
+# Looking at using undistort based on info from openCV calibrate_camera_function
+# ===================================
+
+# ldst = cv.undistort(imgL, left_matrix, left_dist, None, LR)
+# rdst = cv.undistort(imgR, right_matrix, right_dist, None, RR)
+
+# lx, ly, lw, lh = roi1
+# rx, ry, rw, rh = roi2
+
+# ldst = ldst[ly:ly+lh, lx:lx+lw]
+# rdst = rdst[ry:ry+rh, rx:rx+rw]
+
+# cv.imshow("left result", ldst)
+# cv.imshow("right result", rdst)
+# cv.waitKey(0)
+# cv.destroyAllWindows()
+
+# ===================================
 # ADJUSTING BASED ON STACK OVERFLOW ANSWER
+# ===================================
 
-LR_fix = LR.dot(np.linalg.inv(left_matrix))
-RR_fix = RR.dot(np.linalg.inv(right_matrix))
+# LR_fix = LR.dot(np.linalg.inv(left_matrix))
+# RR_fix = RR.dot(np.linalg.inv(right_matrix))
 
-LR = LR_fix.copy()
-RR = RR_fix.copy()
+# LR = LR_fix.copy()
+# RR = RR_fix.copy()
+
+# ===================================
+# USING REGULAR MATRIX for initUndistortRectifyMap
+# ===================================
+
+# left_map1, left_map2 = cv.initUndistortRectifyMap(
+#     left_matrix, left_dist, 
+#     LR, 
+#     # None,
+#     p1, img_size, cv.CV_32FC1)
+
+# right_map1, right_map2 = cv.initUndistortRectifyMap(
+#     right_matrix, right_dist, 
+#     RR, 
+#     # None,
+#     p2, img_size, cv.CV_32FC1)
+
+# ===================================
+# USING OPTIMAL MATRIX for initUndistortRectifyMap
+# ===================================
 
 left_map1, left_map2 = cv.initUndistortRectifyMap(
-    left_matrix, left_dist, 
-    # LR, 
-    None,
+    left_opt_matrix, left_dist, 
+    LR, 
+    # None,
     p1, img_size, cv.CV_32FC1)
+
 right_map1, right_map2 = cv.initUndistortRectifyMap(
-    right_matrix, right_dist, 
-    # RR, 
-    None,
+    right_opt_matrix, right_dist, 
+    RR, 
+    # None,
     p2, img_size, cv.CV_32FC1)
 
 left_rectified = cv.remap(imgL, left_map1, left_map2, cv.INTER_LINEAR)
@@ -146,7 +220,9 @@ right_rectified = cv.remap(imgR, right_map1, right_map2, cv.INTER_LINEAR)
 
 combined_image = np.hstack((left_rectified, right_rectified))
 
-cv.namedWindow("Rectified Images", cv.WINDOW_NORMAL)
+cv.namedWindow("Rectified Images", 
+cv.WINDOW_NORMAL
+)
 cv.resizeWindow("Rectified Images", 1200, 600)
 cv.imshow("Rectified Images", combined_image)
 # cv.setMouseCallback('Rectified Images', click_event_combined)
