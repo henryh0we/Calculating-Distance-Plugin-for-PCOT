@@ -96,9 +96,13 @@ def calibrate_camera(images):
 l_ACM, l_ACD = calibrate_camera(Limages)
 
 print(l_ACM)
+print(l_ACM.dtype)
 print(l_ACD)
+print(l_ACD.dtype)
 
 r_ACM, r_ACD = calibrate_camera(Rimages)
 
 print(r_ACM)
+print(r_ACM.dtype)
 print(r_ACD)
+print(r_ACD.dtype)
