@@ -4,6 +4,8 @@ import glob
 import os
 import math
 
+type_data = np.float64
+
 # from Camera_Calibration.Tutorial.opencv_calibrate_camera_function import calibrate_camera
 
 # Load the images
@@ -28,11 +30,11 @@ left_matrix = np.array([
     [1.93479347e+03, 0.00000000e+00, 4.94465690e+02], 
     [0.00000000e+00, 1.92439346e+03, 4.16565813e+02], 
     [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]
-    ], dtype=np.float64)
+    ], dtype=type_data)
 
 left_dist = np.array([
     [-4.92069166e-02, -8.97949590e-01, -1.33405070e-02, -4.44237271e-03, 2.39096813e+01]
-    ], dtype=np.float64)
+    ], dtype=type_data)
 
 f_x_left = left_matrix[0][0]
 f_y_left = left_matrix[1][1]
@@ -43,11 +45,11 @@ right_matrix = np.array([
     [1.93490723e+03, 0.00000000e+00, 5.26855083e+02],
     [0.00000000e+00, 1.92810886e+03, 5.05013225e+02],
     [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]
- ], dtype=np.float64)
+ ], dtype=type_data)
 
 right_dist = np.array([
     [-1.49167371e-01, 1.24309868e+00, -4.14581848e-04, -3.06654869e-03, -7.74292242e+00]
-    ], dtype=np.float64)
+    ], dtype=type_data)
 
 f_x_right = right_matrix[0][0]
 f_y_right = right_matrix[1][1]
@@ -64,7 +66,7 @@ R = np.array([
     [np.cos(tcr_radians), 0, np.sin(tcr_radians)],
     [0, 1, 0],
     [-np.sin(tcr_radians), 0, np.cos(tcr_radians)]
-], dtype=np.float64)
+], dtype=type_data)
 
 # baseline = 500 # Millimeters
 baseline = 0.5 # Meters
@@ -74,7 +76,7 @@ baseline = 0.5 # Meters
 
 # T = np.array([
 #     [baseline], [0], [0]
-# ], dtype=np.float64)
+# ], dtype=type_data)
 
 # Adjusting relative position so that that the T value is relative to the first camera
 # Imagine that the left camera is facing forwards, instead of toed in
@@ -91,23 +93,23 @@ opposite = baseline * math.sin(tcr_radians)
 
 # T = np.array([ # Left lower than right, left rotated sightly left
 #     [adjacent], [0], [opposite]
-# ], dtype=np.float64)
+# ], dtype=type_data)
 
 T = np.array([ # Perhaps best one? Everything rotated to the left, but looks lined up. ODD
     [adjacent], [opposite], [0]
-], dtype=np.float64)
+], dtype=type_data)
 
 # T = np.array([ # Left lower than right, perhaps a slight rotation to the left for both
 #     [0], [adjacent], [opposite]
-# ], dtype=np.float64)
+# ], dtype=type_data)
 
 # T = np.array([ # DUDD, left lower than right, both rotated to the right
 #     [opposite], [adjacent], [0]
-# ], dtype=np.float64)
+# ], dtype=type_data)
 
 # T = np.array([ # DUDD, Black screen
 #     [opposite], [0], [adjacent]
-# ], dtype=np.float64)
+# ], dtype=type_data)
 
 left_opt_matrix, lroi = cv.getOptimalNewCameraMatrix(left_matrix, left_dist, img_size, 1, img_size)
 right_opt_matrix, rroi = cv.getOptimalNewCameraMatrix(right_matrix, right_dist, img_size, 1, img_size)
