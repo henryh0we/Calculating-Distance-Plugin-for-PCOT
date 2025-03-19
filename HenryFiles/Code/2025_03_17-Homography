@@ -84,8 +84,13 @@ baseline = 0.5 # Meters
 adjacent = baseline * math.cos(tcr_radians)
 opposite = baseline * math.sin(tcr_radians)
 
+# T = [[Tx], [Ty], [Tz]]
+# Where: Tx is horizontal displacement
+#        Ty is vertical displacement
+#        Tz is depth
+
 T = np.array([
-    [adjacent], [opposite], [0]
+    [adjacent], [0], [opposite]
 ], dtype=np.float64)
 
 
