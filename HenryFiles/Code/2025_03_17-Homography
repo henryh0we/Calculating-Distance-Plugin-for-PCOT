@@ -279,8 +279,8 @@ def draw_horizontal_lines(img, num_lines=20, color=(0, 255, 0)):
 imgL_rect_color = cv.cvtColor(left_rectified, cv.COLOR_GRAY2BGR)
 imgR_rect_color = cv.cvtColor(right_rectified, cv.COLOR_GRAY2BGR)
 
-draw_horizontal_lines(imgL_rect_color)
-draw_horizontal_lines(imgR_rect_color)
+# draw_horizontal_lines(imgL_rect_color)
+# draw_horizontal_lines(imgR_rect_color)
 
 combined = cv.hconcat([imgL_rect_color, imgR_rect_color])
 
