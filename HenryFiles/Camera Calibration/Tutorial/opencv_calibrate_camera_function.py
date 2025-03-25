@@ -126,16 +126,24 @@ if os.path.exists('camera_data.txt'):
 else:
     file = open('camera_data.txt', 'x')
 
-file.write("Left Camera Matrix:\n")
+# file.write("Left Camera Matrix:\n")
 for row in l_ACM:
     np.savetxt(file, row, newline=" ")
     file.write("\n")
-file.write("\nLeft Camera Distortion Coefficients:\n")
+
+file.write("\n")
+
+# file.write("\nLeft Camera Distortion Coefficients:\n")
 np.savetxt(file, l_ACD, newline=" ")
-file.write("\n\nRight Camera Matrix:\n")
+file.write("\n\n")
+
+# file.write("\n\nRight Camera Matrix:\n")
 for row in r_ACM:
     np.savetxt(file, row, newline=" ")
     file.write("\n")
-file.write("\nRight Camera Distortion Coefficients:\n")
+file.write("\n")
+
+# file.write("\nRight Camera Distortion Coefficients:\n")
 np.savetxt(file, r_ACD, newline=" ")
+
 file.close()
