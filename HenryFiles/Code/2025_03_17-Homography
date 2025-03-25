@@ -56,6 +56,9 @@ f_y_right = right_matrix[1][1]
 c_x_right = right_matrix[0][2]
 c_y_right = right_matrix[1][2]
 
+focal_length_mm = 12
+sensor_width_mm = 8.8
+image_width_pixels = 1024
 img_size = (1024, 1024)
 
 camera_rotation = 2.8 # Inwards rotation of the cameras in degrees
@@ -81,8 +84,8 @@ R = np.array([ # Y
 # ], dtype=type_data)
 
 
-# baseline = 500 # Millimeters
-baseline = 0.5 # Meters
+baseline = 500 # Millimeters
+# baseline = 0.5 # Meters
 # baseline = 1 # As units instead
 
 # toe_in_angle = baseline * math.tan(tcr_radians)
@@ -96,21 +99,25 @@ baseline = 0.5 # Meters
 # By straighting this out, the right camera moves forward. 
 # Using trigulation, this adjustment can be made.
 
-adjacent = baseline * math.cos(tcr_radians)
-opposite = baseline * math.sin(tcr_radians)
+adjacent = baseline * np.cos(tcr_radians)
+opposite = baseline * np.sin(tcr_radians)
+print("adjacent: ", adjacent)
+print("opposite: ", opposite)
 
 # T = [[Tx], [Ty], [Tz]]
 # Where: Tx is horizontal displacement
 #        Ty is vertical displacement
 #        Tz is depth
 
-# T = np.array([ # Left lower than right, left rotated sightly left
-#     [adjacent], [0], [opposite]
-# ], dtype=type_data)
-
-T = np.array([ # Perhaps best one? Everything rotated to the left, but looks lined up. ODD
-    [adjacent], [opposite], [0]
+# This should be the correct one, as openCVs coordinate system is:
+# X right, Y down, Z forward
+T = np.array([ # Left lower than right, left rotated sightly left
+    [-adjacent], [0], [opposite]
 ], dtype=type_data)
+
+# T = np.array([ # Perhaps best one? Everything rotated to the left, but looks lined up. ODD
+#     [adjacent], [opposite], [0]
+# ], dtype=type_data)
 
 # T = np.array([ # Left lower than right, perhaps a slight rotation to the left for both
 #     [0], [adjacent], [opposite]
@@ -127,15 +134,19 @@ T = np.array([ # Perhaps best one? Everything rotated to the left, but looks lin
 left_opt_matrix, lroi = cv.getOptimalNewCameraMatrix(left_matrix, left_dist, img_size, 1, img_size)
 right_opt_matrix, rroi = cv.getOptimalNewCameraMatrix(right_matrix, right_dist, img_size, 1, img_size)
 
-print(left_matrix)
-print(left_dist)
-print(left_opt_matrix)
-print(right_matrix)
-print(right_dist)
-print(right_opt_matrix)
+# left_opt_matrix = cv.getDefaultNewCameraMatrix(left_matrix, img_size)
+# right_opt_matrix = cv.getDefaultNewCameraMatrix(right_matrix, img_size)
 
-print(R)
-print(T)
+print("left_matrix:", left_matrix)
+print("left_matrix:", left_matrix)
+print("left_dist:", left_dist)
+print("left_opt_matrix:", left_opt_matrix)
+print("right_matrix:", right_matrix)
+print("right_dist:", right_dist)
+print("right_opt_matrix:", right_opt_matrix)
+
+print("R:", R)
+print("T:", T)
 
 print("left_matrix:", left_matrix.dtype)
 print("left_dist:", left_dist.dtype)
@@ -181,7 +192,9 @@ LR, RR, p1, p2, q, roi1, roi2 = cv.stereoRectify(
     left_opt_matrix, left_dist, 
     right_opt_matrix, right_dist, 
     img_size, 
-    R, T)
+    R, T,
+    # flags=cv.CALIB_ZERO_DISPARITY,
+    )
 
 # try:
 #     LR, RR, p1, p2, q, roi1, roi2 = cv.stereoRectify(
@@ -225,44 +238,66 @@ LR, RR, p1, p2, q, roi1, roi2 = cv.stereoRectify(
 # USING REGULAR MATRIX for initUndistortRectifyMap
 # ===================================
 
-# left_map1, left_map2 = cv.initUndistortRectifyMap(
-#     left_matrix, left_dist, 
-#     LR, 
-#     # None,
-#     p1, img_size, cv.CV_32FC1)
-
-# right_map1, right_map2 = cv.initUndistortRectifyMap(
-#     right_matrix, right_dist, 
-#     RR, 
-#     # None,
-#     p2, img_size, cv.CV_32FC1)
-
-# ===================================
-# USING OPTIMAL MATRIX for initUndistortRectifyMap
-# ===================================
-
 left_map1, left_map2 = cv.initUndistortRectifyMap(
-    left_opt_matrix, left_dist, 
+    left_matrix, left_dist, 
     LR, 
     # None,
     p1, img_size, cv.CV_32FC1)
 
 right_map1, right_map2 = cv.initUndistortRectifyMap(
-    right_opt_matrix, right_dist, 
+    right_matrix, right_dist, 
     RR, 
     # None,
     p2, img_size, cv.CV_32FC1)
 
+# ===================================
+# USING OPTIMAL MATRIX for initUndistortRectifyMap
+# ===================================
+
+# left_map1, left_map2 = cv.initUndistortRectifyMap(
+#     left_opt_matrix, left_dist, 
+#     # RR,
+#     LR, 
+#     # None,
+#     p1, img_size, cv.CV_32FC1)
+
+# right_map1, right_map2 = cv.initUndistortRectifyMap(
+#     right_opt_matrix, right_dist, 
+#     RR, 
+#     # None,
+#     p2, img_size, cv.CV_32FC1)
+
 left_rectified = cv.remap(imgL, left_map1, left_map2, cv.INTER_LINEAR)
 right_rectified = cv.remap(imgR, right_map1, right_map2, cv.INTER_LINEAR)
 
-combined_image = np.hstack((left_rectified, right_rectified))
+def draw_horizontal_lines(img, num_lines=20, color=(0, 255, 0)):
+    h, w = img.shape[:2]
+    interval = h // num_lines
+    for i in range(0, h, interval):
+        cv.line(img, (0, i), (w, i), color, 1)
+
+imgL_rect_color = cv.cvtColor(left_rectified, cv.COLOR_GRAY2BGR)
+imgR_rect_color = cv.cvtColor(right_rectified, cv.COLOR_GRAY2BGR)
+
+draw_horizontal_lines(imgL_rect_color)
+draw_horizontal_lines(imgR_rect_color)
+
+combined = cv.hconcat([imgL_rect_color, imgR_rect_color])
 
 cv.namedWindow("Rectified Images", 
 cv.WINDOW_NORMAL
 )
-cv.resizeWindow("Rectified Images", 1200, 600)
-cv.imshow("Rectified Images", combined_image)
-# cv.setMouseCallback('Rectified Images', click_event_combined)
+cv.imshow('Rectified Images', combined)
 cv.waitKey(0)
 cv.destroyAllWindows()
+
+# combined_image = np.hstack((left_rectified, right_rectified))
+
+# cv.namedWindow("Rectified Images", 
+# cv.WINDOW_NORMAL
+# )
+# cv.resizeWindow("Rectified Images", 1200, 600)
+# cv.imshow("Rectified Images", combined_image)
+# # cv.setMouseCallback('Rectified Images', click_event_combined)
+# cv.waitKey(0)
+# cv.destroyAllWindows()
