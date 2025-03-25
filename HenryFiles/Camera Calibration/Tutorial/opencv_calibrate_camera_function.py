@@ -20,6 +20,7 @@ Rimages = glob.glob(os.path.join('Camera Calibration/right images', '*.png'))
 Timages = glob.glob(os.path.join('HenryFiles/Camera Calibration/Tutorial/Tutorial images', '*.jpg'))
 
 def calibrate_camera(images):
+    count = 0
     # Arrays to store object points and image points from all the images.
     objpoints = [] # 3d point in real world space
     imgpoints = [] # 2d points in image plane.
@@ -81,8 +82,12 @@ def calibrate_camera(images):
             dst = dst[y:y+h, x:x+w]
 
             # Shows the image
-            cv.imshow('Result', dst)
+            # cv.imshow('Result', dst)
             # cv.waitKey(500)
+            
+            count += 1
+            print('[{0}/{1}]'.format(count, len(images)))
+            
 
     cv.destroyAllWindows()
 
@@ -114,3 +119,23 @@ print("r_ACD:")
 print(r_ACD)
 print("r_ACD.dtype:")
 print(r_ACD.dtype)
+
+# Save the data to a file
+if os.path.exists('camera_data.txt'):
+    file = open('camera_data.txt', 'w')
+else:
+    file = open('camera_data.txt', 'x')
+
+file.write("Left Camera Matrix:\n")
+for row in l_ACM:
+    np.savetxt(file, row, newline=" ")
+    file.write("\n")
+file.write("\nLeft Camera Distortion Coefficients:\n")
+np.savetxt(file, l_ACD, newline=" ")
+file.write("\n\nRight Camera Matrix:\n")
+for row in r_ACM:
+    np.savetxt(file, row, newline=" ")
+    file.write("\n")
+file.write("\nRight Camera Distortion Coefficients:\n")
+np.savetxt(file, r_ACD, newline=" ")
+file.close()
