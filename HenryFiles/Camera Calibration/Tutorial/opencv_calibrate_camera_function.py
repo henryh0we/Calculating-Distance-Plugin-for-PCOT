@@ -82,7 +82,7 @@ def calibrate_camera(images):
 
             # Shows the image
             cv.imshow('Result', dst)
-            cv.waitKey(500)
+            # cv.waitKey(500)
 
     cv.destroyAllWindows()
 
