@@ -48,7 +48,7 @@ def calibrate_camera(images):
             # checking the gradient of brightness of the window
             # the subpixel will then be represented by a floating point average, 
             # rather than a set pixel position.
-            corners2 = cv.cornerSubPix(gray,corners, (11,11), (-1,-1), criteria)
+            corners2 = cv.cornerSubPix(gray, corners, (11,11), (-1,-1), criteria)
             # Add these new image points to imgpoints
             imgpoints.append(corners)
     
