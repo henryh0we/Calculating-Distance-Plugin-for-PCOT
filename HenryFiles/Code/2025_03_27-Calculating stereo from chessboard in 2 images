@@ -6,6 +6,7 @@ import os
 # Chessboard parameters
 chessboard_size = (9, 6)  # Number of inner corners
 square_size = 1.0  # Size of a square in your preferred unit
+img_size = (1024, 1024)
 
 # Prepare object points (0,0,0), (1,0,0), (2,0,0) ... (8,5,0)
 objp = np.zeros((chessboard_size[0] * chessboard_size[1], 3), np.float32)
@@ -18,43 +19,51 @@ imgpoints_left = []  # 2D points in left image plane
 imgpoints_right = []  # 2D points in right image plane
 
 # Get image pairs 
-left_images = glob.glob(os.path.join('HenryFiles/Camera Calibration/in both images/left images duo', '*.png'))
-right_images = glob.glob(os.path.join('HenryFiles/Camera Calibration/in both images/right images duo', '*.png'))
+duo_left_images = glob.glob(os.path.join('HenryFiles/Camera Calibration/in both images/left images duo', '*.png'))
+duo_right_images = glob.glob(os.path.join('HenryFiles/Camera Calibration/in both images/right images duo', '*.png'))
 
-for left_img_path, right_img_path in zip(left_images, right_images):
-    left_img = cv.imread(left_img_path)
-    right_img = cv.imread(right_img_path)
-    
-    gray_left = cv.cvtColor(left_img, cv.COLOR_BGR2GRAY)
-    gray_right = cv.cvtColor(right_img, cv.COLOR_BGR2GRAY)
-    
-    # Find chessboard corners
-    ret_left, corners_left = cv.findChessboardCorners(gray_left, chessboard_size, None)
-    ret_right, corners_right = cv.findChessboardCorners(gray_right, chessboard_size, None)
-    
-    if ret_left and ret_right:
-        # Refine corner positions
-        criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-        corners_left = cv.cornerSubPix(gray_left, corners_left, (11, 11), (-1, -1), criteria)
-        corners_right = cv.cornerSubPix(gray_right, corners_right, (11, 11), (-1, -1), criteria)
+def duo_calibration(left_images, right_images):
+
+
+    for left_img_path, right_img_path in zip(left_images, right_images):
+        left_img = cv.imread(left_img_path)
+        right_img = cv.imread(right_img_path)
         
-        # Store the points
-        objpoints.append(objp)
-        imgpoints_left.append(corners_left)
-        imgpoints_right.append(corners_right)
+        gray_left = cv.cvtColor(left_img, cv.COLOR_BGR2GRAY)
+        gray_right = cv.cvtColor(right_img, cv.COLOR_BGR2GRAY)
         
-        # Draw and display the corners (optional)
-        cv.drawChessboardCorners(left_img, chessboard_size, corners_left, ret_left)
-        cv.drawChessboardCorners(right_img, chessboard_size, corners_right, ret_right)
-        # cv.imshow('Left Corners', left_img)
-        # cv.imshow('Right Corners', right_img)
-        cv.waitKey(1)
+        # Find chessboard corners
+        ret_left, corners_left = cv.findChessboardCorners(gray_left, chessboard_size, None)
+        ret_right, corners_right = cv.findChessboardCorners(gray_right, chessboard_size, None)
+        
+        if ret_left and ret_right:
+            # Refine corner positions
+            criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+            corners_left = cv.cornerSubPix(gray_left, corners_left, (11, 11), (-1, -1), criteria)
+            corners_right = cv.cornerSubPix(gray_right, corners_right, (11, 11), (-1, -1), criteria)
+            
+            # Store the points
+            objpoints.append(objp)
+            imgpoints_left.append(corners_left)
+            imgpoints_right.append(corners_right)
+            
+            # Draw and display the corners (optional)
+            cv.drawChessboardCorners(left_img, chessboard_size, corners_left, ret_left)
+            cv.drawChessboardCorners(right_img, chessboard_size, corners_right, ret_right)
+            # cv.imshow('Left Corners', left_img)
+            # cv.imshow('Right Corners', right_img)
+            cv.waitKey(1)
+
+    cv.destroyAllWindows()
+    return objpoints, imgpoints_left, imgpoints_right
+
+def non_duo_calibration()
 
 # Calibrate each camera individually
 ret_left, mtx_left, dist_left, rvecs_left, tvecs_left = cv.calibrateCamera(
-    objpoints, imgpoints_left, gray_left.shape[::-1], None, None)
+    objpoints, imgpoints_left, img_size, None, None)
 ret_right, mtx_right, dist_right, rvecs_right, tvecs_right = cv.calibrateCamera(
-    objpoints, imgpoints_right, gray_right.shape[::-1], None, None)
+    objpoints, imgpoints_right, img_size, None, None)
 
 # Stereo calibration
 flags = 0
@@ -64,19 +73,19 @@ criteria_stereo = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 ret_stereo, mtx_left, dist_left, mtx_right, dist_right, R, T, E, F = cv.stereoCalibrate(
     objpoints, imgpoints_left, imgpoints_right, 
     mtx_left, dist_left, mtx_right, dist_right, 
-    gray_left.shape[::-1], criteria=criteria_stereo, flags=flags)
+    img_size, criteria=criteria_stereo, flags=flags)
 
 # Compute rectification transforms
 rect_scale = 1  # Scaling factor: 0=zoomed out, 1=cropped
 rect_left, rect_right, proj_left, proj_right, Q, roi_left, roi_right = cv.stereoRectify(
-    mtx_left, dist_left, mtx_right, dist_right, gray_left.shape[::-1], 
+    mtx_left, dist_left, mtx_right, dist_right, img_size, 
     R, T, flags=cv.CALIB_ZERO_DISPARITY, alpha=rect_scale)
 
 # Compute mapping for rectification
 map_left_x, map_left_y = cv.initUndistortRectifyMap(
-    mtx_left, dist_left, rect_left, proj_left, gray_left.shape[::-1], cv.CV_32FC1)
+    mtx_left, dist_left, rect_left, proj_left, img_size, cv.CV_32FC1)
 map_right_x, map_right_y = cv.initUndistortRectifyMap(
-    mtx_right, dist_right, rect_right, proj_right, gray_right.shape[::-1], cv.CV_32FC1)
+    mtx_right, dist_right, rect_right, proj_right, img_size, cv.CV_32FC1)
 
 
 # idx = 0
