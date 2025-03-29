@@ -2,6 +2,7 @@ import cv2 as cv
 import numpy as np
 import glob
 import os
+import json
 
 # Chessboard parameters
 chessboard_size = (9, 6)  # Number of inner corners
@@ -142,30 +143,88 @@ def calibrate_non_duo(images):
 
     return camera_mats, camera_dists
 
-objpoints, imgpoints_left, imgpoints_right = calibrate_duo_image(duo_left_images, duo_right_images)
+if os.path.exists('camera_data.json'):
+    # with open('camera_data.txt', 'r') as file:
+    #     # file.readline()
+    #     mtx_left = np.loadtxt(file, max_rows=3)
 
-# Calibrating camera from image pairs which both contain chessboards
-ret_left, mtx_left, dist_left, rvecs_left, tvecs_left = cv.calibrateCamera(
-    objpoints, imgpoints_left, img_size, None, None)
-ret_right, mtx_right, dist_right, rvecs_right, tvecs_right = cv.calibrateCamera(
-    objpoints, imgpoints_right, img_size, None, None)
+    #     dist_left = np.loadtxt(file, skiprows=4, max_rows=5)
 
-L_cm, L_cd = calibrate_non_duo(non_left_images)
-R_cm, R_cd = calibrate_non_duo(non_right_images)
+    #     mtx_right = np.loadtxt(file, skiprows=9, max_rows=12)
 
-# Append the additional mtx to the list
-L_cm.append(mtx_left)
-L_cd.append(dist_left)
+    #     dist_right = np.loadtxt(file, skiprows=13, max_rows=18)
+    with open('camera_data.json', 'r') as file:
+        data = json.load(file)
 
-R_cm.append(mtx_right)
-R_cd.append(dist_right)
+    mtx_left = np.array(data['mtx_left'])
+    dist_left = np.array(data['dist_left']).reshape(-1,1)
 
-# Generate the average camera matrix
-mtx_left = np.mean(np.array(L_cm), axis=0)
-dist_left = np.mean(np.array(L_cd), axis=0)
+    mtx_right = np.array(data['mtx_right'])
+    dist_right = np.array(data['dist_right']).reshape(-1,1)
 
-mtx_right = np.mean(np.array(R_cm), axis=0)
-dist_right = np.mean(np.array(R_cd), axis=0)
+    objpoints = [np.array(obj, dtype=np.float32) for obj in data['objpoints']]
+    imgpoints_left = [np.array(img, dtype=np.float32) for img in data['imgpoints_left']]
+    imgpoints_right = [np.array(img, dtype=np.float32) for img in data['imgpoints_right']]
+
+    print(mtx_left)
+    print(dist_left)
+    print(mtx_right)
+    print(dist_right)
+
+    assert mtx_left.shape == (3, 3), "mtx_left shape is incorrect"
+    assert dist_left.shape[0] in [4, 5], "dist_left shape is incorrect"
+    assert mtx_right.shape == (3, 3), "mtx_right shape is incorrect"
+    assert dist_right.shape[0] in [4, 5], "dist_right shape is incorrect"
+
+else:
+    objpoints, imgpoints_left, imgpoints_right = calibrate_duo_image(duo_left_images, duo_right_images)
+
+    # Calibrating camera from image pairs which both contain chessboards
+    ret_left, mtx_left, dist_left, rvecs_left, tvecs_left = cv.calibrateCamera(
+        objpoints, imgpoints_left, img_size, None, None)
+    ret_right, mtx_right, dist_right, rvecs_right, tvecs_right = cv.calibrateCamera(
+        objpoints, imgpoints_right, img_size, None, None)
+
+    L_cm, L_cd = calibrate_non_duo(non_left_images)
+    R_cm, R_cd = calibrate_non_duo(non_right_images)
+
+    # Append the additional mtx to the list
+    L_cm.append(mtx_left)
+    L_cd.append(dist_left)
+
+    R_cm.append(mtx_right)
+    R_cd.append(dist_right)
+
+    # Generate the average camera matrix
+    mtx_left = np.mean(np.array(L_cm), axis=0)
+    dist_left = np.mean(np.array(L_cd), axis=0)
+
+    mtx_right = np.mean(np.array(R_cm), axis=0)
+    dist_right = np.mean(np.array(R_cd), axis=0)
+
+    data = {
+    "mtx_left": mtx_left.tolist(),
+    "dist_left": dist_left.tolist(),
+    "mtx_right": mtx_right.tolist(),
+    "dist_right": dist_right.tolist(),
+    "objpoints": [obj.tolist() for obj in objpoints],
+    "imgpoints_left": [img.tolist() for img in imgpoints_left],
+    "imgpoints_right": [img.tolist() for img in imgpoints_right]
+    }
+
+    # Save the data to a file
+    # with open('camera_data.txt', 'w') as file:
+    #     # file.write("Left Camera Matrix:\n")
+    #     np.savetxt(file, mtx_left, newline="\n")
+    #     # file.write("\nLeft Camera Distortion Coefficients:\n")
+    #     np.savetxt(file, dist_left, newline="\n")
+    #     # file.write("\n\nRight Camera Matrix:\n")
+    #     np.savetxt(file, mtx_right, newline="\n")
+    #     # file.write("\nRight Camera Distortion Coefficients:\n")
+    #     np.savetxt(file, dist_right, newline="\n")
+
+    with open('camera_data.json', 'w') as file:
+        json.dump(data, file, indent=4)
 
 # Stereo calibration
 flags = 0
@@ -190,13 +249,13 @@ map_right_x, map_right_y = cv.initUndistortRectifyMap(
     mtx_right, dist_right, rect_right, proj_right, img_size, cv.CV_32FC1)
 
 
-idx = 0
-# Example: Rectify a pair of images
-left_img = cv.imread(duo_left_images[idx])
-right_img = cv.imread(duo_right_images[idx])
+# idx = 2
+# # Example: Rectify a pair of images
+# left_img = cv.imread(duo_left_images[idx])
+# right_img = cv.imread(duo_right_images[idx])
 
-# left_img = cv.imread('HenryFiles\AUPE Images\distance\pctset-1m-8bit\distance_pctset-1m-8bit_LWAC01_T00_P00_BS.png')
-# right_img = cv.imread('HenryFiles\AUPE Images\distance\pctset-1m-8bit\distance_pctset-1m-8bit_RWAC01_T00_P00_BS.png')
+left_img = cv.imread('HenryFiles\AUPE Images\distance\pctset-1m-8bit\distance_pctset-1m-8bit_LWAC01_T00_P00_BS.png')
+right_img = cv.imread('HenryFiles\AUPE Images\distance\pctset-1m-8bit\distance_pctset-1m-8bit_RWAC01_T00_P00_BS.png')
 
 # left_img = cv.imread('HenryFiles\AUPE Images\distance\pctset-1m-8bit-tiltdown\distance_pctset-1m-8bit-tiltdown_LWAC01_T00_P00_BS.png')
 # right_img = cv.imread('HenryFiles\AUPE Images\distance\pctset-1m-8bit-tiltdown\distance_pctset-1m-8bit-tiltdown_RWAC01_T00_P00_BS.png')
@@ -208,7 +267,7 @@ right_rectified = cv.remap(right_img, map_right_x, map_right_y, cv.INTER_LINEAR)
 combined_rectified = np.hstack((left_rectified, right_rectified))
 
 # Draw horizontal lines on combined image
-num_lines = 40
+num_lines = 80
 interval = combined_rectified.shape[0] // num_lines
 for i in range(0, combined_rectified.shape[0], interval):
     cv.line(combined_rectified, (0, i), (combined_rectified.shape[1], i), (0, 255, 0), 1)
