@@ -158,23 +158,39 @@ if os.path.exists('camera_data.json'):
 
     mtx_left = np.array(data['mtx_left'])
     dist_left = np.array(data['dist_left']).reshape(-1,1)
+    rect_left = np.array(data['rect_left'])
+    proj_left = np.array(data['proj_left'])
 
     mtx_right = np.array(data['mtx_right'])
     dist_right = np.array(data['dist_right']).reshape(-1,1)
+    rect_right = np.array(data['rect_right'])
+    proj_right = np.array(data['proj_right'])
 
-    objpoints = [np.array(obj, dtype=np.float32) for obj in data['objpoints']]
-    imgpoints_left = [np.array(img, dtype=np.float32) for img in data['imgpoints_left']]
-    imgpoints_right = [np.array(img, dtype=np.float32) for img in data['imgpoints_right']]
+    # objpoints = [np.array(obj, dtype=np.float32) for obj in data['objpoints']]
+    # imgpoints_left = [np.array(img, dtype=np.float32) for img in data['imgpoints_left']]
+    # imgpoints_right = [np.array(img, dtype=np.float32) for img in data['imgpoints_right']]
 
-    print(mtx_left)
-    print(dist_left)
-    print(mtx_right)
-    print(dist_right)
+    # print(mtx_left)
+    # print(dist_left)
+    # print(mtx_right)
+    # print(dist_right)
 
-    assert mtx_left.shape == (3, 3), "mtx_left shape is incorrect"
-    assert dist_left.shape[0] in [4, 5], "dist_left shape is incorrect"
-    assert mtx_right.shape == (3, 3), "mtx_right shape is incorrect"
-    assert dist_right.shape[0] in [4, 5], "dist_right shape is incorrect"
+    # assert mtx_left.shape == (3, 3), "mtx_left shape is incorrect"
+    # assert dist_left.shape[0] in [4, 5], "dist_left shape is incorrect"
+    # assert mtx_right.shape == (3, 3), "mtx_right shape is incorrect"
+    # assert dist_right.shape[0] in [4, 5], "dist_right shape is incorrect"
+
+    # map_left_x = [np.array(map_point_lx, dtype=np.float32) for map_point_lx in data['map_left_x']]
+    # map_left_y = [np.array(map_point_ly, dtype=np.float32) for map_point_ly in data['map_left_y']]
+
+    # map_right_x = [np.array(map_point_rx, dtype=np.float32) for map_point_rx in data['map_right_x']]
+    # map_right_y = [np.array(map_point_ry, dtype=np.float32) for map_point_ry in data['map_right_y']]
+
+    # print(map_left_x)
+    # print(map_left_y)
+
+    # print(map_right_x)
+    # print(map_right_y)
 
 else:
     objpoints, imgpoints_left, imgpoints_right = calibrate_duo_image(duo_left_images, duo_right_images)
@@ -202,15 +218,53 @@ else:
     mtx_right = np.mean(np.array(R_cm), axis=0)
     dist_right = np.mean(np.array(R_cd), axis=0)
 
+    # Stereo calibration
+    flags = 0
+    flags |= cv.CALIB_FIX_INTRINSIC
+    # criteria_stereo = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+
+    ret_stereo, mtx_left, dist_left, mtx_right, dist_right, R, T, E, F = cv.stereoCalibrate(
+        objpoints, imgpoints_left, imgpoints_right, 
+        mtx_left, dist_left, mtx_right, dist_right, 
+        img_size, criteria=criteria, flags=flags)
+
+    # Compute rectification transforms
+    rect_scale = 1  # Scaling factor: 0=zoomed out, 1=cropped
+    rect_left, rect_right, proj_left, proj_right, Q, roi_left, roi_right = cv.stereoRectify(
+        mtx_left, dist_left, mtx_right, dist_right, img_size, 
+        R, T, flags=cv.CALIB_ZERO_DISPARITY, alpha=rect_scale)
+
+
     data = {
-    "mtx_left": mtx_left.tolist(),
-    "dist_left": dist_left.tolist(),
-    "mtx_right": mtx_right.tolist(),
-    "dist_right": dist_right.tolist(),
-    "objpoints": [obj.tolist() for obj in objpoints],
-    "imgpoints_left": [img.tolist() for img in imgpoints_left],
-    "imgpoints_right": [img.tolist() for img in imgpoints_right]
+        "mtx_left": mtx_left.tolist(),
+        "dist_left": dist_left.tolist(),
+        "rect_left": rect_left.tolist(),
+        "proj_left": proj_left.tolist(),
+
+        "mtx_right": mtx_right.tolist(),
+        "dist_right": dist_right.tolist(),
+        "rect_right": rect_right.tolist(),
+        "proj_right": proj_right.tolist(),
     }
+
+    # Dont do it this way, the maps are humoungous
+    # data = {
+    #     "map_left_x": map_left_x.tolist(),
+    #     "map_left_y": map_left_y.tolist(),
+
+    #     "map_right_x": map_right_x.tolist(),
+    #     "map_right_y": map_right_y.tolist()
+    # }
+
+    # data = {
+    # "mtx_left": mtx_left.tolist(),
+    # "dist_left": dist_left.tolist(),
+    # "mtx_right": mtx_right.tolist(),
+    # "dist_right": dist_right.tolist(),
+    # "objpoints": [obj.tolist() for obj in objpoints],
+    # "imgpoints_left": [img.tolist() for img in imgpoints_left],
+    # "imgpoints_right": [img.tolist() for img in imgpoints_right]
+    # }
 
     # Save the data to a file
     # with open('camera_data.txt', 'w') as file:
@@ -226,28 +280,11 @@ else:
     with open('camera_data.json', 'w') as file:
         json.dump(data, file, indent=4)
 
-# Stereo calibration
-flags = 0
-flags |= cv.CALIB_FIX_INTRINSIC
-# criteria_stereo = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-
-ret_stereo, mtx_left, dist_left, mtx_right, dist_right, R, T, E, F = cv.stereoCalibrate(
-    objpoints, imgpoints_left, imgpoints_right, 
-    mtx_left, dist_left, mtx_right, dist_right, 
-    img_size, criteria=criteria, flags=flags)
-
-# Compute rectification transforms
-rect_scale = 1  # Scaling factor: 0=zoomed out, 1=cropped
-rect_left, rect_right, proj_left, proj_right, Q, roi_left, roi_right = cv.stereoRectify(
-    mtx_left, dist_left, mtx_right, dist_right, img_size, 
-    R, T, flags=cv.CALIB_ZERO_DISPARITY, alpha=rect_scale)
-
 # Compute mapping for rectification
 map_left_x, map_left_y = cv.initUndistortRectifyMap(
     mtx_left, dist_left, rect_left, proj_left, img_size, cv.CV_32FC1)
 map_right_x, map_right_y = cv.initUndistortRectifyMap(
     mtx_right, dist_right, rect_right, proj_right, img_size, cv.CV_32FC1)
-
 
 # idx = 2
 # # Example: Rectify a pair of images
