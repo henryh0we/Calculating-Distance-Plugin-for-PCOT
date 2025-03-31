@@ -227,6 +227,11 @@ else:
         objpoints, imgpoints_left, imgpoints_right, 
         mtx_left, dist_left, mtx_right, dist_right, 
         img_size, criteria=criteria, flags=flags)
+    
+    print(R)
+    print(T)
+    print(E)
+    print(F)
 
     # Compute rectification transforms
     rect_scale = 1  # Scaling factor: 0=zoomed out, 1=cropped
@@ -245,6 +250,11 @@ else:
         "dist_right": dist_right.tolist(),
         "rect_right": rect_right.tolist(),
         "proj_right": proj_right.tolist(),
+
+        "R": R.tolist(),
+        "T": T.tolist(),
+        "E": E.tolist(),
+        "F": F.tolist(),
     }
 
     # Dont do it this way, the maps are humoungous
@@ -291,11 +301,11 @@ map_right_x, map_right_y = cv.initUndistortRectifyMap(
 # left_img = cv.imread(duo_left_images[idx])
 # right_img = cv.imread(duo_right_images[idx])
 
-left_img = cv.imread('HenryFiles\AUPE Images\distance\pctset-1m-8bit\distance_pctset-1m-8bit_LWAC01_T00_P00_BS.png')
-right_img = cv.imread('HenryFiles\AUPE Images\distance\pctset-1m-8bit\distance_pctset-1m-8bit_RWAC01_T00_P00_BS.png')
+# left_img = cv.imread('HenryFiles\AUPE Images\distance\pctset-1m-8bit\distance_pctset-1m-8bit_LWAC01_T00_P00_BS.png')
+# right_img = cv.imread('HenryFiles\AUPE Images\distance\pctset-1m-8bit\distance_pctset-1m-8bit_RWAC01_T00_P00_BS.png')
 
-# left_img = cv.imread('HenryFiles\AUPE Images\distance\pctset-1m-8bit-tiltdown\distance_pctset-1m-8bit-tiltdown_LWAC01_T00_P00_BS.png')
-# right_img = cv.imread('HenryFiles\AUPE Images\distance\pctset-1m-8bit-tiltdown\distance_pctset-1m-8bit-tiltdown_RWAC01_T00_P00_BS.png')
+left_img = cv.imread('HenryFiles\AUPE Images\distance\pctset-1m-8bit-tiltdown\distance_pctset-1m-8bit-tiltdown_LWAC01_T00_P00_BS.png')
+right_img = cv.imread('HenryFiles\AUPE Images\distance\pctset-1m-8bit-tiltdown\distance_pctset-1m-8bit-tiltdown_RWAC01_T00_P00_BS.png')
 
 left_rectified = cv.remap(left_img, map_left_x, map_left_y, cv.INTER_LINEAR)
 right_rectified = cv.remap(right_img, map_right_x, map_right_y, cv.INTER_LINEAR)
@@ -304,12 +314,13 @@ right_rectified = cv.remap(right_img, map_right_x, map_right_y, cv.INTER_LINEAR)
 combined_rectified = np.hstack((left_rectified, right_rectified))
 
 # Draw horizontal lines on combined image
-num_lines = 80
+num_lines = 40
 interval = combined_rectified.shape[0] // num_lines
 for i in range(0, combined_rectified.shape[0], interval):
     cv.line(combined_rectified, (0, i), (combined_rectified.shape[1], i), (0, 255, 0), 1)
 
-cv.namedWindow('Rectified Images', cv.WINDOW_NORMAL)
+# cv.namedWindow('Rectified Images', cv.WINDOW_NORMAL)
+cv.namedWindow('Rectified Images', cv.WINDOW_AUTOSIZE)
 cv.imshow('Rectified Images', combined_rectified)
 cv.waitKey(0)
 cv.destroyAllWindows()
