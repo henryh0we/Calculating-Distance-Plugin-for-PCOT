@@ -111,18 +111,18 @@ def calibrate_non_duo(images):
             camera_dists.append(dist)
 
             # Get the height and width of the image
-            h,  w = img.shape[:2]
+            # h,  w = img.shape[:2]
 
             # getOptimalNewCameraMatrix creates a matrix which is specifically useful for 
             # undistorting the image.
-            newcameramtx, roi = cv.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
+            # newcameramtx, roi = cv.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
             
-            # Undistorting the image
-            dst = cv.undistort(img, mtx, dist, None, newcameramtx)
+            # # Undistorting the image
+            # dst = cv.undistort(img, mtx, dist, None, newcameramtx)
 
-            # Crops the image
-            x, y, w, h = roi
-            dst = dst[y:y+h, x:x+w]
+            # # Crops the image
+            # x, y, w, h = roi
+            # dst = dst[y:y+h, x:x+w]
 
             # Shows the image
             # cv.imshow('Result', dst)
