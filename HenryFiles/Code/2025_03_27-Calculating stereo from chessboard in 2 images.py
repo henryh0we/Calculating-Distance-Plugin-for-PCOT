@@ -234,7 +234,7 @@ else:
     print(F)
 
     # Compute rectification transforms
-    rect_scale = 1  # Scaling factor: 0=zoomed out, 1=cropped
+    rect_scale = 0.6  # Scaling factor: 0=zoomed out, 1=cropped
     rect_left, rect_right, proj_left, proj_right, Q, roi_left, roi_right = cv.stereoRectify(
         mtx_left, dist_left, mtx_right, dist_right, img_size, 
         R, T, flags=cv.CALIB_ZERO_DISPARITY, alpha=rect_scale)
@@ -319,8 +319,115 @@ interval = combined_rectified.shape[0] // num_lines
 for i in range(0, combined_rectified.shape[0], interval):
     cv.line(combined_rectified, (0, i), (combined_rectified.shape[1], i), (0, 255, 0), 1)
 
-cv.namedWindow('Rectified Images', cv.WINDOW_NORMAL)
-# cv.namedWindow('Rectified Images', cv.WINDOW_AUTOSIZE)
-cv.imshow('Rectified Images', combined_rectified)
-cv.waitKey(0)
+# cv.namedWindow('Left Rectified', cv.WINDOW_NORMAL)
+# cv.imshow('Left Rectified', left_rectified)
+# cv.resizeWindow('Left Rectified', 600, 600)
+# cv.setWindowProperty('Left Rectified', cv.WND_PROP_ASPECT_RATIO, cv.WINDOW_KEEPRATIO)
+
+# cv.namedWindow('Right Rectified', cv.WINDOW_NORMAL)
+# cv.imshow('Right Rectified', right_rectified)
+# cv.resizeWindow('Right Rectified', 600, 600)
+# cv.setWindowProperty('Right Rectified', cv.WND_PROP_ASPECT_RATIO, cv.WINDOW_KEEPRATIO)
+
+
+# cv.namedWindow('Rectified Images', cv.WINDOW_NORMAL)
+# # cv.namedWindow('Rectified Images', cv.WINDOW_AUTOSIZE)
+# cv.imshow('Rectified Images', combined_rectified)
+# cv.resizeWindow('Rectified Images', 1200, 600)
+# cv.setWindowProperty('Rectified Images', cv.WND_PROP_ASPECT_RATIO, cv.WINDOW_KEEPRATIO)
+
+# cv.waitKey(0)
+# cv.destroyAllWindows()
+
+points = []
+
+# def select_point(event, x, y, flags, param):
+#     global points
+#     if event == cv.EVENT_LBUTTONDOWN:
+#         if len(points) < 2:  # Ensure only 2 points are selected
+#             points.append((x, y))
+#             cv.circle(param, (x, y), 5, (0, 255, 0), -1)
+#             cv.imshow("Select Points", param)
+#             print(f"Point selected at: {x}, {y}")
+#         if len(points) == 2:
+#             cv.destroyAllWindows()  # Close the window after selecting 2 points
+
+def select_point(event, x, y, flags, param):
+    global points
+    if event == cv.EVENT_LBUTTONDOWN:
+        if len(points) < 2:
+            points.append((x, y))
+            # Ensure param (which should be your image) is not None and has valid dimensions
+            if param is not None and param.shape[0] > 0 and param.shape[1] > 0:
+                cv.circle(param, (x, y), 5, (0, 255, 0), -1)
+                # cv.imshow("Select Points", param)
+            else:
+                print("Invalid image passed to callback")
+            if len(points) == 2:
+                cv.destroyAllWindows()
+
+cv.namedWindow("Image", cv.WINDOW_NORMAL)
+cv.setMouseCallback("Image", select_point, combined_rectified)
+cv.resizeWindow('Image', 1200, 600)
+cv.setWindowProperty('Image', cv.WND_PROP_ASPECT_RATIO, cv.WINDOW_KEEPRATIO)
+
+while True:
+    cv.imshow("Image", combined_rectified)
+    if cv.waitKey(1) & 0xFF == 27 or len(points) == 2:  # ESC key or 2 points selected
+        break
+
 cv.destroyAllWindows()
+
+print(points)
+point_left = points[0] # ( x , y )
+point_right = points[1] # ( x , y )
+
+disparity = point_right[0] - point_left[0]
+
+print("disparity: ", disparity)
+
+## Calculating focal length from camera parameters from PDF doc
+# focal_length_mm = 12
+# sensor_width_mm = 8.8
+# image_width_pixels = 1024
+
+# focal_length_pixels = (focal_length_mm / sensor_width_mm) * image_width_pixels
+
+# print("focal_length_pixels: ", focal_length_pixels)
+
+# focal_length = focal_length_pixels
+
+# print("focal_length: ", focal_length)
+
+## Calculating focal length from camera parameters from OpenCV
+
+mtx_left
+
+left_fx = mtx_left[0][0]
+left_fy = mtx_left[1][1]
+left_avg = np.mean([left_fx, left_fy])
+
+right_fx = mtx_right[0][0]
+right_fy = mtx_right[1][1]
+right_avg = np.mean([right_fx, right_fy])
+
+total_avg = np.mean([left_avg, right_avg])
+
+print("left_fx: ", left_fx)
+print("left_fy: ", left_fy)
+print("right_fx: ", right_fx)
+print("right_fy: ", right_fy)
+
+print("left_avg: ", left_avg)
+print("right_avg: ", right_avg)
+
+print("total_avg: ", total_avg)
+
+focal_length = total_avg
+
+baseline = 0.5  # Distance in meters
+# baseline = 500 # Distance in mm
+
+depth = (focal_length * baseline) / disparity
+
+print("depth: ", depth)
