@@ -319,8 +319,8 @@ interval = combined_rectified.shape[0] // num_lines
 for i in range(0, combined_rectified.shape[0], interval):
     cv.line(combined_rectified, (0, i), (combined_rectified.shape[1], i), (0, 255, 0), 1)
 
-# cv.namedWindow('Rectified Images', cv.WINDOW_NORMAL)
-cv.namedWindow('Rectified Images', cv.WINDOW_AUTOSIZE)
+cv.namedWindow('Rectified Images', cv.WINDOW_NORMAL)
+# cv.namedWindow('Rectified Images', cv.WINDOW_AUTOSIZE)
 cv.imshow('Rectified Images', combined_rectified)
 cv.waitKey(0)
 cv.destroyAllWindows()
