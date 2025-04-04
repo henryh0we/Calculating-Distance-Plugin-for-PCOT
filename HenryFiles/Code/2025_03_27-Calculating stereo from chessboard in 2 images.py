@@ -378,56 +378,57 @@ while True:
 
 cv.destroyAllWindows()
 
-print(points)
-point_left = points[0] # ( x , y )
-point_right = points[1] # ( x , y )
+if ((len(points) == 2)):
+    print(points)
+    point_left = points[0] # ( x , y )
+    point_right = points[1] # ( x , y )
 
-disparity = point_right[0] - point_left[0]
+    disparity = point_right[0] - point_left[0]
 
-print("disparity: ", disparity)
+    print("disparity: ", disparity)
 
-## Calculating focal length from camera parameters from PDF doc
-# focal_length_mm = 12
-# sensor_width_mm = 8.8
-# image_width_pixels = 1024
+    ## Calculating focal length from camera parameters from PDF doc
+    # focal_length_mm = 12
+    # sensor_width_mm = 8.8
+    # image_width_pixels = 1024
 
-# focal_length_pixels = (focal_length_mm / sensor_width_mm) * image_width_pixels
+    # focal_length_pixels = (focal_length_mm / sensor_width_mm) * image_width_pixels
 
-# print("focal_length_pixels: ", focal_length_pixels)
+    # print("focal_length_pixels: ", focal_length_pixels)
 
-# focal_length = focal_length_pixels
+    # focal_length = focal_length_pixels
 
-# print("focal_length: ", focal_length)
+    # print("focal_length: ", focal_length)
 
-## Calculating focal length from camera parameters from OpenCV
+    ## Calculating focal length from camera parameters from OpenCV
 
-mtx_left
+    # mtx_left
 
-left_fx = mtx_left[0][0]
-left_fy = mtx_left[1][1]
-left_avg = np.mean([left_fx, left_fy])
+    left_fx = mtx_left[0][0]
+    left_fy = mtx_left[1][1]
+    left_avg = np.mean([left_fx, left_fy])
 
-right_fx = mtx_right[0][0]
-right_fy = mtx_right[1][1]
-right_avg = np.mean([right_fx, right_fy])
+    right_fx = mtx_right[0][0]
+    right_fy = mtx_right[1][1]
+    right_avg = np.mean([right_fx, right_fy])
 
-total_avg = np.mean([left_avg, right_avg])
+    total_avg = np.mean([left_avg, right_avg])
 
-print("left_fx: ", left_fx)
-print("left_fy: ", left_fy)
-print("right_fx: ", right_fx)
-print("right_fy: ", right_fy)
+    print("left_fx: ", left_fx)
+    print("left_fy: ", left_fy)
+    print("right_fx: ", right_fx)
+    print("right_fy: ", right_fy)
 
-print("left_avg: ", left_avg)
-print("right_avg: ", right_avg)
+    print("left_avg: ", left_avg)
+    print("right_avg: ", right_avg)
 
-print("total_avg: ", total_avg)
+    print("total_avg: ", total_avg)
 
-focal_length = total_avg
+    focal_length = total_avg
 
-baseline = 0.5  # Distance in meters
-# baseline = 500 # Distance in mm
+    baseline = 0.5  # Distance in meters
+    # baseline = 500 # Distance in mm
 
-depth = (focal_length * baseline) / disparity
+    depth = (focal_length * baseline) / disparity
 
-print("depth: ", depth)
+    print("depth: ", depth)
