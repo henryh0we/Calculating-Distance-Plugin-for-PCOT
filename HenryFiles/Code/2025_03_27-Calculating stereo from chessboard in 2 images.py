@@ -404,6 +404,9 @@ if ((len(points) == 2)):
 
     # mtx_left
 
+    # Currently works using estimations made from OpenCV.
+    # Need to make adjustments to code to instead use the above code.
+    # Thus using real-world data
     left_fx = mtx_left[0][0]
     left_fy = mtx_left[1][1]
     left_avg = np.mean([left_fx, left_fy])
