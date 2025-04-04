@@ -404,33 +404,53 @@ if ((len(points) == 2)):
 
     # mtx_left
 
+    # left_fx = mtx_left[0][0]
+    # left_fy = mtx_left[1][1]
+    # left_avg = np.mean([left_fx, left_fy])
+
+    # right_fx = mtx_right[0][0]
+    # right_fy = mtx_right[1][1]
+    # right_avg = np.mean([right_fx, right_fy])
+
+    # total_avg = np.mean([left_avg, right_avg])
+
+    
+    # print("left_fx: ", left_fx)
+    # print("left_fy: ", left_fy)
+    # print("right_fx: ", right_fx)
+    # print("right_fy: ", right_fy)
+
+    # print("left_avg: ", left_avg)
+    # print("right_avg: ", right_avg)
+
+    # print("total_avg: ", total_avg)
+
+    # focal_length = total_avg
+
     # Currently works using estimations made from OpenCV.
-    # Need to make adjustments to code to instead use the above code.
+    # Need to make adjustments to code to instead use new code.
     # Thus using real-world data
-    left_fx = mtx_left[0][0]
-    left_fy = mtx_left[1][1]
-    left_avg = np.mean([left_fx, left_fy])
 
-    right_fx = mtx_right[0][0]
-    right_fy = mtx_right[1][1]
-    right_avg = np.mean([right_fx, right_fy])
+    # ==================
+    # Real-world data
+    # ==================
 
-    total_avg = np.mean([left_avg, right_avg])
+    focal_length_mm = 12
+    image_width_pixels = 1024
 
-    print("left_fx: ", left_fx)
-    print("left_fy: ", left_fy)
-    print("right_fx: ", right_fx)
-    print("right_fy: ", right_fy)
+    diagonal_length = 8 # diagonal size of the now-square sensor in mm
+    side_length = 5.657 # side length of the now-square sensor in mm
 
-    print("left_avg: ", left_avg)
-    print("right_avg: ", right_avg)
+    sensor_width_mm = side_length
 
-    print("total_avg: ", total_avg)
+    focal_length_pixels = (focal_length_mm / sensor_width_mm) * image_width_pixels
 
-    focal_length = total_avg
+    focal_length = focal_length_pixels
 
-    baseline = 0.5  # Distance in meters
-    # baseline = 500 # Distance in mm
+    print("focal_length: ", focal_length)
+
+    # baseline = 0.5  # Distance in meters
+    baseline = 500 # Distance in mm
 
     depth = (focal_length * baseline) / disparity
 
