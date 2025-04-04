@@ -311,13 +311,20 @@ left_rectified = cv.remap(left_img, map_left_x, map_left_y, cv.INTER_LINEAR)
 right_rectified = cv.remap(right_img, map_right_x, map_right_y, cv.INTER_LINEAR)
 
 # Display rectified images
-combined_rectified = np.hstack((left_rectified, right_rectified))
+# combined_rectified = np.hstack((left_rectified, right_rectified))
 
 # Draw horizontal lines on combined image
+# num_lines = 40
+# interval = combined_rectified.shape[0] // num_lines
+# for i in range(0, combined_rectified.shape[0], interval):
+#     cv.line(combined_rectified, (0, i), (combined_rectified.shape[1], i), (0, 255, 0), 1)
+
+# Draw horizontal lines on left and right rectified images
 num_lines = 40
-interval = combined_rectified.shape[0] // num_lines
-for i in range(0, combined_rectified.shape[0], interval):
-    cv.line(combined_rectified, (0, i), (combined_rectified.shape[1], i), (0, 255, 0), 1)
+interval = left_rectified.shape[0] // num_lines
+for i in range(0, left_rectified.shape[0], interval):
+    cv.line(left_rectified, (0, i), (left_rectified.shape[1], i), (0, 255, 0), 1)
+    cv.line(right_rectified, (0, i), (right_rectified.shape[1], i), (0, 255, 0), 1)
 
 # cv.namedWindow('Left Rectified', cv.WINDOW_NORMAL)
 # cv.imshow('Left Rectified', left_rectified)
@@ -352,40 +359,77 @@ points = []
 #         if len(points) == 2:
 #             cv.destroyAllWindows()  # Close the window after selecting 2 points
 
-def select_point(event, x, y, flags, param):
-    global points
-    if event == cv.EVENT_LBUTTONDOWN:
-        if len(points) < 2:
-            points.append((x, y))
-            # Ensure param (which should be your image) is not None and has valid dimensions
-            if param is not None and param.shape[0] > 0 and param.shape[1] > 0:
-                cv.circle(param, (x, y), 5, (0, 255, 0), -1)
-                # cv.imshow("Select Points", param)
-            else:
-                print("Invalid image passed to callback")
-            if len(points) == 2:
-                cv.destroyAllWindows()
+# Initialize lists to store points
+points_left = []
+points_right = []
 
-cv.namedWindow("Image", cv.WINDOW_NORMAL)
-cv.setMouseCallback("Image", select_point, combined_rectified)
-cv.resizeWindow('Image', 1200, 600)
-cv.setWindowProperty('Image', cv.WND_PROP_ASPECT_RATIO, cv.WINDOW_KEEPRATIO)
+def select_point_left(event, x, y, flags, param):
+    global points_left
+    if event == cv.EVENT_LBUTTONDOWN:
+        if len(points_left) < 1:
+            points_left.append((x, y))
+            cv.circle(param, (x, y), 5, (0, 255, 0), -1)
+            cv.imshow("Left Image", param)
+            print(f"Left Image: Point selected at: {x}, {y}")
+        if len(points_left) == 1:
+            cv.setMouseCallback("Left Image", lambda *args: None)  # Disable further callbacks
+
+def select_point_right(event, x, y, flags, param):
+    global points_right
+    if event == cv.EVENT_LBUTTONDOWN:
+        if len(points_right) < 1:
+            points_right.append((x, y))
+            cv.circle(param, (x, y), 5, (0, 255, 0), -1)
+            cv.imshow("Right Image", param)
+            print(f"Right Image: Point selected at: {x}, {y}")
+        if len(points_right) == 1:
+            cv.setMouseCallback("Right Image", lambda *args: None)  # Disable further callbacks
+
+# cv.namedWindow("Image", cv.WINDOW_NORMAL)
+# cv.setMouseCallback("Image", select_point, combined_rectified)
+# cv.resizeWindow('Image', 1200, 600)
+# cv.setWindowProperty('Image', cv.WND_PROP_ASPECT_RATIO, cv.WINDOW_KEEPRATIO)
+
+cv.namedWindow("Left Image", cv.WINDOW_NORMAL)
+cv.setMouseCallback("Left Image", select_point_left, left_rectified)
+cv.resizeWindow('Left Image', 600, 600)
+cv.setWindowProperty('Left Image', cv.WND_PROP_ASPECT_RATIO, cv.WINDOW_KEEPRATIO)
+
+cv.namedWindow("Right Image", cv.WINDOW_NORMAL)
+cv.setMouseCallback("Right Image", select_point_right, right_rectified)
+cv.resizeWindow('Right Image', 600, 600)
+cv.setWindowProperty('Right Image', cv.WND_PROP_ASPECT_RATIO, cv.WINDOW_KEEPRATIO)
+
+cv.moveWindow('Left Image', 100, 100)  # Position of the left image window
+cv.moveWindow('Right Image', 100 + 600, 100)  # Position of the right image window
+
 
 while True:
-    cv.imshow("Image", combined_rectified)
-    if cv.waitKey(1) & 0xFF == 27 or len(points) == 2:  # ESC key or 2 points selected
+    # cv.imshow("Image", combined_rectified)
+    cv.imshow("Left Image", left_rectified)
+    cv.imshow("Right Image", right_rectified)
+    if cv.waitKey(1) & 0xFF == 27 or ((len(points_left) == 1) and (len(points_right) == 1)):  # ESC key or 2 points selected
         break
 
 cv.destroyAllWindows()
 
-if ((len(points) == 2)):
-    print(points)
-    point_left = points[0] # ( x , y )
-    point_right = points[1] # ( x , y )
+if ((len(points_left) == 1) and (len(points_right) == 1)):
+    point_left = points_left[0] # ( x , y )
+    point_right = points_right[0] # ( x , y )
 
     disparity = point_right[0] - point_left[0]
 
+    disparity = abs(disparity) #  Always non-negative
+
     print("disparity: ", disparity)
+
+    # print(points)
+    # point_left = points[0] # ( x , y )
+    # point_right = points[1] # ( x , y )
+
+    # disparity = point_right[0] - point_left[0]
+
+    # print("disparity: ", disparity)
 
     ## Calculating focal length from camera parameters from PDF doc
     # focal_length_mm = 12
@@ -400,32 +444,32 @@ if ((len(points) == 2)):
 
     # print("focal_length: ", focal_length)
 
-    ## Calculating focal length from camera parameters from OpenCV
+    # Calculating focal length from camera parameters from OpenCV
 
     # mtx_left
 
-    # left_fx = mtx_left[0][0]
-    # left_fy = mtx_left[1][1]
-    # left_avg = np.mean([left_fx, left_fy])
+    left_fx = mtx_left[0][0]
+    left_fy = mtx_left[1][1]
+    left_avg = np.mean([left_fx, left_fy])
 
-    # right_fx = mtx_right[0][0]
-    # right_fy = mtx_right[1][1]
-    # right_avg = np.mean([right_fx, right_fy])
+    right_fx = mtx_right[0][0]
+    right_fy = mtx_right[1][1]
+    right_avg = np.mean([right_fx, right_fy])
 
-    # total_avg = np.mean([left_avg, right_avg])
+    total_avg = np.mean([left_avg, right_avg])
 
     
-    # print("left_fx: ", left_fx)
-    # print("left_fy: ", left_fy)
-    # print("right_fx: ", right_fx)
-    # print("right_fy: ", right_fy)
+    print("left_fx: ", left_fx)
+    print("left_fy: ", left_fy)
+    print("right_fx: ", right_fx)
+    print("right_fy: ", right_fy)
 
-    # print("left_avg: ", left_avg)
-    # print("right_avg: ", right_avg)
+    print("left_avg: ", left_avg)
+    print("right_avg: ", right_avg)
 
-    # print("total_avg: ", total_avg)
+    print("total_avg: ", total_avg)
 
-    # focal_length = total_avg
+    focal_length = total_avg
 
     # Currently works using estimations made from OpenCV.
     # Need to make adjustments to code to instead use new code.
@@ -435,17 +479,17 @@ if ((len(points) == 2)):
     # Real-world data
     # ==================
 
-    focal_length_mm = 12
-    image_width_pixels = 1024
+    # focal_length_mm = 12
+    # image_width_pixels = 1024
 
-    diagonal_length = 8 # diagonal size of the now-square sensor in mm
-    side_length = 5.657 # side length of the now-square sensor in mm
+    # diagonal_length = 8 # diagonal size of the now-square sensor in mm
+    # side_length = 5.657 # side length of the now-square sensor in mm
 
-    sensor_width_mm = side_length
+    # sensor_width_mm = side_length
 
-    focal_length_pixels = (focal_length_mm / sensor_width_mm) * image_width_pixels
+    # focal_length_pixels = (focal_length_mm / sensor_width_mm) * image_width_pixels
 
-    focal_length = focal_length_pixels
+    # focal_length = focal_length_pixels
 
     print("focal_length: ", focal_length)
 
