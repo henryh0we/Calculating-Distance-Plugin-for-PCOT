@@ -500,7 +500,7 @@ if ((len(points_left) == 1) and (len(points_right) == 1)):
 
     print("depth: ", depth)
 
-    aupe_height = 1.092
+    aupe_height = 1.094
 
     approximate_ground_distance = np.sqrt(depth**2 - aupe_height**2)
 
