@@ -17,7 +17,7 @@ classifiers = [
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/AU-ExoMars/PCOT/issues"
 
-[tool.poetry.dependencies]
+[tool.poetry.group.dev.dependencies]
 python = ">=3.9,<3.11"
 PySide2 = "^5.15.2"
 opencv-python-headless = "4.10.0.84"
