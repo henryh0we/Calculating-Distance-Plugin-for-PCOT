@@ -160,7 +160,6 @@ if os.path.exists(camera_data_file_path):
     rect_right = np.array(data['rect_right'])
     proj_right = np.array(data['proj_right'])
 
-
 else:
     objpoints, imgpoints_left, imgpoints_right = calibrate_duo_image(duo_left_images, duo_right_images)
 
@@ -207,7 +206,6 @@ else:
     rect_left, rect_right, proj_left, proj_right, Q, roi_left, roi_right = cv.stereoRectify(
         mtx_left, dist_left, mtx_right, dist_right, img_size, 
         R, T, flags=cv.CALIB_ZERO_DISPARITY, alpha=rect_scale)
-
 
     data = {
         "mtx_left": mtx_left.tolist(),
