@@ -143,19 +143,11 @@ def calibrate_non_duo(images):
 
     return camera_mats, camera_dists
 
-camear_data_file_path = 'HenryFiles/camera_data.json'
+camera_data_file_path = 'HenryFiles/camera_data.json'
 
-if os.path.exists(camear_data_file_path):
-    # with open('camera_data.txt', 'r') as file:
-    #     # file.readline()
-    #     mtx_left = np.loadtxt(file, max_rows=3)
+if os.path.exists(camera_data_file_path):
 
-    #     dist_left = np.loadtxt(file, skiprows=4, max_rows=5)
-
-    #     mtx_right = np.loadtxt(file, skiprows=9, max_rows=12)
-
-    #     dist_right = np.loadtxt(file, skiprows=13, max_rows=18)
-    with open(camear_data_file_path, 'r') as file:
+    with open(camera_data_file_path, 'r') as file:
         data = json.load(file)
 
     mtx_left = np.array(data['mtx_left'])
@@ -168,31 +160,6 @@ if os.path.exists(camear_data_file_path):
     rect_right = np.array(data['rect_right'])
     proj_right = np.array(data['proj_right'])
 
-    # objpoints = [np.array(obj, dtype=np.float32) for obj in data['objpoints']]
-    # imgpoints_left = [np.array(img, dtype=np.float32) for img in data['imgpoints_left']]
-    # imgpoints_right = [np.array(img, dtype=np.float32) for img in data['imgpoints_right']]
-
-    # print(mtx_left)
-    # print(dist_left)
-    # print(mtx_right)
-    # print(dist_right)
-
-    # assert mtx_left.shape == (3, 3), "mtx_left shape is incorrect"
-    # assert dist_left.shape[0] in [4, 5], "dist_left shape is incorrect"
-    # assert mtx_right.shape == (3, 3), "mtx_right shape is incorrect"
-    # assert dist_right.shape[0] in [4, 5], "dist_right shape is incorrect"
-
-    # map_left_x = [np.array(map_point_lx, dtype=np.float32) for map_point_lx in data['map_left_x']]
-    # map_left_y = [np.array(map_point_ly, dtype=np.float32) for map_point_ly in data['map_left_y']]
-
-    # map_right_x = [np.array(map_point_rx, dtype=np.float32) for map_point_rx in data['map_right_x']]
-    # map_right_y = [np.array(map_point_ry, dtype=np.float32) for map_point_ry in data['map_right_y']]
-
-    # print(map_left_x)
-    # print(map_left_y)
-
-    # print(map_right_x)
-    # print(map_right_y)
 
 else:
     objpoints, imgpoints_left, imgpoints_right = calibrate_duo_image(duo_left_images, duo_right_images)
@@ -259,36 +226,6 @@ else:
         "F": F.tolist(),
     }
 
-    # Dont do it this way, the maps are humoungous
-    # data = {
-    #     "map_left_x": map_left_x.tolist(),
-    #     "map_left_y": map_left_y.tolist(),
-
-    #     "map_right_x": map_right_x.tolist(),
-    #     "map_right_y": map_right_y.tolist()
-    # }
-
-    # data = {
-    # "mtx_left": mtx_left.tolist(),
-    # "dist_left": dist_left.tolist(),
-    # "mtx_right": mtx_right.tolist(),
-    # "dist_right": dist_right.tolist(),
-    # "objpoints": [obj.tolist() for obj in objpoints],
-    # "imgpoints_left": [img.tolist() for img in imgpoints_left],
-    # "imgpoints_right": [img.tolist() for img in imgpoints_right]
-    # }
-
-    # Save the data to a file
-    # with open('camera_data.txt', 'w') as file:
-    #     # file.write("Left Camera Matrix:\n")
-    #     np.savetxt(file, mtx_left, newline="\n")
-    #     # file.write("\nLeft Camera Distortion Coefficients:\n")
-    #     np.savetxt(file, dist_left, newline="\n")
-    #     # file.write("\n\nRight Camera Matrix:\n")
-    #     np.savetxt(file, mtx_right, newline="\n")
-    #     # file.write("\nRight Camera Distortion Coefficients:\n")
-    #     np.savetxt(file, dist_right, newline="\n")
-
     with open('camera_data.json', 'w') as file:
         json.dump(data, file, indent=4)
 
@@ -312,15 +249,6 @@ right_img = cv.imread('HenryFiles\AUPE Images\distance\pctset-1m-8bit-tiltdown\d
 left_rectified = cv.remap(left_img, map_left_x, map_left_y, cv.INTER_LINEAR)
 right_rectified = cv.remap(right_img, map_right_x, map_right_y, cv.INTER_LINEAR)
 
-# Display rectified images
-# combined_rectified = np.hstack((left_rectified, right_rectified))
-
-# Draw horizontal lines on combined image
-# num_lines = 40
-# interval = combined_rectified.shape[0] // num_lines
-# for i in range(0, combined_rectified.shape[0], interval):
-#     cv.line(combined_rectified, (0, i), (combined_rectified.shape[1], i), (0, 255, 0), 1)
-
 # Draw horizontal lines on left and right rectified images
 num_lines = 40
 interval = left_rectified.shape[0] // num_lines
@@ -328,38 +256,7 @@ for i in range(0, left_rectified.shape[0], interval):
     cv.line(left_rectified, (0, i), (left_rectified.shape[1], i), (0, 255, 0), 1)
     cv.line(right_rectified, (0, i), (right_rectified.shape[1], i), (0, 255, 0), 1)
 
-# cv.namedWindow('Left Rectified', cv.WINDOW_NORMAL)
-# cv.imshow('Left Rectified', left_rectified)
-# cv.resizeWindow('Left Rectified', 600, 600)
-# cv.setWindowProperty('Left Rectified', cv.WND_PROP_ASPECT_RATIO, cv.WINDOW_KEEPRATIO)
-
-# cv.namedWindow('Right Rectified', cv.WINDOW_NORMAL)
-# cv.imshow('Right Rectified', right_rectified)
-# cv.resizeWindow('Right Rectified', 600, 600)
-# cv.setWindowProperty('Right Rectified', cv.WND_PROP_ASPECT_RATIO, cv.WINDOW_KEEPRATIO)
-
-
-# cv.namedWindow('Rectified Images', cv.WINDOW_NORMAL)
-# # cv.namedWindow('Rectified Images', cv.WINDOW_AUTOSIZE)
-# cv.imshow('Rectified Images', combined_rectified)
-# cv.resizeWindow('Rectified Images', 1200, 600)
-# cv.setWindowProperty('Rectified Images', cv.WND_PROP_ASPECT_RATIO, cv.WINDOW_KEEPRATIO)
-
-# cv.waitKey(0)
-# cv.destroyAllWindows()
-
 points = []
-
-# def select_point(event, x, y, flags, param):
-#     global points
-#     if event == cv.EVENT_LBUTTONDOWN:
-#         if len(points) < 2:  # Ensure only 2 points are selected
-#             points.append((x, y))
-#             cv.circle(param, (x, y), 5, (0, 255, 0), -1)
-#             cv.imshow("Select Points", param)
-#             print(f"Point selected at: {x}, {y}")
-#         if len(points) == 2:
-#             cv.destroyAllWindows()  # Close the window after selecting 2 points
 
 # Initialize lists to store points
 points_left = []
@@ -387,11 +284,6 @@ def select_point_right(event, x, y, flags, param):
         if len(points_right) == 1:
             cv.setMouseCallback("Right Image", lambda *args: None)  # Disable further callbacks
 
-# cv.namedWindow("Image", cv.WINDOW_NORMAL)
-# cv.setMouseCallback("Image", select_point, combined_rectified)
-# cv.resizeWindow('Image', 1200, 600)
-# cv.setWindowProperty('Image', cv.WND_PROP_ASPECT_RATIO, cv.WINDOW_KEEPRATIO)
-
 cv.namedWindow("Left Image", cv.WINDOW_NORMAL)
 cv.setMouseCallback("Left Image", select_point_left, left_rectified)
 cv.resizeWindow('Left Image', 600, 600)
@@ -404,7 +296,6 @@ cv.setWindowProperty('Right Image', cv.WND_PROP_ASPECT_RATIO, cv.WINDOW_KEEPRATI
 
 cv.moveWindow('Left Image', 100, 100)  # Position of the left image window
 cv.moveWindow('Right Image', 100 + 600, 100)  # Position of the right image window
-
 
 while True:
     # cv.imshow("Image", combined_rectified)
@@ -424,54 +315,6 @@ if ((len(points_left) == 1) and (len(points_right) == 1)):
     disparity = abs(disparity) #  Always non-negative
 
     print("disparity: ", disparity)
-
-    # print(points)
-    # point_left = points[0] # ( x , y )
-    # point_right = points[1] # ( x , y )
-
-    # disparity = point_right[0] - point_left[0]
-
-    # print("disparity: ", disparity)
-
-    ## Calculating focal length from camera parameters from PDF doc
-    # focal_length_mm = 12
-    # sensor_width_mm = 8.8
-    # image_width_pixels = 1024
-
-    # focal_length_pixels = (focal_length_mm / sensor_width_mm) * image_width_pixels
-
-    # print("focal_length_pixels: ", focal_length_pixels)
-
-    # focal_length = focal_length_pixels
-
-    # print("focal_length: ", focal_length)
-
-    # Calculating focal length from camera parameters from OpenCV
-
-    # mtx_left
-
-    # left_fx = mtx_left[0][0]
-    # left_fy = mtx_left[1][1]
-    # left_avg = np.mean([left_fx, left_fy])
-
-    # right_fx = mtx_right[0][0]
-    # right_fy = mtx_right[1][1]
-    # right_avg = np.mean([right_fx, right_fy])
-
-    # total_avg = np.mean([left_avg, right_avg])
-
-    
-    # print("left_fx: ", left_fx)
-    # print("left_fy: ", left_fy)
-    # print("right_fx: ", right_fx)
-    # print("right_fy: ", right_fy)
-
-    # print("left_avg: ", left_avg)
-    # print("right_avg: ", right_avg)
-
-    # print("total_avg: ", total_avg)
-
-    # focal_length = total_avg
 
     # Currently works using estimations made from OpenCV.
     # Need to make adjustments to code to instead use new code.
