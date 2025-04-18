@@ -143,7 +143,9 @@ def calibrate_non_duo(images):
 
     return camera_mats, camera_dists
 
-if os.path.exists('camera_data.json'):
+camear_data_file_path = 'HenryFiles/camera_data.json'
+
+if os.path.exists(camear_data_file_path):
     # with open('camera_data.txt', 'r') as file:
     #     # file.readline()
     #     mtx_left = np.loadtxt(file, max_rows=3)
@@ -153,7 +155,7 @@ if os.path.exists('camera_data.json'):
     #     mtx_right = np.loadtxt(file, skiprows=9, max_rows=12)
 
     #     dist_right = np.loadtxt(file, skiprows=13, max_rows=18)
-    with open('camera_data.json', 'r') as file:
+    with open(camear_data_file_path, 'r') as file:
         data = json.load(file)
 
     mtx_left = np.array(data['mtx_left'])
