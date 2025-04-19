@@ -12,6 +12,7 @@ from pcot.value import Value
 from pcot.datumtypes import Type
 from PySide2.QtGui import QColor
 from pcot.expressions.register import datumfunc
+from pcot.rois import ROICircle
 
 import pcot.config
 
@@ -51,17 +52,20 @@ class XFormDistEstimate(XFormType):
         # Load JSON data
         # self.load_json()
 
-        self.focal_length_mm = 12
-        self.image_width_pixels = 1024
+        # self.focal_length_mm = 12
+        # self.image_width_pixels = 1024
 
-        self.diagonal_length = 8 # diagonal size of the now-square sensor in mm
-        self.side_length = 5.657 # side length of the now-square sensor in mm
+        # self.diagonal_length = 8 # diagonal size of the now-square sensor in mm
+        # self.side_length = 5.657 # side length of the now-square sensor in mm
 
-        self.sensor_width_mm = self.side_length
+        # self.sensor_width_mm = self.side_length
 
-        self.focal_length_pixels = (self.focal_length_mm / self.sensor_width_mm) * self.image_width_pixels
+        # self.focal_length = (self.focal_length_mm / self.sensor_width_mm) * self.image_width_pixels
 
-        self.focal_length = self.focal_length_pixels
+        # self.focal_length = self.focal_length_pixels
+
+        # HARDCODED
+        self.focal_length = 2172.176065052148
 
         self.baseline = 0.5  # Distance in meters
         # baseline = 500 # Distance in mm
@@ -74,12 +78,20 @@ class XFormDistEstimate(XFormType):
         pass
 
     def perform(self, node):
-        left_coords = node.getInput("Left Coords", Datum.ROI)
-        right_coords = node.getInput("Right Coords", Datum.ROI)
+        left_roi = node.getInput("Left Coords", Datum.ROI)
+        right_roi = node.getInput("Right Coords", Datum.ROI)
 
-        if left_coords is not None and right_coords is not None:
+        if left_roi is not None and right_roi is not None:
+            # # For rectangle
+            # left_x, left_y = self.extract_coordinates(left_roi)
+            # right_x, right_y = self.extract_coordinates(right_roi)
+            
+            # For circle
+            left_x = left_roi.x
+            right_x = right_roi.x
+
             # Perform the distance estimation
-            distance = self.estimate_distance(left_coords, right_coords)
+            distance = self.estimate_distance(left_x, right_x)
 
             # Set the output value
             node.out = Datum(Datum.FLOAT, distance)
@@ -88,10 +100,26 @@ class XFormDistEstimate(XFormType):
 
         node.setOutput("Distance", node.out)
 
+    def extract_coordinates(self, roi): 
+        """Extract the X and Y coordinates from a Rectangular ROI."""
+        bb = roi.bb()
+        if bb is not None:
+            x, y, w, h = bb
+            center_x = x + w / 2
+            center_y = y + h / 2
+            return center_x, center_y
+        else:
+            raise ValueError("Bounding box is not defined for the ROI")
 
-    def estimate_distance(self, left_coords, right_coords):
-        left_x = left_coords[0]
-        right_x = right_coords[0]
+def extract_center_coordinates(self, roi):
+    """Extract the center X and Y coordinates from a ROICircle."""
+    if isinstance(roi, ROICircle):
+        return roi.x, roi.y
+    else:
+        raise ValueError("ROI is not an instance of ROICircle")
+    def estimate_distance(self, left_x, right_x):
+        # left_x = left_coords[0]
+        # right_x = right_coords[0]
 
         disparity = right_x - left_x
         
