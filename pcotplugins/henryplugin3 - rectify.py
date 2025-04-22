@@ -6,6 +6,10 @@ import json
 from PySide2.QtWidgets import QLabel, QVBoxLayout
 from PySide2.QtGui import QPixmap
 import pcot.utils.image
+from PySide2.QtWidgets import QVBoxLayout, QLabel
+from pcot.ui.tabs import Tab
+from pcot.datum import Datum
+from pcot.ui.canvas import Canvas
 
 # Coppied from other pcot plugins
 from pcot.sources import SourceSet
@@ -118,6 +122,11 @@ class XFormImageRectify(XFormType):
         left_img_cube = left_img_datum.get(Datum.IMG)
         right_img_cube = right_img_datum.get(Datum.IMG)
 
+        if left_img_cube is None or right_img_cube is None:
+            node.setOutput(0, Datum(Datum.IMG, None))  # Use index 0 for 'Left Output'
+            node.setOutput(1, Datum(Datum.IMG, None))  # Use index 1 for 'Right Output'
+            return
+
         left_img = left_img_cube.img
         right_img = right_img_cube.img
 
@@ -176,32 +185,64 @@ class XFormImageRectify(XFormType):
             self.proj_right = np.array(data['proj_right'])
 
 
-class TabImageRectify(pcot.ui.tabs.Tab):
+# class TabImageRectify(pcot.ui.tabs.Tab):
+#     def __init__(self, node, window):
+#         super().__init__(window, node)
+#         layout = QVBoxLayout(self.w)
+        
+#         self.leftImageLabel = QLabel("Left Rectified Image")
+#         self.rightImageLabel = QLabel("Right Rectified Image")
+        
+#         layout.addWidget(self.leftImageLabel)
+#         layout.addWidget(self.rightImageLabel)
+        
+#         self.nodeChanged()
+
+#     # def onNodeChanged(self):
+#     #     if self.node.left_rectified is not None:
+#     #         pixmap = pcot.utils.image.toQPixmap(self.node.left_rectified)
+#     #         self.leftImageLabel.setPixmap(pixmap)
+        
+#     #     if self.node.right_rectified is not None:
+#     #         pixmap = pcot.utils.image.toQPixmap(self.node.right_rectified)
+#     #         self.rightImageLabel.setPixmap(pixmap)
+#     def onNodeChanged(self):
+#         if hasattr(self.node, 'left_rectified') and self.node.left_rectified is not None:
+#             pixmap = pcot.utils.image.toQPixmap(self.node.left_rectified)
+#             self.leftImageLabel.setPixmap(pixmap)
+        
+#         if hasattr(self.node, 'right_rectified') and self.node.right_rectified is not None:
+#             pixmap = pcot.utils.image.toQPixmap(self.node.right_rectified)
+#             self.rightImageLabel.setPixmap(pixmap)
+
+class TabImageRectify(Tab):
     def __init__(self, node, window):
         super().__init__(window, node)
         layout = QVBoxLayout(self.w)
-        
+
         self.leftImageLabel = QLabel("Left Rectified Image")
         self.rightImageLabel = QLabel("Right Rectified Image")
-        
+
+        self.leftCanvas = Canvas(self)
+        self.rightCanvas = Canvas(self)
+
         layout.addWidget(self.leftImageLabel)
+        layout.addWidget(self.leftCanvas)
         layout.addWidget(self.rightImageLabel)
-        
+        layout.addWidget(self.rightCanvas)
+
+        self.leftCanvas.setGraph(node.graph)
+        self.rightCanvas.setGraph(node.graph)
+
         self.nodeChanged()
 
-    # def onNodeChanged(self):
-    #     if self.node.left_rectified is not None:
-    #         pixmap = pcot.utils.image.toQPixmap(self.node.left_rectified)
-    #         self.leftImageLabel.setPixmap(pixmap)
-        
-    #     if self.node.right_rectified is not None:
-    #         pixmap = pcot.utils.image.toQPixmap(self.node.right_rectified)
-    #         self.rightImageLabel.setPixmap(pixmap)
     def onNodeChanged(self):
         if hasattr(self.node, 'left_rectified') and self.node.left_rectified is not None:
-            pixmap = pcot.utils.image.toQPixmap(self.node.left_rectified)
-            self.leftImageLabel.setPixmap(pixmap)
-        
+            left_img_cube = ImageCube(self.node.left_rectified)
+            self.leftCanvas.display(left_img_cube)
+            # self.leftCanvas.display(self.node.left_rectified)
+
         if hasattr(self.node, 'right_rectified') and self.node.right_rectified is not None:
-            pixmap = pcot.utils.image.toQPixmap(self.node.right_rectified)
-            self.rightImageLabel.setPixmap(pixmap)
+            right_img_cube = ImageCube(self.node.right_rectified)
+            self.rightCanvas.display(right_img_cube)
+            #  self.rightCanvas.display(self.node.right_rectified)
