@@ -111,12 +111,12 @@ class XFormDistEstimate(XFormType):
         else:
             raise ValueError("Bounding box is not defined for the ROI")
 
-def extract_center_coordinates(self, roi):
-    """Extract the center X and Y coordinates from a ROICircle."""
-    if isinstance(roi, ROICircle):
-        return roi.x, roi.y
-    else:
-        raise ValueError("ROI is not an instance of ROICircle")
+    def extract_center_coordinates(self, roi):
+        """Extract the center X and Y coordinates from a ROICircle."""
+        if isinstance(roi, ROICircle):
+            return roi.x, roi.y
+        else:
+            raise ValueError("ROI is not an instance of ROICircle")
     def estimate_distance(self, left_x, right_x):
         # left_x = left_coords[0]
         # right_x = right_coords[0]
