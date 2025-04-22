@@ -1,5 +1,6 @@
 import cv2 as cv
 import numpy as np
+from pcot.ui.tabs import Tab
 from pcot.value import Value
 from pcot.sources import nullSourceSet
 
@@ -107,6 +108,9 @@ class XFormDistEstimateRoi(XFormType):
 
         node.setOutput(0, distance_datum)
 
+        # if node.tab is not None:
+        #     node.tab.update()
+
     def extract_roi_points(self, roi):
         if isinstance(roi, ROIPoly):
             return roi.points  # List of (x, y) tuples
@@ -132,3 +136,24 @@ class XFormDistEstimateRoi(XFormType):
 
         return depth
 
+# class TabDistEstimateRoi(Tab):
+#     def __init__(self, node, w):
+#         pass
+
+# class DistEstimateRoiTab(QWidget):
+#     def __init__(self, node, window):
+#         super().__init__()
+#         self.node = node
+#         self.window = window
+#         self.layout = QVBoxLayout()
+#         self.distance_label = QLabel("Distance: N/A")
+#         self.layout.addWidget(self.distance_label)
+#         self.setLayout(self.layout)
+#         self.update()
+
+#     def update(self):
+#         distance_datum = self.node.getOutput(0)
+#         if distance_datum is not None and distance_datum.val is not None:
+#             self.distance_label.setText(f"Distance: {distance_datum.val.val}")
+#         else:
+#             self.distance_label.setText("Distance: N/A")
