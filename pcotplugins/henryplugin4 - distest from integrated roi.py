@@ -3,6 +3,7 @@ import numpy as np
 from pcot.ui.tabs import Tab
 from pcot.value import Value
 from pcot.sources import nullSourceSet
+from PySide2.QtWidgets import QGridLayout, QLabel, QVBoxLayout
 
 from pcot.parameters.taggedaggregates import TaggedDictType
 from pcot.rois import ROICircle, ROIPainted, ROIPoly, ROIRect
@@ -17,6 +18,9 @@ from PySide2.QtGui import QColor
 from pcot.expressions.register import datumfunc
 
 import pcot.config
+
+camera_height = 1.094
+
 
 @xformtype
 class XFormDistEstimateRoi(XFormType):
@@ -42,6 +46,7 @@ class XFormDistEstimateRoi(XFormType):
         self.addInputConnector("right", Datum.IMG)
 
         self.addOutputConnector("distance", Datum.NUMBER)
+        self.addOutputConnector("crow", Datum.NUMBER)
 
         self.params = TaggedDictType(
             left_img_rois =('Left Image ROIs', list, []),
@@ -50,7 +55,7 @@ class XFormDistEstimateRoi(XFormType):
 
 
     def createTab(self, n, w):
-        return TabData(n, w)
+        return TabDistEstimateRoi(n, w)
     
     def init(self, n):
         # No initialisation required.
@@ -104,9 +109,18 @@ class XFormDistEstimateRoi(XFormType):
             node.setOutput(0, Datum(Datum.NUMBER, Value(float('nan')), nullSourceSet))  
             return
         
+        # camera_height = 1.094
+
+        try:
+            crow_distance = (distance**2 - camera_height**2)**0.5
+        except Exception as e:
+            print(f"Error in crow distance calculation: {e}")
+
         distance_datum = Datum(Datum.NUMBER, Value(distance), nullSourceSet)
+        crow_datum = Datum(Datum.NUMBER, Value(crow_distance), nullSourceSet)
 
         node.setOutput(0, distance_datum)
+        node.setOutput(1, crow_datum)
 
         # if node.tab is not None:
         #     node.tab.update()
@@ -140,9 +154,44 @@ class XFormDistEstimateRoi(XFormType):
 
         return depth
 
-# class TabDistEstimateRoi(Tab):
-#     def __init__(self, node, w):
-#         pass
+class TabDistEstimateRoi(Tab):
+    def __init__(self, node, w):
+        super().__init__(w, node)
+        # self.layout = QGridLayout(self.w)
+        self.layout = QVBoxLayout(self.w)
+
+        self.distance_label = QLabel("Distance: N/A")
+        # self.layout.addWidget(self.distance_label, 0, 0)
+        self.layout.addWidget(self.distance_label)
+
+        self.crow_label = QLabel("Crow Distance: N/A")
+        self.layout.addWidget(self.crow_label)
+
+        self.height_label = QLabel("Height: N/A")
+        self.layout.addWidget(self.height_label)
+
+        self.nodeChanged()
+
+    def onNodeChanged(self):
+        distance_datum = self.node.getOutput(0)
+        crow_datum = self.node.getOutput(1)
+
+        
+        # Debugging information
+        print(f"distance_datum: {distance_datum}")
+        if distance_datum is not None:
+            print(f"type of distance_datum: {type(distance_datum)}")
+            self.distance_label.setText(f"Distance: {distance_datum}")
+        else:
+            self.distance_label.setText("Distance: N/A")
+        
+        if crow_datum is not None:
+            print(f"type of crow_datum: {type(crow_datum)}")
+            self.crow_label.setText(f"Crow Distance: {crow_datum}")
+        else:
+            self.crow_label.setText("Crow Distance: N/A")
+
+        self.height_label.setText(f"Height: {camera_height}")
 
 # class DistEstimateRoiTab(QWidget):
 #     def __init__(self, node, window):
