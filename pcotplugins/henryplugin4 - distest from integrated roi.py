@@ -5,7 +5,7 @@ from pcot.value import Value
 from pcot.sources import nullSourceSet
 
 from pcot.parameters.taggedaggregates import TaggedDictType
-from pcot.rois import ROICircle, ROIPoly, ROIRect
+from pcot.rois import ROICircle, ROIPainted, ROIPoly, ROIRect
 from pcot.sources import SourceSet
 from pcot.xform import XFormType, xformtype
 from pcot.xforms.tabdata import TabData
@@ -78,16 +78,16 @@ class XFormDistEstimateRoi(XFormType):
             node.setOutput(0, Datum(Datum.NUMBER, Value(float('nan')), nullSourceSet))  
             return
 
-        # print(left_img_rois)
-        # print(right_img_rois)
+        print(left_img_rois)
+        print(right_img_rois)
 
         left_coords = []
         right_coords = []
 
         for roi in left_img_rois:
-            left_coords = self.extract_roi_points(roi)
+            left_coords.extend(self.extract_roi_points(roi))
         for roi2 in right_img_rois:
-            right_coords = self.extract_roi_points(roi2)
+            right_coords.extend(self.extract_roi_points(roi2))
         # if len(left_coords) > 0 and len(right_coords) > 0:
         #     distance = self.estimate_distance(left_coords[0], right_coords[0])
         
@@ -104,7 +104,7 @@ class XFormDistEstimateRoi(XFormType):
             node.setOutput(0, Datum(Datum.NUMBER, Value(float('nan')), nullSourceSet))  
             return
         
-        distance_datum = Datum(Datum.NUMBER, Value(distance))
+        distance_datum = Datum(Datum.NUMBER, Value(distance), nullSourceSet)
 
         node.setOutput(0, distance_datum)
 
@@ -118,6 +118,10 @@ class XFormDistEstimateRoi(XFormType):
             return [(roi.x, roi.y), (roi.x + roi.w, roi.y + roi.h)]
         elif isinstance(roi, ROICircle):
             return [(roi.x, roi.y)]  # Center and radius are also attributes
+        elif isinstance(roi, ROIPainted):
+            # mask_points = np.column_stack(np.where(roi.mask))  # Assuming roi.mask is a 2D numpy array
+            # return [(int(x), int(y)) for y, x in mask_points]  # Convert to list of (x, y) tuples
+            return [roi.centroid()]
         else:
             return []
 
