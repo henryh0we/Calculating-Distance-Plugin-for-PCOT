@@ -4,7 +4,8 @@ from pcot.ui.canvas import Canvas
 from pcot.ui.tabs import Tab
 from pcot.value import Value
 from pcot.sources import nullSourceSet
-from PySide2.QtWidgets import QGridLayout, QLabel, QVBoxLayout, QTableWidget, QTableWidgetItem, QHBoxLayout
+from PySide2.QtWidgets import QGridLayout, QLabel, QVBoxLayout, QTableWidget, QTableWidgetItem, QHBoxLayout, QScrollArea, QSplitter, QWidget
+from PySide2.QtCore import Qt
 
 from pcot.parameters.taggedaggregates import TaggedDictType
 from pcot.rois import ROICircle, ROIPainted, ROIPoly, ROIRect
@@ -312,9 +313,14 @@ class TabDistEstimateRoi(Tab):
     def __init__(self, node, w):
         super().__init__(w, node)
 
-        # self.layout = QVBoxLayout(self.w)
-        self.layout = QHBoxLayout(self.w)
-        self.canvas_layout = QVBoxLayout(self.w)
+        self.splitter = QSplitter()
+        self.splitter.setOrientation(Qt.Vertical)  # Set the orientation to vertical
+        
+        self.layout = QVBoxLayout(self.w)
+        self.layout.addWidget(self.splitter)
+        
+        self.canvas_widget = QWidget()
+        self.canvas_layout = QHBoxLayout(self.canvas_widget)
 
         self.left_canvas = Canvas(self)
         self.right_canvas = Canvas(self)
@@ -325,19 +331,101 @@ class TabDistEstimateRoi(Tab):
         self.canvas_layout.addWidget(self.left_canvas)
         self.canvas_layout.addWidget(self.right_canvas)
 
-        self.layout.addLayout(self.canvas_layout)
-        
+        self.splitter.addWidget(self.canvas_widget)
+
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+
         self.table = QTableWidget()
         self.table.setColumnCount(3)
         self.table.setHorizontalHeaderLabels(["Left ROI Label", "Right ROI Label", "Distance"])
-    
+
         self.table.setColumnWidth(0, 200)
         self.table.setColumnWidth(1, 200)
         self.table.setColumnWidth(2, 250)        
-        
-        self.layout.addWidget(self.table)
-        
+
+        self.scroll_area.setWidget(self.table)
+        self.splitter.addWidget(self.scroll_area)
+
+        self.splitter.setStretchFactor(0, 3)
+        self.splitter.setStretchFactor(1, 1)
+
         self.nodeChanged()
+
+    # def __init__(self, node, w):
+    #     super().__init__(w, node)
+
+    #     self.layout = QVBoxLayout(self.w)
+        
+    #     self.canvas_widget = QWidget()
+    #     self.canvas_layout = QHBoxLayout(self.canvas_widget)
+
+    #     self.left_canvas = Canvas(self)
+    #     self.right_canvas = Canvas(self)
+
+    #     self.left_canvas.setGraph(node.graph)
+    #     self.right_canvas.setGraph(node.graph)
+
+    #     self.canvas_layout.addWidget(self.left_canvas)
+    #     self.canvas_layout.addWidget(self.right_canvas)
+
+    #     self.layout.addWidget(self.canvas_widget)
+
+    #     self.scroll_area = QScrollArea()
+    #     self.scroll_area.setWidgetResizable(True)
+
+    #     self.table = QTableWidget()
+    #     self.table.setColumnCount(3)
+    #     self.table.setHorizontalHeaderLabels(["Left ROI Label", "Right ROI Label", "Distance"])
+
+    #     self.table.setColumnWidth(0, 200)
+    #     self.table.setColumnWidth(1, 200)
+    #     self.table.setColumnWidth(2, 250)        
+
+    #     self.scroll_area.setWidget(self.table)
+    #     self.layout.addWidget(self.scroll_area)
+
+    #     self.nodeChanged()
+
+    # def __init__(self, node, w):
+    #     super().__init__(w, node)
+
+    #     self.splitter = QSplitter()
+    #     self.layout = QVBoxLayout(self.w)
+    #     self.layout.addWidget(self.splitter)
+        
+    #     self.canvas_widget = QWidget()
+    #     self.canvas_layout = QHBoxLayout(self.canvas_widget)
+
+    #     self.left_canvas = Canvas(self)
+    #     self.right_canvas = Canvas(self)
+
+    #     self.left_canvas.setGraph(node.graph)
+    #     self.right_canvas.setGraph(node.graph)
+
+    #     self.canvas_layout.addWidget(self.left_canvas)
+    #     self.canvas_layout.addWidget(self.right_canvas)
+
+    #     self.splitter.addWidget(self.canvas_widget)
+
+    #     self.scroll_area = QScrollArea()
+    #     self.scroll_area.setWidgetResizable(True)
+
+    #     self.table = QTableWidget()
+    #     self.table.setColumnCount(3)
+    #     self.table.setHorizontalHeaderLabels(["Left ROI Label", "Right ROI Label", "Distance"])
+
+    #     self.table.setColumnWidth(0, 200)
+    #     self.table.setColumnWidth(1, 200)
+    #     self.table.setColumnWidth(2, 250)        
+
+    #     self.scroll_area.setWidget(self.table)
+    #     self.splitter.addWidget(self.scroll_area)
+
+    #     self.splitter.setStretchFactor(0, 3)
+    #     self.splitter.setStretchFactor(1, 1)
+
+    #     self.nodeChanged()
 
     def onNodeChanged(self):
         node = self.node
