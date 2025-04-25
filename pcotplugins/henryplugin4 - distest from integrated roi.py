@@ -3,7 +3,7 @@ import numpy as np
 from pcot.ui.tabs import Tab
 from pcot.value import Value
 from pcot.sources import nullSourceSet
-from PySide2.QtWidgets import QGridLayout, QLabel, QVBoxLayout
+from PySide2.QtWidgets import QGridLayout, QLabel, QVBoxLayout, QTableWidget, QTableWidgetItem
 
 from pcot.parameters.taggedaggregates import TaggedDictType
 from pcot.rois import ROICircle, ROIPainted, ROIPoly, ROIRect
@@ -89,44 +89,108 @@ class XFormDistEstimateRoi(XFormType):
         print(left_img_rois)
         print(right_img_rois)
 
-        left_coords = []
-        right_coords = []
+        left_rois_sorted = self.extract_and_check_rois(left_img_datum)
+        right_rois_sorted = self.extract_and_check_rois(right_img_datum)
 
-        for roi in left_img_rois:
-            left_coords.extend(self.extract_roi_points(roi))
-        for roi2 in right_img_rois:
-            right_coords.extend(self.extract_roi_points(roi2))
-        # if len(left_coords) > 0 and len(right_coords) > 0:
-        #     distance = self.estimate_distance(left_coords[0], right_coords[0])
+        all_distances = []
+
+        for label in sorted(left_rois_sorted.keys() & right_rois_sorted.keys()):
+            print("Processing label:", label)
+            left_rois_match = left_rois_sorted[label]
+            right_rois_match = right_rois_sorted[label]
+
+            print("Left ROIs Match:", left_rois_match)
+            print("Right ROIs Match:", right_rois_match)
+
+            left_coord = self.extract_roi_points(left_rois_match[0])
+            right_coord = self.extract_roi_points(right_rois_match[0])
+
+            print("Left Coordinates:", left_coord)
+            print("Right Coordinates:", right_coord)
+
+            left_x = left_coord[0][0]
+            right_x = right_coord[0][0]
+
+            distance = self.estimate_distance(left_x, right_x)
+            print("Estimated Distance:", distance)
+
+            left_roi = left_rois_match[0]
+            right_roi = right_rois_match[0]
+            storage = self.store_distance_and_rois(distance, left_roi, right_roi)
+
+            all_distances.append(storage)
+            # left_rois_match = left_rois_sorted[label]
+            # right_rois_match = right_rois_sorted[label]
+
+            # left_coord = self.extract_roi_points(left_rois_match[0])
+            # right_coord = self.extract_roi_points(right_rois_match[0])
+
+            # left_x = left_coord[0][0]
+            # right_x = right_coord[0][0]
+
+            # distance = self.estimate_distance(left_x, right_x) 
+
+            # storage = self.store_distance_and_rois(distance, left_rois_match[0], right_rois_match[0])
+
+            # print(storage)
+
+            # all_distances.append(storage)
+
+        node.all_distances = all_distances
+
+        print("Computed distances:", all_distances)
+
+        if all_distances:
+            node.setOutput(0, Datum(Datum.NUMBER, Value(all_distances[0]['distance']), nullSourceSet))
+        else:
+            node.setOutput(0, Datum(Datum.NUMBER, Value(float('nan')), nullSourceSet))
+
+
+        if node.tabs is not None:
+            for tab in node.tabs:
+                tab.onNodeChanged()
+
+        # left_coords = []
+        # right_coords = []
+
+        # for roi in left_img_rois:
+        #     left_coords.extend(self.extract_roi_points(roi))
+        # for roi2 in right_img_rois:
+        #     right_coords.extend(self.extract_roi_points(roi2))
+        # # if len(left_coords) > 0 and len(right_coords) > 0:
+        # #     distance = self.estimate_distance(left_coords[0], right_coords[0])
         
-        if not left_coords or not right_coords:
-            print("Error: No coordinates extracted from ROIs")
-            node.setOutput(0, Datum(Datum.NUMBER, Value(float('nan')), nullSourceSet))  
-            return
+        # if not left_coords or not right_coords:
+        #     print("Error: No coordinates extracted from ROIs")
+        #     node.setOutput(0, Datum(Datum.NUMBER, Value(float('nan')), nullSourceSet))  
+        #     return
 
         # distance = 10
-        try:
-            distance = self.estimate_distance(left_coords[0][0], right_coords[0][0])
-        except Exception as e:
-            print(f"Error in estimate_distance calculation: {e}")
-            node.setOutput(0, Datum(Datum.NUMBER, Value(float('nan')), nullSourceSet))  
-            return
+        # try:
+        #     distance = self.estimate_distance(left_coords[0][0], right_coords[0][0])
+        # except Exception as e:
+        #     print(f"Error in estimate_distance calculation: {e}")
+        #     node.setOutput(0, Datum(Datum.NUMBER, Value(float('nan')), nullSourceSet))  
+        #     return
         
-        # camera_height = 1.094
+        # # camera_height = 1.094
 
-        try:
-            crow_distance = (distance**2 - camera_height**2)**0.5
-        except Exception as e:
-            print(f"Error in crow distance calculation: {e}")
+        # try:
+        #     crow_distance = (distance**2 - camera_height**2)**0.5
+        # except Exception as e:
+        #     print(f"Error in crow distance calculation: {e}")
 
-        distance_datum = Datum(Datum.NUMBER, Value(distance), nullSourceSet)
-        crow_datum = Datum(Datum.NUMBER, Value(crow_distance), nullSourceSet)
+        # distance_datum = Datum(Datum.NUMBER, Value(distance), nullSourceSet)
+        # crow_datum = Datum(Datum.NUMBER, Value(crow_distance), nullSourceSet)
 
-        node.setOutput(0, distance_datum)
-        node.setOutput(1, crow_datum)
+        # node.setOutput(0, distance_datum)
+        # node.setOutput(1, crow_datum)
 
         # if node.tab is not None:
         #     node.tab.update()
+
+    def getDistanceList(self):
+        return getattr(self, 'all_distances', [])
 
     def extract_roi_points(self, roi):
         if isinstance(roi, ROIPoly):
@@ -157,44 +221,142 @@ class XFormDistEstimateRoi(XFormType):
 
         return depth
 
+    def extract_and_check_rois(self, datum):
+        """
+        Extract ROIs from a Datum object and ensure they are labeled if there are multiple ROIs.
+
+        Parameters:
+        datum (Datum): The Datum object to check.
+
+        Returns:
+        dict: A dictionary of ROIs keyed by their labels, sorted by label.
+
+        Raises:
+        UnlabeledROIException: If multiple ROIs are present and any ROI is unlabeled.
+        """
+        if datum.tp in (Datum.ROI, Datum.IMG, Datum.VARIANT, Datum.ANY):
+            rois = None
+            if datum.tp == Datum.IMG:
+                rois = datum.val.rois if datum.val else None
+            elif datum.tp == Datum.ROI:
+                rois = [datum.val]
+            elif datum.tp in (Datum.VARIANT, Datum.ANY):
+                if hasattr(datum.val, 'rois'):
+                    rois = datum.val.rois
+                elif isinstance(datum.val, list):
+                    rois = datum.val
+
+            if rois:
+                roi_dict = {}
+                for roi in rois:
+                    if not roi.label:
+                        if len(rois) > 1:
+                            raise UnlabeledROIException("Multiple ROIs must be labeled.")
+                    else:
+                        if roi.label not in roi_dict:
+                            roi_dict[roi.label] = []
+                        roi_dict[roi.label].append(roi)
+                
+                # Sorting ROIs by label
+                sorted_rois = {label: roi_dict[label] for label in sorted(roi_dict)}
+                return sorted_rois
+
+        return {}
+
+    def store_distance_and_rois(self, distance, left_roi, right_roi):
+        """
+        Stores the distance and the two ROIs in a dictionary.
+        
+        Parameters:
+        distance (float): The calculated distance.
+        left_roi (ROI): The ROI from the left image.
+        right_roi (ROI): The ROI from the right image.
+        
+        Returns:
+        dict: A dictionary containing the distance and the ROIs.
+        """
+        storage = {
+            "distance": distance,
+            "left_roi": left_roi.to_tagged_dict(),
+            "right_roi": right_roi.to_tagged_dict()
+        }
+        return storage
+    
+
+class UnlabeledROIException(Exception):
+    pass
+
+# class TabDistanceTable(Tab):
+#     def __init__(self, node, w):
+
 class TabDistEstimateRoi(Tab):
     def __init__(self, node, w):
         super().__init__(w, node)
-        # self.layout = QGridLayout(self.w)
         self.layout = QVBoxLayout(self.w)
-
-        self.distance_label = QLabel("Distance: N/A")
-        # self.layout.addWidget(self.distance_label, 0, 0)
-        self.layout.addWidget(self.distance_label)
-
-        self.crow_label = QLabel("Crow Distance: N/A")
-        self.layout.addWidget(self.crow_label)
-
-        self.height_label = QLabel("Height: N/A")
-        self.layout.addWidget(self.height_label)
-
+        
+        self.table = QTableWidget()
+        self.table.setColumnCount(3)
+        self.table.setHorizontalHeaderLabels(["Left Img ROI Label", "Right Img ROI Label", "Distance"])
+        self.layout.addWidget(self.table)
+        
         self.nodeChanged()
 
     def onNodeChanged(self):
-        distance_datum = self.node.getOutput(0)
-        crow_datum = self.node.getOutput(1)
+        node = self.node
+        distance_list = node.type.getDistanceList()  # Assume this method returns the all_distances list
+        self.populate_table(distance_list)
+
+    def populate_table(self, distance_list):
+        self.table.setRowCount(len(distance_list))
+        for row_index, data in enumerate(distance_list):
+            left_label = data['left_roi']['label']
+            right_label = data['right_roi']['label']
+            distance = data['distance']
+
+            self.table.setItem(row_index, 0, QTableWidgetItem(left_label))
+            self.table.setItem(row_index, 1, QTableWidgetItem(right_label))
+            self.table.setItem(row_index, 2, QTableWidgetItem(str(distance)))
+
+
+
+# class TabDistEstimateRoi(Tab):
+#     def __init__(self, node, w):
+#         super().__init__(w, node)
+#         # self.layout = QGridLayout(self.w)
+#         self.layout = QVBoxLayout(self.w)
+
+#         self.distance_label = QLabel("Distance: N/A")
+#         # self.layout.addWidget(self.distance_label, 0, 0)
+#         self.layout.addWidget(self.distance_label)
+
+#         self.crow_label = QLabel("Crow Distance: N/A")
+#         self.layout.addWidget(self.crow_label)
+
+#         self.height_label = QLabel("Height: N/A")
+#         self.layout.addWidget(self.height_label)
+
+#         self.nodeChanged()
+
+#     def onNodeChanged(self):
+#         distance_datum = self.node.getOutput(0)
+#         crow_datum = self.node.getOutput(1)
 
         
-        # Debugging information
-        print(f"distance_datum: {distance_datum}")
-        if distance_datum is not None:
-            print(f"type of distance_datum: {type(distance_datum)}")
-            self.distance_label.setText(f"Distance: {distance_datum}")
-        else:
-            self.distance_label.setText("Distance: N/A")
+#         # Debugging information
+#         print(f"distance_datum: {distance_datum}")
+#         if distance_datum is not None:
+#             print(f"type of distance_datum: {type(distance_datum)}")
+#             self.distance_label.setText(f"Distance: {distance_datum}")
+#         else:
+#             self.distance_label.setText("Distance: N/A")
         
-        if crow_datum is not None:
-            print(f"type of crow_datum: {type(crow_datum)}")
-            self.crow_label.setText(f"Crow Distance: {crow_datum}")
-        else:
-            self.crow_label.setText("Crow Distance: N/A")
+#         if crow_datum is not None:
+#             print(f"type of crow_datum: {type(crow_datum)}")
+#             self.crow_label.setText(f"Crow Distance: {crow_datum}")
+#         else:
+#             self.crow_label.setText("Crow Distance: N/A")
 
-        self.height_label.setText(f"Height: {camera_height}")
+#         self.height_label.setText(f"Height: {camera_height}")
 
 # class DistEstimateRoiTab(QWidget):
 #     def __init__(self, node, window):
