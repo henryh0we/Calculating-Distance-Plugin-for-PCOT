@@ -29,6 +29,9 @@ class XFormDistEstimateRoi(XFormType):
     and then calculate the distance to said point
     This version should take the integrated ROIs which are stored within the 
     IMG Datum.
+    The code also outputs the distance to the tab, alongside the calculation for 
+    the distance "as-the-crow-flies" by using the height of the camera and some 
+    basic pythagoras.
 
     Author: Henry Howe
     Date:2025-04-22
