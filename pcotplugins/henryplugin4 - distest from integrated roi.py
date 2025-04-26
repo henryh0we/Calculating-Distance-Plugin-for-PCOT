@@ -125,7 +125,10 @@ class XFormDistEstimateRoi(XFormType):
 
             left_roi = left_rois_match[0]
             right_roi = right_rois_match[0]
-            storage = self.store_distance_and_rois(distance, left_roi, right_roi)
+
+            crow = self.get_crow(distance)
+
+            storage = self.store_distance_and_rois(distance, crow, left_roi, right_roi)
 
             self.all_distances.append(storage)
             # left_rois_match = left_rois_sorted[label]
@@ -207,6 +210,11 @@ class XFormDistEstimateRoi(XFormType):
     #     print(f"Returning {len(distances)} distances")
     #     return distances
 
+    def get_crow(self, distance):
+        height = 1.094
+        return (distance**2 - height**2)**0.5
+        
+    
     def extract_roi_points(self, roi):
         if isinstance(roi, ROIPoly):
             return roi.points  # List of (x, y) tuples
@@ -283,7 +291,7 @@ class XFormDistEstimateRoi(XFormType):
         print("No ROIs found")
         return {}
 
-    def store_distance_and_rois(self, distance, left_roi, right_roi):
+    def store_distance_and_rois(self, distance, crow, left_roi, right_roi):
         """
         Stores the distance and the two ROIs in a dictionary.
         
@@ -298,7 +306,8 @@ class XFormDistEstimateRoi(XFormType):
         storage = {
             "distance": distance,
             "left_roi": left_roi.to_tagged_dict(),
-            "right_roi": right_roi.to_tagged_dict()
+            "right_roi": right_roi.to_tagged_dict(),
+            "crow": crow
         }
         return storage
     
@@ -338,10 +347,10 @@ class TabDistEstimateRoi(Tab):
 
         self.table = QTableWidget()
         self.table.setColumnCount(3)
-        self.table.setHorizontalHeaderLabels(["Left ROI Label", "Right ROI Label", "Distance"])
+        self.table.setHorizontalHeaderLabels(["Label", "Distance (Depth)", "Crow"])
 
         self.table.setColumnWidth(0, 200)
-        self.table.setColumnWidth(1, 200)
+        self.table.setColumnWidth(1, 250)
         self.table.setColumnWidth(2, 250)        
 
         self.scroll_area.setWidget(self.table)
@@ -455,15 +464,16 @@ class TabDistEstimateRoi(Tab):
         print(f"Populating table with {len(distance_list)} entries")
         self.table.setRowCount(len(distance_list))
         for row_index, data in enumerate(distance_list):
-            left_label = data['left_roi']['label']
-            right_label = data['right_roi']['label']
+            # left_label = data['left_roi']['label']
+            label = data['right_roi']['label']
             distance = data['distance']
+            crow = data['crow']
 
-            print(f"Row {row_index}: Left label: {left_label}, Right label: {right_label}, Distance: {distance}")
+            print(f"Row {row_index}: Label: {label}, Distance: {distance}, Crow: {crow}")
 
-            self.table.setItem(row_index, 0, QTableWidgetItem(left_label))
-            self.table.setItem(row_index, 1, QTableWidgetItem(right_label))
-            self.table.setItem(row_index, 2, QTableWidgetItem(str(distance)))
+            self.table.setItem(row_index, 0, QTableWidgetItem(label))
+            self.table.setItem(row_index, 1, QTableWidgetItem(str(distance)))
+            self.table.setItem(row_index, 2, QTableWidgetItem(str(crow)))
 
 
 
