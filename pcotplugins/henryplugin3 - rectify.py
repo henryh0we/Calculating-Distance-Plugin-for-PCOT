@@ -30,10 +30,10 @@ import pcot.config
 @xformtype
 class XFormImageRectify(XFormType):
     """
-    A node designed to rectify an image
+    A node designed to rectify an image pair
 
     Author: Henry Howe
-    Date:2025-04-19
+    Date: 2025-04-19
 
     """
 
