@@ -42,7 +42,9 @@ class XFormDistEstimateRoi(XFormType):
         super().__init__("distestimateROI", "processing", "0.0.0")
 
         # HARDCODED DATA
-        self.focal_length = 2172.176065052148
+        # self.focal_length = 2172.176065052148
+        self.focal_length = 1904.422603226366 # diag = 9.125mm
+        # self.focal_length = 1930.872917160066 # diag = 9mm
         self.baseline = 0.5
 
         self.all_distances = []

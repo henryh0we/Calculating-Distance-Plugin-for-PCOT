@@ -493,9 +493,9 @@ def calculate_depth(disparity, diagonal_length):
 
     approximate_ground_distance = np.sqrt(depth**2 - aupe_height**2)
 
-    return sensor_width_mm, depth, approximate_ground_distance
+    return sensor_width_mm, depth, approximate_ground_distance, focal_length
 
 for length in diagonal_length:
-    sensor_width_mm, depth, approximate_ground_distance = calculate_depth(disparity, length)
-    print(f"diagonal length: {length} mm, sensor width: {sensor_width_mm:.3f} mm, depth: {depth:.3f} m, approximate ground distance: {approximate_ground_distance:.3f} m")
+    sensor_width_mm, depth, approximate_ground_distance, focal_length = calculate_depth(disparity, length)
+    print(f"diagonal length: {length} mm, sensor width: {sensor_width_mm:.3f} mm, depth: {depth:.3f} m, approximate ground distance: {approximate_ground_distance:.3f} m, focal length: {focal_length:.12f} pixels")
 
