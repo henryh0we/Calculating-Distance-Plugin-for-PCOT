@@ -447,10 +447,10 @@ if ((len(points_left) == 1) and (len(points_right) == 1)):
     # UPDATED 27/04/2025
     diagonal_length = [] 
 
-    # diagonal_length.append(8) # v1
-    # diagonal_length.append(7.168) # v2
-    # diagonal_length.append(7.0656) # v3
-    # diagonal_length.append(7.4752) # v4
+    diagonal_length.append(8) # v1
+    diagonal_length.append(7.168) # v2
+    diagonal_length.append(7.0656) # v3
+    diagonal_length.append(7.4752) # v4
     # Some testing
     # diagonal_length.append(8)
     diagonal_length.append(9)
@@ -477,6 +477,7 @@ if ((len(points_left) == 1) and (len(points_right) == 1)):
 
 def calculate_depth(disparity, diagonal_length):
     focal_length_mm = 12
+    # focal_length_mm = 12.65
     image_width_pixels = 1024
 
     sensor_width_mm = calc_side_length(diagonal_length)
