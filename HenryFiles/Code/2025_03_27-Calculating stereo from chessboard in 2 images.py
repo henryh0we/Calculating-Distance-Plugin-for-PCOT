@@ -29,7 +29,7 @@ non_left_images = glob.glob(os.path.join('HenryFiles/Camera Calibration/left ima
 non_right_images = glob.glob(os.path.join('HenryFiles/Camera Calibration/right images', '*.png'))
 
 def calibrate_duo_image(left_images, right_images):
-
+    count = 0
 
     for left_img_path, right_img_path in zip(left_images, right_images):
         left_img = cv.imread(left_img_path)
@@ -59,10 +59,12 @@ def calibrate_duo_image(left_images, right_images):
             # cv.imshow('Right Corners', right_img)
             # cv.waitKey(1)
 
+            count += 1
+            print('[{0}/{1}]'.format(count, len(left_images)))
     cv.destroyAllWindows()
     return objpoints, imgpoints_left, imgpoints_right
 
-def calibrate_non_duo(images):
+def old_calibrate_non_duo(images):
     count = 0
     # Arrays to store object points and image points from all the images.
     objpoints = [] # 3d point in real world space
@@ -147,6 +149,64 @@ def calibrate_non_duo(images):
 
     return camera_mats, camera_dists
 
+def calibrate_non_duo(images):
+    count = 0
+    # Arrays to store object points and image points from all the images.
+    objpoints = [] # 3d point in real world space
+    imgpoints = [] # 2d points in image plane.
+
+    # List storing the camera calibration matrices
+    camera_mats = []
+    camera_dists = []
+
+    if not images:
+        raise ValueError("No images found")
+
+    # Loop through the images
+    for fname in images:
+        # Load the image
+        img = cv.imread(fname)
+        #  Convert to grayscale
+        gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+        # Find the chess board corners
+        ret, corners = cv.findChessboardCorners(gray, chessboard_size, None)
+        if ret == True:
+
+            # If found, add object points, these are the points (corners of the chessboard squares)
+            # in real world space
+            objpoints.append(objp)
+
+            # Refine the corner location by subpixel accuracy
+            # This works by taking each corner, taking a small window around it
+            # checking the gradient of brightness of the window
+            # the subpixel will then be represented by a floating point average, 
+            # rather than a set pixel position.
+            corners2 = cv.cornerSubPix(gray, corners, (11,11), (-1,-1), criteria)
+            # Add these new image points to imgpoints
+            imgpoints.append(corners2)
+    
+            # Draw and display the corners
+            # cv.drawChessboardCorners(img, chessboard_size, corners2, ret)
+            # cv.imshow('Original', img)
+            # cv.waitKey(500)
+
+            count += 1
+            print('[{0}/{1}]'.format(count, len(images)))
+            # print(gray.shape[::-1])
+            
+            # Calibrate the camera
+            # This is achieved by comparing the placement of the chessboard corners in the image
+            # to those of the real world.
+            # The discrepency between the two is used to calculate the camera matrix
+    
+            ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, img_size, None, None)
+    
+            # Add the camera matrix to a list
+            camera_mats.append(mtx)
+            camera_dists.append(dist)
+
+    return camera_mats, camera_dists
+
 camera_data_file_path = 'HenryFiles/camera_data.json'
 
 if os.path.exists(camera_data_file_path):
@@ -165,7 +225,10 @@ if os.path.exists(camera_data_file_path):
     proj_right = np.array(data['proj_right'])
 
 else:
+
     objpoints, imgpoints_left, imgpoints_right = calibrate_duo_image(duo_left_images, duo_right_images)
+
+    print("Successfully calibrated the camera from image pairs which both contain chessboards")
 
     # Calibrating camera from image pairs which both contain chessboards
     ret_left, mtx_left, dist_left, rvecs_left, tvecs_left = cv.calibrateCamera(
@@ -176,12 +239,28 @@ else:
     L_cm, L_cd = calibrate_non_duo(non_left_images)
     R_cm, R_cd = calibrate_non_duo(non_right_images)
 
+    print("Successfully calibrated the camera from images of the left and right cameras")
+
     # Append the additional mtx to the list
     L_cm.append(mtx_left)
     L_cd.append(dist_left)
 
+    print("Left camera matrices:")
+    for cm in L_cm:
+        print(cm)
+    print("Left camera distortions:")
+    for cd in L_cd:
+        print(cd)
+
     R_cm.append(mtx_right)
     R_cd.append(dist_right)
+
+    print("Right camera matrices:")
+    for cm in R_cm:
+        print(cm)
+    print("Right camera distortions:")
+    for cd in R_cd:
+        print(cd)
 
     # Generate the average camera matrix
     mtx_left = np.mean(np.array(L_cm), axis=0)
@@ -189,6 +268,25 @@ else:
 
     mtx_right = np.mean(np.array(R_cm), axis=0)
     dist_right = np.mean(np.array(R_cd), axis=0)
+
+
+    # ===============
+    # Testing
+    # ===============
+    # mtx_test = 1
+    # dist_test = 1
+    # mtx_left = L_cm[mtx_test]
+    # # mtx_left = np.mean(np.array(L_cm), axis=0)
+    # # dist_left = L_cd[dist_test]
+    # dist_left = np.mean (np.array(L_cd), axis=0)
+
+    # mtx_right = R_cm[mtx_test]
+    # # mtx_right = np.mean(np.array(R_cm), axis=0)
+    # # dist_right = R_cd[dist_test]
+    # dist_right = np.mean(np.array(R_cd), axis=0)
+    # ===============
+
+    print("Successfully generated the average camera matrix")
 
     # Stereo calibration
     flags = 0
@@ -200,6 +298,7 @@ else:
         mtx_left, dist_left, mtx_right, dist_right, 
         img_size, criteria=criteria, flags=flags)
     
+    print("Successfully performed stereo calibration")
     print(R)
     print(T)
     print(E)
@@ -210,6 +309,8 @@ else:
     rect_left, rect_right, proj_left, proj_right, Q, roi_left, roi_right = cv.stereoRectify(
         mtx_left, dist_left, mtx_right, dist_right, img_size, 
         R, T, flags=cv.CALIB_ZERO_DISPARITY, alpha=rect_scale)
+
+    print("Successfully computed rectification transforms")
 
     data = {
         "mtx_left": mtx_left.tolist(),
@@ -230,6 +331,8 @@ else:
 
     with open('HenryFiles/camera_data.json', 'w') as file:
         json.dump(data, file, indent=4)
+
+    print("Successfully wrote the camera data to file")
 
 # Compute mapping for rectification
 map_left_x, map_left_y = cv.initUndistortRectifyMap(
