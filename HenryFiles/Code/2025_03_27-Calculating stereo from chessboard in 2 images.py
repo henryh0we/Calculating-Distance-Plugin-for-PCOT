@@ -236,23 +236,23 @@ else:
     ret_right, mtx_right, dist_right, rvecs_right, tvecs_right = cv.calibrateCamera(
         objpoints, imgpoints_right, img_size, None, None)
 
-    L_cm, L_cd = calibrate_non_duo(non_left_images)
-    # R_cm, R_cd = calibrate_non_duo(non_right_images)
+    # L_cm, L_cd = calibrate_non_duo(non_left_images)
+    # # R_cm, R_cd = calibrate_non_duo(non_right_images)
 
-    print("Successfully calibrated the camera from images of the left and right cameras")
+    # print("Successfully calibrated the camera from images of the left and right cameras")
 
     # Append the additional mtx to the list
-    L_cm.append(mtx_left)
-    L_cd.append(dist_left)
+    # L_cm.append(mtx_left)
+    # L_cd.append(dist_left)
 
-    print("Left camera matrices:")
-    for i, cm in enumerate(L_cm):
-        print(f"{i}:")
-        print(cm)
-    print("Left camera distortions:")
-    for i, cd in enumerate(L_cd):
-        print(f"{i}:")
-        print(cd)
+    # print("Left camera matrices:")
+    # for i, cm in enumerate(L_cm):
+    #     print(f"{i}:")
+    #     print(cm)
+    # print("Left camera distortions:")
+    # for i, cd in enumerate(L_cd):
+    #     print(f"{i}:")
+    #     print(cd)
 
     # R_cm.append(mtx_right)
     # R_cd.append(dist_right)
@@ -267,8 +267,8 @@ else:
     #     print(cd)
 
     # Generate the average camera matrix
-    mtx_left = np.mean(np.array(L_cm), axis=0)
-    dist_left = np.mean(np.array(L_cd), axis=0)
+    # mtx_left = np.mean(np.array(L_cm), axis=0)
+    # dist_left = np.mean(np.array(L_cd), axis=0)
 
     # mtx_right = np.mean(np.array(R_cm), axis=0)
     # dist_right = np.mean(np.array(R_cd), axis=0)
@@ -290,7 +290,7 @@ else:
     # dist_right = np.mean(np.array(R_cd), axis=0)
     # ===============
 
-    print("Successfully generated the average camera matrix")
+    # print("Successfully generated the average camera matrix")
 
     # Stereo calibration
     flags = 0
@@ -437,15 +437,16 @@ if ((len(points_left) == 1) and (len(points_right) == 1)):
     image_width_pixels = 1024
 
     diagonal_length = 8 # diagonal size of the now-square sensor in mm
-    side_length = 5.657 # side length of the now-square sensor in mm
-
+    # side_length = 5.657 # side length of the now-square sensor in mm
+    sensor_width_mm = 5.657 # side length of the now-square sensor in mm
+    
     # INCORRECT
     # # perhaps I misinterpreted the size of the image? so its 8cm, 
     # # therefore diagonal length is 80mm
     # diagonal_length = 80
     # side_length = 56.57
 
-    sensor_width_mm = side_length
+    # sensor_width_mm = side_length
 
     focal_length_pixels = (focal_length_mm / sensor_width_mm) * image_width_pixels
 
