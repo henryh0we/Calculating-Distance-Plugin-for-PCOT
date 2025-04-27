@@ -52,7 +52,8 @@ class XFormImageRectify(XFormType):
         self.proj_right = None
 
         # Load JSON data
-        self.load_json()
+        file_path = 'pcotplugins/pcotdistanceestimate plugins/mtx_dst_rect_proj.json'
+        self.load_json(file_path)
 
         self.left_rectified = None
         self.right_rectified = None
@@ -166,13 +167,13 @@ class XFormImageRectify(XFormType):
         node.setOutput(0, left_rectified_datum)  # Use index 0 for 'Left Output'
         node.setOutput(1, right_rectified_datum)  # Use index 1 for 'Right Output'
 
-    def load_json(self):
+    def load_json(self, file_path):
         # camera_data_file_path = 'HenryFiles/camera_data.json'
-        camera_data_file_path = 'pcotplugins/pcotdistanceestimate plugins/mtx_dst_rect_proj.json'
+        # file_path = 'pcotplugins/pcotdistanceestimate plugins/mtx_dst_rect_proj.json'
 
-        if os.path.exists(camera_data_file_path):
+        if os.path.exists(file_path):
 
-            with open(camera_data_file_path, 'r') as file:
+            with open(file_path, 'r') as file:
                 data = json.load(file)
 
             self.mtx_left = np.array(data['mtx_left'])
