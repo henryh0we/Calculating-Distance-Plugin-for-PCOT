@@ -167,7 +167,8 @@ class XFormImageRectify(XFormType):
         node.setOutput(1, right_rectified_datum)  # Use index 1 for 'Right Output'
 
     def load_json(self):
-        camera_data_file_path = 'HenryFiles/camera_data.json'
+        # camera_data_file_path = 'HenryFiles/camera_data.json'
+        camera_data_file_path = 'pcotplugins/pcotdistanceestimate plugins/mtx_dst_rect_proj.json'
 
         if os.path.exists(camera_data_file_path):
 
