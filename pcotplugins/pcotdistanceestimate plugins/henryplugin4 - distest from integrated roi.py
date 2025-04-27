@@ -23,7 +23,7 @@ from pcot.expressions.register import datumfunc
 
 import pcot.config
 
-camera_height = 1.094
+# camera_height = 1.094
 
 
 @xformtype
@@ -53,6 +53,7 @@ class XFormDistEstimateRoi(XFormType):
         file_data_path = 'pcotplugins/pcotdistanceestimate plugins/focal_baseline.json'
         self.focal_length = None
         self.baseline = None
+        self.camera_height = None
 
         self.load_json(file_data_path)
 
@@ -77,6 +78,7 @@ class XFormDistEstimateRoi(XFormType):
                 data = json.load(file)
                 self.focal_length = data['focal_length']
                 self.baseline = data['baseline']
+                self.camera_height = data['camera_height']
 
 
     def createTab(self, n, w):
