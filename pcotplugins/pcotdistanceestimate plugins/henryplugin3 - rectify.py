@@ -6,7 +6,7 @@ import json
 from PySide2.QtWidgets import QLabel, QVBoxLayout
 from PySide2.QtGui import QPixmap
 import pcot.utils.image
-from PySide2.QtWidgets import QVBoxLayout, QLabel
+from PySide2.QtWidgets import QVBoxLayout, QLabel, QHBoxLayout
 from pcot.ui.tabs import Tab
 from pcot.datum import Datum
 from pcot.ui.canvas import Canvas
@@ -218,7 +218,11 @@ class XFormImageRectify(XFormType):
 class TabImageRectify(Tab):
     def __init__(self, node, window):
         super().__init__(window, node)
-        layout = QVBoxLayout(self.w)
+        # layout = QVBoxLayout(self.w)
+        layout = QHBoxLayout(self.w)
+
+        left_layout = QVBoxLayout()
+        right_layout = QVBoxLayout()
 
         self.leftImageLabel = QLabel("Left Rectified Image")
         self.rightImageLabel = QLabel("Right Rectified Image")
@@ -226,13 +230,16 @@ class TabImageRectify(Tab):
         self.leftCanvas = Canvas(self)
         self.rightCanvas = Canvas(self)
 
-        layout.addWidget(self.leftImageLabel)
-        layout.addWidget(self.leftCanvas)
-        layout.addWidget(self.rightImageLabel)
-        layout.addWidget(self.rightCanvas)
+        left_layout.addWidget(self.leftImageLabel)
+        left_layout.addWidget(self.leftCanvas)
+        right_layout.addWidget(self.rightImageLabel)
+        right_layout.addWidget(self.rightCanvas)
 
         self.leftCanvas.setGraph(node.graph)
         self.rightCanvas.setGraph(node.graph)
+
+        layout.addLayout(left_layout)
+        layout.addLayout(right_layout)
 
         self.nodeChanged()
 
