@@ -199,15 +199,15 @@ def calibrate_non_duo(images):
             # to those of the real world.
             # The discrepency between the two is used to calculate the camera matrix
     
-            ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, img_size, None, None)
-    
-            # Add the camera matrix to a list
-            camera_mats.append(mtx)
-            camera_dists.append(dist)
+    ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, img_size, None, None)
+
+    # Add the camera matrix to a list
+    camera_mats.append(mtx)
+    camera_dists.append(dist)
 
     return camera_mats, camera_dists
 
-camera_data_file_path = 'HenryFiles/camera_data.json'
+camera_data_file_path = 'HenryFiles/camera_data_filler.json'
 
 if os.path.exists(camera_data_file_path):
 
@@ -237,7 +237,7 @@ else:
         objpoints, imgpoints_right, img_size, None, None)
 
     L_cm, L_cd = calibrate_non_duo(non_left_images)
-    R_cm, R_cd = calibrate_non_duo(non_right_images)
+    # R_cm, R_cd = calibrate_non_duo(non_right_images)
 
     print("Successfully calibrated the camera from images of the left and right cameras")
 
@@ -246,28 +246,32 @@ else:
     L_cd.append(dist_left)
 
     print("Left camera matrices:")
-    for cm in L_cm:
+    for i, cm in enumerate(L_cm):
+        print(f"{i}:")
         print(cm)
     print("Left camera distortions:")
-    for cd in L_cd:
+    for i, cd in enumerate(L_cd):
+        print(f"{i}:")
         print(cd)
 
-    R_cm.append(mtx_right)
-    R_cd.append(dist_right)
+    # R_cm.append(mtx_right)
+    # R_cd.append(dist_right)
 
-    print("Right camera matrices:")
-    for cm in R_cm:
-        print(cm)
-    print("Right camera distortions:")
-    for cd in R_cd:
-        print(cd)
+    # print("Right camera matrices:")
+    # for i, cm in enumerate(R_cm):
+    #     print(f"{i}:")
+    #     print(cm)
+    # print("Right camera distortions:")
+    # for i, cd in enumerate(R_cd):
+    #     print(f"{i}:")
+    #     print(cd)
 
     # Generate the average camera matrix
     mtx_left = np.mean(np.array(L_cm), axis=0)
     dist_left = np.mean(np.array(L_cd), axis=0)
 
-    mtx_right = np.mean(np.array(R_cm), axis=0)
-    dist_right = np.mean(np.array(R_cd), axis=0)
+    # mtx_right = np.mean(np.array(R_cm), axis=0)
+    # dist_right = np.mean(np.array(R_cd), axis=0)
 
 
     # ===============
@@ -277,12 +281,12 @@ else:
     # dist_test = 1
     # mtx_left = L_cm[mtx_test]
     # # mtx_left = np.mean(np.array(L_cm), axis=0)
-    # # dist_left = L_cd[dist_test]
+    # dist_left = L_cd[dist_test]
     # dist_left = np.mean (np.array(L_cd), axis=0)
 
     # mtx_right = R_cm[mtx_test]
     # # mtx_right = np.mean(np.array(R_cm), axis=0)
-    # # dist_right = R_cd[dist_test]
+    # dist_right = R_cd[dist_test]
     # dist_right = np.mean(np.array(R_cd), axis=0)
     # ===============
 
@@ -434,6 +438,12 @@ if ((len(points_left) == 1) and (len(points_right) == 1)):
 
     diagonal_length = 8 # diagonal size of the now-square sensor in mm
     side_length = 5.657 # side length of the now-square sensor in mm
+
+    # INCORRECT
+    # # perhaps I misinterpreted the size of the image? so its 8cm, 
+    # # therefore diagonal length is 80mm
+    # diagonal_length = 80
+    # side_length = 56.57
 
     sensor_width_mm = side_length
 
