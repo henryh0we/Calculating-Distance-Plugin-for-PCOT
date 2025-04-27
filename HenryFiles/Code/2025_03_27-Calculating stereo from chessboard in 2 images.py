@@ -96,19 +96,23 @@ def calibrate_non_duo(images):
             imgpoints.append(corners)
     
             # Draw and display the corners
-            cv.drawChessboardCorners(img, chessboard_size, corners2, ret)
+            # cv.drawChessboardCorners(img, chessboard_size, corners2, ret)
             # cv.imshow('Original', img)
             # cv.waitKey(500)
 
+            count += 1
+            print('[{0}/{1}]'.format(count, len(images)))
+            
             # Calibrate the camera
             # This is achieved by comparing the placement of the chessboard corners in the image
             # to those of the real world.
             # The discrepency between the two is used to calculate the camera matrix
-            ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
-            
-            # Add the camera matrix to a list
-            camera_mats.append(mtx)
-            camera_dists.append(dist)
+    
+    ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+    
+    # Add the camera matrix to a list
+    camera_mats.append(mtx)
+    camera_dists.append(dist)
 
             # Get the height and width of the image
             # h,  w = img.shape[:2]
@@ -128,11 +132,8 @@ def calibrate_non_duo(images):
             # cv.imshow('Result', dst)
             # cv.waitKey(500)
             
-            count += 1
-            print('[{0}/{1}]'.format(count, len(images)))
-            
 
-    cv.destroyAllWindows()
+    # cv.destroyAllWindows()
 
     # # Generate the average camera matrix
     # average_camera_matrix = np.mean(np.array(camera_mats), axis=0)
