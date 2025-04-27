@@ -207,7 +207,7 @@ def calibrate_non_duo(images):
 
     return camera_mats, camera_dists
 
-camera_data_file_path = 'HenryFiles/camera_data_filler.json'
+camera_data_file_path = 'HenryFiles/camera_data.json'
 
 if os.path.exists(camera_data_file_path):
 
@@ -436,10 +436,34 @@ if ((len(points_left) == 1) and (len(points_right) == 1)):
     focal_length_mm = 12
     image_width_pixels = 1024
 
-    diagonal_length = 8 # diagonal size of the now-square sensor in mm
-    # side_length = 5.657 # side length of the now-square sensor in mm
-    sensor_width_mm = 5.657 # side length of the now-square sensor in mm
-    
+    # OUTDATED 27/04/2025
+    # diagonal_length = 8 # diagonal size of the now-square sensor in mm
+    # # side_length = 5.657 # side length of the now-square sensor in mm
+    # sensor_width_mm = 5.657 # side length of the now-square sensor in mm
+
+    # UPDATED 27/04/2025
+    diagonal_length = [] 
+
+    diagonal_length.append(8) # v1
+    diagonal_length.append(7.168) # v2
+    diagonal_length.append(7.0656) # v3
+    diagonal_length.append(7.4752) # v4
+    # Some testing
+    # diagonal_length.append(8)
+    diagonal_length.append(9)
+    diagonal_length.append(9.125)
+    diagonal_length.append(9.25)
+    diagonal_length.append(9.5)
+    diagonal_length.append(10)
+
+
+    def calc_side_length(diagonal_length):
+        div2 = diagonal_length / 2
+        return np.sqrt(2) * div2
+    # diagonal_length = np.sqrt(2) * side_length
+    # side_length = diagonal_length / np.sqrt(2)
+    # sensor_width_mm = side_length
+
     # INCORRECT
     # # perhaps I misinterpreted the size of the image? so its 8cm, 
     # # therefore diagonal length is 80mm
@@ -448,21 +472,27 @@ if ((len(points_left) == 1) and (len(points_right) == 1)):
 
     # sensor_width_mm = side_length
 
+def calculate_depth(disparity, diagonal_length):
+    focal_length_mm = 12
+    image_width_pixels = 1024
+
+    sensor_width_mm = calc_side_length(diagonal_length)
+
     focal_length_pixels = (focal_length_mm / sensor_width_mm) * image_width_pixels
 
     focal_length = focal_length_pixels
 
-    print("focal_length: ", focal_length)
-
     baseline = 0.5  # Distance in meters
-    # baseline = 500 # Distance in mm
 
     depth = (focal_length * baseline) / disparity
-
-    print("depth: ", depth)
 
     aupe_height = 1.094
 
     approximate_ground_distance = np.sqrt(depth**2 - aupe_height**2)
 
-    print("approximate_ground_distance: ", approximate_ground_distance)
+    return sensor_width_mm, depth, approximate_ground_distance
+
+for length in diagonal_length:
+    sensor_width_mm, depth, approximate_ground_distance = calculate_depth(disparity, length)
+    print(f"diagonal length: {length} mm, sensor width: {sensor_width_mm:.3f} mm, depth: {depth:.3f} m, approximate ground distance: {approximate_ground_distance:.3f} m")
+
