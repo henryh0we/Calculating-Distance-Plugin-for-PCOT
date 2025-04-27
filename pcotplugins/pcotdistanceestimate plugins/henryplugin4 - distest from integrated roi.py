@@ -1,3 +1,4 @@
+import os
 import cv2 as cv
 import numpy as np
 from pcot.ui.canvas import Canvas
@@ -6,6 +7,7 @@ from pcot.value import Value
 from pcot.sources import nullSourceSet
 from PySide2.QtWidgets import QGridLayout, QLabel, QVBoxLayout, QTableWidget, QTableWidgetItem, QHBoxLayout, QScrollArea, QSplitter, QWidget
 from PySide2.QtCore import Qt
+import json
 
 from pcot.parameters.taggedaggregates import TaggedDictType
 from pcot.rois import ROICircle, ROIPainted, ROIPoly, ROIRect
@@ -43,9 +45,17 @@ class XFormDistEstimateRoi(XFormType):
 
         # HARDCODED DATA
         # self.focal_length = 2172.176065052148
-        self.focal_length = 1904.422603226366 # diag = 9.125mm
+        # self.focal_length = 1904.422603226366 # diag = 9.125mm USE THIS ONE
         # self.focal_length = 1930.872917160066 # diag = 9mm
-        self.baseline = 0.5
+        # self.baseline = 0.5
+
+        # LOAD DATA FROM FILE
+        file_data_path = 'pcotplugins/pcotdistanceestimate plugins/focal_baseline.json'
+        self.focal_length = None
+        self.baseline = None
+
+        self.load_json(file_data_path)
+
 
         self.all_distances = []
 
@@ -59,6 +69,14 @@ class XFormDistEstimateRoi(XFormType):
             left_img_rois =('Left Image ROIs', list, []),
             right_img_rois =('Right Image ROIs', list, [])
         )
+
+    def load_json(self, file_path):
+
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as file:
+                data = json.load(file)
+                self.focal_length = data['focal_length']
+                self.baseline = data['baseline']
 
 
     def createTab(self, n, w):
