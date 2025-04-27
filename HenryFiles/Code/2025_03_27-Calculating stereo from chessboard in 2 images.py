@@ -25,8 +25,8 @@ imgpoints_right = []  # 2D points in right image plane
 duo_left_images = glob.glob(os.path.join('HenryFiles/Camera Calibration/in both images/left images duo', '*.png'))
 duo_right_images = glob.glob(os.path.join('HenryFiles/Camera Calibration/in both images/right images duo', '*.png'))
 
-non_left_images = glob.glob(os.path.join('HenryFiles\Camera Calibration\left images', '*.png'))
-non_right_images = glob.glob(os.path.join('HenryFiles\Camera Calibration\right images', '*.png'))
+non_left_images = glob.glob(os.path.join('HenryFiles/Camera Calibration/left images', '*.png'))
+non_right_images = glob.glob(os.path.join('HenryFiles/Camera Calibration/right images', '*.png'))
 
 def calibrate_duo_image(left_images, right_images):
 
@@ -72,6 +72,9 @@ def calibrate_non_duo(images):
     camera_mats = []
     camera_dists = []
 
+    if not images:
+        raise ValueError("No images found")
+
     # Loop through the images
     for fname in images:
         # Load the image
@@ -93,7 +96,7 @@ def calibrate_non_duo(images):
             # rather than a set pixel position.
             corners2 = cv.cornerSubPix(gray, corners, (11,11), (-1,-1), criteria)
             # Add these new image points to imgpoints
-            imgpoints.append(corners)
+            imgpoints.append(corners2)
     
             # Draw and display the corners
             # cv.drawChessboardCorners(img, chessboard_size, corners2, ret)
@@ -108,7 +111,7 @@ def calibrate_non_duo(images):
             # to those of the real world.
             # The discrepency between the two is used to calculate the camera matrix
     
-    ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+    ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, img_size, None, None)
     
     # Add the camera matrix to a list
     camera_mats.append(mtx)
@@ -225,7 +228,7 @@ else:
         "F": F.tolist(),
     }
 
-    with open('camera_data.json', 'w') as file:
+    with open('HenryFiles/camera_data.json', 'w') as file:
         json.dump(data, file, indent=4)
 
 # Compute mapping for rectification
