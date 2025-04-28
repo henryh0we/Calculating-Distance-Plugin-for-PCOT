@@ -152,6 +152,7 @@ class XFormDistEstimateRoi(XFormType):
             storage = self.store_distance_and_rois(distance, crow, left_roi, right_roi)
 
             self.all_distances.append(storage)
+            # region
             # left_rois_match = left_rois_sorted[label]
             # right_rois_match = right_rois_sorted[label]
 
@@ -168,6 +169,7 @@ class XFormDistEstimateRoi(XFormType):
             # print(storage)
 
             # all_distances.append(storage)
+            # endregion
 
         node.all_distances = self.all_distances
         node.left_rectified = left_img_datum.get(Datum.IMG)
@@ -185,7 +187,7 @@ class XFormDistEstimateRoi(XFormType):
         if node.tabs is not None:
             for tab in node.tabs:
                 tab.onNodeChanged()
-
+        # region
         # left_coords = []
         # right_coords = []
 
@@ -230,6 +232,7 @@ class XFormDistEstimateRoi(XFormType):
     #     all_distances = getattr(self, 'all_distances', [])
     #     print(f"Returning {len(distances)} distances")
     #     return distances
+    # endregion
 
     def get_crow(self, distance):
         height = 1.094
@@ -381,7 +384,7 @@ class TabDistEstimateRoi(Tab):
         self.splitter.setStretchFactor(1, 1)
 
         self.nodeChanged()
-
+    # region
     # def __init__(self, node, w):
     #     super().__init__(w, node)
 
@@ -456,6 +459,7 @@ class TabDistEstimateRoi(Tab):
     #     self.splitter.setStretchFactor(1, 1)
 
     #     self.nodeChanged()
+    # endregion
 
     def onNodeChanged(self):
         node = self.node
@@ -497,7 +501,7 @@ class TabDistEstimateRoi(Tab):
             self.table.setItem(row_index, 2, QTableWidgetItem(str(crow)))
 
 
-
+# region
 # class TabDistEstimateRoi(Tab):
 #     def __init__(self, node, w):
 #         super().__init__(w, node)
@@ -554,3 +558,4 @@ class TabDistEstimateRoi(Tab):
 #             self.distance_label.setText(f"Distance: {distance_datum.val.val}")
 #         else:
 #             self.distance_label.setText("Distance: N/A")
+# endregion
