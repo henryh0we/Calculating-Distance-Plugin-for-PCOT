@@ -526,7 +526,7 @@ class TabDistEstimateRoi(Tab):
         print(f"Node attributes before access: {dir(node)}")
 
         distance_list = node.all_distances
-        table = node.all_distances_table
+        # node.all_distances_table = node.all_distances_table
 
         # print("Table:")
         # for row in range(table.__len__()):
@@ -540,8 +540,8 @@ class TabDistEstimateRoi(Tab):
         # print(distance_list)
         # self.populate_table(distance_list)
 
-        print(table)
-        self.update_tab_table(table)
+        print(f"Table before update: {node.all_distances_table}") 
+        self.update_tab_table(node.all_distances_table)
 
 
         if hasattr(node, 'left_rectified') and node.left_rectified is not None:
@@ -637,22 +637,24 @@ class TabDistEstimateRoi(Tab):
         # self.table.set_table(table)
 
     def dump_data_to_txt(self):
-        if self.table is None:
+        if self.node.all_distances_table is None:
+            print("No data to dump TXT")
             return
 
         options = QFileDialog.Options()
         file_name, _ = QFileDialog.getSaveFileName(self, "Save Data", "distances.txt", "Text Files (*.txt)", options=options)
         if file_name:
             with open(file_name, "w") as f:
-                for row in self.table:
-                    label, distance, crow = row
-                    # distance = data['distance']
-                    # crow = data['crow']
-                    f.write(f"Label: {label}, Distance: {distance}, Crow: {crow}\n")
+                headers = self.node.all_distances_table.keys()
+                f.write(", ".join(f'{header}' for header in headers) + "\n")
+                for row in self.node.all_distances_table:
+                    f.write(", ".join(f'{header}: {row[i]}' for i, header in enumerate(headers)) + "\n")
+
             print(f"Data dumped to {file_name}")
 
     def dump_data_to_csv(self):
-        if self.table is None:
+        if self.node.all_distances_table is None:
+            print("No data to dump CSV")
             return
 
         options = QFileDialog.Options()
@@ -660,7 +662,10 @@ class TabDistEstimateRoi(Tab):
         if file_name:
             with open(file_name, "w") as f:
                 # Write the header
-                f.write("Label,Distance,Crow\n")
+                headers = self.node.all_distances_table.keys()
+                for header in headers:
+                    f.write(f"{header},")
+                f.write("\n")
                 
                 # Write the data
                 # for data in self.node.all_distances:
@@ -669,22 +674,27 @@ class TabDistEstimateRoi(Tab):
                 #     crow = data['crow']
                 #     f.write(f"{label},{distance},{crow}\n")
 
-                for row in self.table:
-                    label, distance, crow = row
-                    # distance = data['distance']
-                    # crow = data['crow']
-                    f.write(f"{label},{distance},{crow}\n")
+                # for row in self.table:
+                #     label, distance, crow = row
+                #     # distance = data['distance']
+                #     # crow = data['crow']
+                #     f.write(f"{label},{distance},{crow}\n")
+
+                for row in self.node.all_distances_table:
+                    f.write(",".join(map(str, row)) + "\n")
+
             print(f"Data dumped to {file_name}")
 
     def dump_data_to_html(self):
-        if self.table is None:
+        if self.node.all_distances_table is None:
+            print("No data to dump HTML")
             return
 
         options = QFileDialog.Options()
         file_name, _ = QFileDialog.getSaveFileName(self, "Save Data", "distances.html", "HTML Files (*.html)", options=options)
         if file_name:
             with open(file_name, "w") as f:
-                f.write(self.table.html())
+                f.write(self.node.all_distances_table.html())
             print(f"Data dumped to {file_name}")
 
 
