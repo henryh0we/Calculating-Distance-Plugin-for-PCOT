@@ -3,9 +3,10 @@ import cv2 as cv
 import numpy as np
 from pcot.ui.canvas import Canvas
 from pcot.ui.tabs import Tab
+from pcot.utils.table import Table
 from pcot.value import Value
 from pcot.sources import nullSourceSet
-from PySide2.QtWidgets import QGridLayout, QLabel, QVBoxLayout, QTableWidget, QTableWidgetItem, QHBoxLayout, QScrollArea, QSplitter, QWidget, QPushButton, QFileDialog
+from PySide2.QtWidgets import QGridLayout, QLabel, QVBoxLayout, QTableWidget, QTableWidgetItem, QHBoxLayout, QScrollArea, QSplitter, QWidget, QPushButton, QFileDialog, QTextEdit
 from PySide2.QtCore import Qt
 import json
 
@@ -369,15 +370,18 @@ class TabDistEstimateRoi(Tab):
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
 
-        self.table = QTableWidget()
-        self.table.setColumnCount(3)
-        self.table.setHorizontalHeaderLabels(["Label", "Distance (Depth)", "Crow"])
+        # self.table = QTableWidget()
+        # self.table.setColumnCount(3)
+        # self.table.setHorizontalHeaderLabels(["Label", "Distance (Depth)", "Crow"])
 
-        self.table.setColumnWidth(0, 200)
-        self.table.setColumnWidth(1, 250)
-        self.table.setColumnWidth(2, 250)        
+        # self.table.setColumnWidth(0, 200)
+        # self.table.setColumnWidth(1, 250)
+        # self.table.setColumnWidth(2, 250)  
+        # 
+        self.table_widget = QTextEdit()      
 
-        self.scroll_area.setWidget(self.table)
+        # self.scroll_area.setWidget(self.table)
+        self.scroll_area.setWidget(self.table_widget)
         self.splitter.addWidget(self.scroll_area)
 
         self.button_layout = QHBoxLayout()
@@ -398,6 +402,8 @@ class TabDistEstimateRoi(Tab):
 
         self.splitter.setStretchFactor(0, 3)
         self.splitter.setStretchFactor(1, 1)
+
+        self.table = None
 
         self.nodeChanged()
     # region
@@ -502,33 +508,60 @@ class TabDistEstimateRoi(Tab):
             print("Right rectified image is not available")
 
     def populate_table(self, distance_list):
-        print(f"Populating table with {len(distance_list)} entries")
-        self.table.setRowCount(len(distance_list))
-        for row_index, data in enumerate(distance_list):
+        # print(f"Populating table with {len(distance_list)} entries")
+        # self.table.setRowCount(len(distance_list))
+        # for row_index, data in enumerate(distance_list):
+        #     # left_label = data['left_roi']['label']
+        #     label = data['right_roi']['label']
+        #     distance = data['distance']
+        #     crow = data['crow']
+
+        #     print(f"Row {row_index}: Label: {label}, Distance: {distance}, Crow: {crow}")
+
+        #     self.table.setItem(row_index, 0, QTableWidgetItem(label))
+        #     self.table.setItem(row_index, 1, QTableWidgetItem(str(distance)))
+        #     self.table.setItem(row_index, 2, QTableWidgetItem(str(crow)))
+
+        table = Table()
+        for data in distance_list:
             # left_label = data['left_roi']['label']
             label = data['right_roi']['label']
             distance = data['distance']
             crow = data['crow']
 
-            print(f"Row {row_index}: Label: {label}, Distance: {distance}, Crow: {crow}")
+            table.newRow(label)
+            table.add('Label', label)
+            table.add('Distance', distance)
+            table.add('Crow', crow)
 
-            self.table.setItem(row_index, 0, QTableWidgetItem(label))
-            self.table.setItem(row_index, 1, QTableWidgetItem(str(distance)))
-            self.table.setItem(row_index, 2, QTableWidgetItem(str(crow)))
+            print(f"Label: {label}, Distance: {distance}, Crow: {crow}")
+
+        self.table = table
+
+        html_str = table.html()
+        self.table_widget.setHtml(html_str)
+
+        # self.table.set_table(table)
 
     def dump_data_to_txt(self):
+        if self.table is None:
+            return
+
         options = QFileDialog.Options()
         file_name, _ = QFileDialog.getSaveFileName(self, "Save Data", "distances.txt", "Text Files (*.txt)", options=options)
         if file_name:
             with open(file_name, "w") as f:
-                for data in self.node.all_distances:
-                    label = data['right_roi']['label']
-                    distance = data['distance']
-                    crow = data['crow']
+                for row in self.table:
+                    label, distance, crow = row
+                    # distance = data['distance']
+                    # crow = data['crow']
                     f.write(f"Label: {label}, Distance: {distance}, Crow: {crow}\n")
-            print("Data dumped to {file_name}")
+            print(f"Data dumped to {file_name}")
 
     def dump_data_to_csv(self):
+        if self.table is None:
+            return
+
         options = QFileDialog.Options()
         file_name, _ = QFileDialog.getSaveFileName(self, "Save Data", "distances.csv", "CSV Files (*.csv)", options=options)
         if file_name:
@@ -537,10 +570,16 @@ class TabDistEstimateRoi(Tab):
                 f.write("Label,Distance,Crow\n")
                 
                 # Write the data
-                for data in self.node.all_distances:
-                    label = data['right_roi']['label']
-                    distance = data['distance']
-                    crow = data['crow']
+                # for data in self.node.all_distances:
+                #     label = data['right_roi']['label']
+                #     distance = data['distance']
+                #     crow = data['crow']
+                #     f.write(f"{label},{distance},{crow}\n")
+
+                for row in self.table:
+                    label, distance, crow = row
+                    # distance = data['distance']
+                    # crow = data['crow']
                     f.write(f"{label},{distance},{crow}\n")
             print(f"Data dumped to {file_name}")
 
