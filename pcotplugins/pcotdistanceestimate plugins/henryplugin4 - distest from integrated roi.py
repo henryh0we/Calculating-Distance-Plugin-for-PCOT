@@ -398,6 +398,12 @@ class TabDistEstimateRoi(Tab):
         self.button_layout.addWidget(self.csv_button)
         # ================================================
 
+        # ===== DUMP DATA TO HTML ========
+        self.html_button = QPushButton("Dump Data to HTML")
+        self.html_button.clicked.connect(self.dump_data_to_html)
+        self.button_layout.addWidget(self.html_button)
+        # ================================================
+
         self.layout.addLayout(self.button_layout)
 
         self.splitter.setStretchFactor(0, 3)
@@ -600,6 +606,17 @@ class TabDistEstimateRoi(Tab):
                     # distance = data['distance']
                     # crow = data['crow']
                     f.write(f"{label},{distance},{crow}\n")
+            print(f"Data dumped to {file_name}")
+
+    def dump_data_to_html(self):
+        if self.table is None:
+            return
+
+        options = QFileDialog.Options()
+        file_name, _ = QFileDialog.getSaveFileName(self, "Save Data", "distances.html", "HTML Files (*.html)", options=options)
+        if file_name:
+            with open(file_name, "w") as f:
+                f.write(self.table.html())
             print(f"Data dumped to {file_name}")
 
 
