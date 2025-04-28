@@ -59,6 +59,11 @@ class XFormDistEstimateRoi(XFormType):
         self.load_json(file_data_path)
 
         self.all_distances = []
+        # self.all_distances_table = None
+        self.all_distances_table = Table()
+
+        print(f"Initialized all_distances: {self.all_distances}")
+        print(f"Initialized all_distances_table: {self.all_distances_table}")
 
         self.addInputConnector("left", Datum.IMG)
         self.addInputConnector("right", Datum.IMG)
@@ -82,6 +87,9 @@ class XFormDistEstimateRoi(XFormType):
 
 
     def createTab(self, n, w):
+        print(f"Creating tab for node of type: {type(n)}")
+        print(f"Node attributes: {dir(n)}")
+
         return TabDistEstimateRoi(n, w)
     
     def init(self, n):
@@ -91,6 +99,7 @@ class XFormDistEstimateRoi(XFormType):
     def perform(self, node):
         
         self.all_distances = []
+        self.all_distances_table = Table()
 
         left_img_datum = node.getInput(0)  
         right_img_datum = node.getInput(1)  
@@ -172,9 +181,13 @@ class XFormDistEstimateRoi(XFormType):
             # all_distances.append(storage)
             # endregion
 
+        self.populate_table()
+
         node.all_distances = self.all_distances
+        node.all_distances_table = self.all_distances_table
         node.left_rectified = left_img_datum.get(Datum.IMG)
         node.right_rectified = right_img_datum.get(Datum.IMG)
+
 
         print("Computed distances:", self.all_distances)
         
@@ -335,6 +348,24 @@ class XFormDistEstimateRoi(XFormType):
             "crow": crow
         }
         return storage
+
+    def populate_table(self):
+        
+        table = Table()
+        for data in self.all_distances:
+            # left_label = data['left_roi']['label']
+            label = data['right_roi']['label']
+            distance = data['distance']
+            crow = data['crow']
+
+            table.newRow(label)
+            table.add('Label', label)
+            table.add('Distance', distance)
+            table.add('Crow', crow)
+
+            print(f"Label: {label}, Distance: {distance}, Crow: {crow}")
+
+        self.all_distances_table = table
     
 
 class UnlabeledROIException(Exception):
@@ -491,10 +522,27 @@ class TabDistEstimateRoi(Tab):
 
     def onNodeChanged(self):
         node = self.node
+        print(f"Node type: {type(node)}")
+        print(f"Node attributes before access: {dir(node)}")
+
         distance_list = node.all_distances
+        table = node.all_distances_table
+
+        # print("Table:")
+        # for row in range(table.__len__()):
+        #     for col in range(table._keys()):
+        #         item = table.item(row, col)
+        #         print(item.text() if item else '', end=' ')
+        #     print()
+
+        # table = node.populate_table()
         # distance_list = node.type.getDistanceList()  # Assume this method returns the all_distances list
-        print(distance_list)
-        self.populate_table(distance_list)
+        # print(distance_list)
+        # self.populate_table(distance_list)
+
+        print(table)
+        self.update_tab_table(table)
+
 
         if hasattr(node, 'left_rectified') and node.left_rectified is not None:
             print("Left rectified image is available")
@@ -513,7 +561,7 @@ class TabDistEstimateRoi(Tab):
         else:
             print("Right rectified image is not available")
 
-    def populate_table(self, distance_list):
+    def update_tab_table(self, distance_table):
         # print(f"Populating table with {len(distance_list)} entries")
         # self.table.setRowCount(len(distance_list))
         # for row_index, data in enumerate(distance_list):
@@ -528,41 +576,61 @@ class TabDistEstimateRoi(Tab):
         #     self.table.setItem(row_index, 1, QTableWidgetItem(str(distance)))
         #     self.table.setItem(row_index, 2, QTableWidgetItem(str(crow)))
 
-        table = Table()
-        for data in distance_list:
-            # left_label = data['left_roi']['label']
-            label = data['right_roi']['label']
-            distance = data['distance']
-            crow = data['crow']
+        # table = Table()
+        # for data in distance_list:
+        #     # left_label = data['left_roi']['label']
+        #     label = data['right_roi']['label']
+        #     distance = data['distance']
+        #     crow = data['crow']
 
-            table.newRow(label)
-            table.add('Label', label)
-            table.add('Distance', distance)
-            table.add('Crow', crow)
+        #     table.newRow(label)
+        #     table.add('Label', label)
+        #     table.add('Distance', distance)
+        #     table.add('Crow', crow)
 
-            print(f"Label: {label}, Distance: {distance}, Crow: {crow}")
+        #     print(f"Label: {label}, Distance: {distance}, Crow: {crow}")
 
-        self.table = table
+        # self.table = table
 
         # html_str = table.html()
         # self.table_widget.setHtml(html_str)
 
         self.table_widget.clear()
-        self.table_widget.setRowCount(len(distance_list))
-        self.table_widget.setColumnCount(3)
-        self.table_widget.setHorizontalHeaderLabels(["Label", "Distance", "Crow"])
 
-        for row_index, data in enumerate(distance_list):
-            # left_label = data['left_roi']['label']
-            label = data['right_roi']['label']
-            distance = data['distance']
-            crow = data['crow']
+        row_count = distance_table.__len__()
 
-            print(f"Row {row_index}: Label: {label}, Distance (depth): {distance}, Crow: {crow}")
+        self.table_widget.setRowCount(row_count)
+        print(f"Row count: {row_count}")
 
-            self.table_widget.setItem(row_index, 0, QTableWidgetItem(label))
-            self.table_widget.setItem(row_index, 1, QTableWidgetItem(str(distance)))
-            self.table_widget.setItem(row_index, 2, QTableWidgetItem(str(crow)))
+        headers = distance_table.keys()
+        print(f"Headers: {headers}")
+
+        # print(distance_table.__str__())
+
+        self.table_widget.setColumnCount(len(headers))
+
+        self.table_widget.setHorizontalHeaderLabels(headers)
+
+        # for row_index, data in enumerate(distance_table):
+        #     # left_label = data['left_roi']['label']
+        #     label = data['right_roi']['label']
+        #     distance = data['distance']
+        #     crow = data['crow']
+
+        #     print(f"Row {row_index}: Label: {label}, Distance (depth): {distance}, Crow: {crow}")
+
+        #     self.table_widget.setItem(row_index, 0, QTableWidgetItem(label))
+        #     self.table_widget.setItem(row_index, 1, QTableWidgetItem(str(distance)))
+        #     self.table_widget.setItem(row_index, 2, QTableWidgetItem(str(crow)))
+        print(f"Headers: {headers}")
+        print(f"Distance table: {distance_table}")
+
+        for row_index, data in enumerate(distance_table):
+            print(f"Row {row_index}: {data}")
+            for col_index, header in enumerate(headers):
+                # header = int(header)
+                print(f"Setting item ({row_index}, {col_index}) to {data[col_index]}")
+                self.table_widget.setItem(row_index, col_index, QTableWidgetItem(str(data[col_index])))
 
         self.table_widget.resizeColumnsToContents()
 
