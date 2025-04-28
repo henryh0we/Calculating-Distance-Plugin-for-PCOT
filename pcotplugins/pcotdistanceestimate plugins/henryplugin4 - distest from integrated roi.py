@@ -5,7 +5,7 @@ from pcot.ui.canvas import Canvas
 from pcot.ui.tabs import Tab
 from pcot.value import Value
 from pcot.sources import nullSourceSet
-from PySide2.QtWidgets import QGridLayout, QLabel, QVBoxLayout, QTableWidget, QTableWidgetItem, QHBoxLayout, QScrollArea, QSplitter, QWidget
+from PySide2.QtWidgets import QGridLayout, QLabel, QVBoxLayout, QTableWidget, QTableWidgetItem, QHBoxLayout, QScrollArea, QSplitter, QWidget, QPushButton, QFileDialog
 from PySide2.QtCore import Qt
 import json
 
@@ -380,6 +380,22 @@ class TabDistEstimateRoi(Tab):
         self.scroll_area.setWidget(self.table)
         self.splitter.addWidget(self.scroll_area)
 
+        self.button_layout = QHBoxLayout()
+
+        # ===== DUMP DATA TO TXT ========
+        self.dump_button = QPushButton("Dump Data to TXT")
+        self.dump_button.clicked.connect(self.dump_data_to_txt)
+        self.button_layout.addWidget(self.dump_button)
+        # ================================================
+
+        # ===== DUMP DATA TO CSV ========
+        self.csv_button = QPushButton("Dump Data to CSV")
+        self.csv_button.clicked.connect(self.dump_data_to_csv)
+        self.button_layout.addWidget(self.csv_button)
+        # ================================================
+
+        self.layout.addLayout(self.button_layout)
+
         self.splitter.setStretchFactor(0, 3)
         self.splitter.setStretchFactor(1, 1)
 
@@ -499,6 +515,34 @@ class TabDistEstimateRoi(Tab):
             self.table.setItem(row_index, 0, QTableWidgetItem(label))
             self.table.setItem(row_index, 1, QTableWidgetItem(str(distance)))
             self.table.setItem(row_index, 2, QTableWidgetItem(str(crow)))
+
+    def dump_data_to_txt(self):
+        options = QFileDialog.Options()
+        file_name, _ = QFileDialog.getSaveFileName(self, "Save Data", "distances.txt", "Text Files (*.txt)", options=options)
+        if file_name:
+            with open(file_name, "w") as f:
+                for data in self.node.all_distances:
+                    label = data['right_roi']['label']
+                    distance = data['distance']
+                    crow = data['crow']
+                    f.write(f"Label: {label}, Distance: {distance}, Crow: {crow}\n")
+            print("Data dumped to {file_name}")
+
+    def dump_data_to_csv(self):
+        options = QFileDialog.Options()
+        file_name, _ = QFileDialog.getSaveFileName(self, "Save Data", "distances.csv", "CSV Files (*.csv)", options=options)
+        if file_name:
+            with open(file_name, "w") as f:
+                # Write the header
+                f.write("Label,Distance,Crow\n")
+                
+                # Write the data
+                for data in self.node.all_distances:
+                    label = data['right_roi']['label']
+                    distance = data['distance']
+                    crow = data['crow']
+                    f.write(f"{label},{distance},{crow}\n")
+            print(f"Data dumped to {file_name}")
 
 
 # region
