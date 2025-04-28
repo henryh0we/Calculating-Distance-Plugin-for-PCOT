@@ -155,9 +155,9 @@ class XFormImageRectify(XFormType):
         left_rectified_datum = Datum(Datum.IMG, left_rectified_cube)
         right_rectified_datum = Datum(Datum.IMG, right_rectified_cube)
 
-        # Create Datum objects
-        left_rectified_datum = Datum(Datum.IMG, left_rectified_cube)
-        right_rectified_datum = Datum(Datum.IMG, right_rectified_cube)
+        # # Create Datum objects
+        # left_rectified_datum = Datum(Datum.IMG, left_rectified_cube)
+        # right_rectified_datum = Datum(Datum.IMG, right_rectified_cube)
 
         # # Create Datum objects for the outputs
         # left_rectified_datum = Datum(Datum.IMG, left_rectified)
