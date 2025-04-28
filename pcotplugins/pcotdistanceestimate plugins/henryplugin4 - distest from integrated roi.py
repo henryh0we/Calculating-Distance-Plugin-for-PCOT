@@ -378,7 +378,7 @@ class TabDistEstimateRoi(Tab):
         # self.table.setColumnWidth(1, 250)
         # self.table.setColumnWidth(2, 250)  
         # 
-        self.table_widget = QTextEdit()      
+        self.table_widget = QTableWidget()      
 
         # self.scroll_area.setWidget(self.table)
         self.scroll_area.setWidget(self.table_widget)
@@ -538,8 +538,27 @@ class TabDistEstimateRoi(Tab):
 
         self.table = table
 
-        html_str = table.html()
-        self.table_widget.setHtml(html_str)
+        # html_str = table.html()
+        # self.table_widget.setHtml(html_str)
+
+        self.table_widget.clear()
+        self.table_widget.setRowCount(len(distance_list))
+        self.table_widget.setColumnCount(3)
+        self.table_widget.setHorizontalHeaderLabels(["Label", "Distance", "Crow"])
+
+        for row_index, data in enumerate(distance_list):
+            # left_label = data['left_roi']['label']
+            label = data['right_roi']['label']
+            distance = data['distance']
+            crow = data['crow']
+
+            print(f"Row {row_index}: Label: {label}, Distance (depth): {distance}, Crow: {crow}")
+
+            self.table_widget.setItem(row_index, 0, QTableWidgetItem(label))
+            self.table_widget.setItem(row_index, 1, QTableWidgetItem(str(distance)))
+            self.table_widget.setItem(row_index, 2, QTableWidgetItem(str(crow)))
+
+        self.table_widget.resizeColumnsToContents()
 
         # self.table.set_table(table)
 
