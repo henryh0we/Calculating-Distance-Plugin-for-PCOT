@@ -68,8 +68,7 @@ class XFormDistEstimateRoi(XFormType):
         self.addInputConnector("left", Datum.IMG)
         self.addInputConnector("right", Datum.IMG)
 
-        self.addOutputConnector("distance", Datum.NUMBER)
-        self.addOutputConnector("crow", Datum.NUMBER)
+        self.addOutputConnector("distance", Datum.DATA)
 
         self.params = TaggedDictType(
             left_img_rois =('Left Image ROIs', list, []),
@@ -200,7 +199,7 @@ class XFormDistEstimateRoi(XFormType):
         print("Computed distances:", self.all_distances)
         
         if self.all_distances:
-            node.setOutput(0, Datum(Datum.DATA, Value(self.all_distances_table), nullSourceSet))
+            node.setOutput(0, Datum(Datum.DATA, str(self.all_distances_table), nullSourceSet))
         else:
             node.setOutput(0, Datum(Datum.DATA, Value(float('nan')), nullSourceSet))
 
@@ -387,6 +386,16 @@ class TabDistEstimateRoi(Tab):
         self.scroll_area.setWidget(self.table_widget)
         self.splitter.addWidget(self.scroll_area)
 
+        self.load_buttons()
+
+        self.splitter.setStretchFactor(0, 3)
+        self.splitter.setStretchFactor(1, 1)
+
+        self.table = None
+
+        self.nodeChanged()
+
+    def load_buttons(self):
         self.button_layout = QHBoxLayout()
 
         # ===== DUMP DATA TO TXT ========
@@ -408,13 +417,6 @@ class TabDistEstimateRoi(Tab):
         # ================================================
 
         self.layout.addLayout(self.button_layout)
-
-        self.splitter.setStretchFactor(0, 3)
-        self.splitter.setStretchFactor(1, 1)
-
-        self.table = None
-
-        self.nodeChanged()
 
     def onNodeChanged(self):
         node = self.node
