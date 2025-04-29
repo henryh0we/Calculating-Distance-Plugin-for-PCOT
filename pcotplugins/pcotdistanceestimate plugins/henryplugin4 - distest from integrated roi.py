@@ -77,7 +77,16 @@ class XFormDistEstimateRoi(XFormType):
         )
 
     def load_json(self, file_path):
+        """
+        Loads the camera data from a file at the given path, and then uses that data to set the focal length, baseline, and camera height of the object.
 
+        Args:
+            file_path (str): The path to the file to load from.
+
+        Returns:
+            None
+        """
+        
         if os.path.exists(file_path):
             with open(file_path, 'r') as file:
                 data = json.load(file)
@@ -193,9 +202,9 @@ class XFormDistEstimateRoi(XFormType):
         
 
         if self.all_distances:
-            node.setOutput(0, Datum(Datum.NUMBER, Value(self.all_distances[0]['distance']), nullSourceSet))
+            node.setOutput(0, Datum(Datum.DATA, Value(self.all_distances_table), nullSourceSet))
         else:
-            node.setOutput(0, Datum(Datum.NUMBER, Value(float('nan')), nullSourceSet))
+            node.setOutput(0, Datum(Datum.DATA, Value(float('nan')), nullSourceSet))
 
 
         if node.tabs is not None:
