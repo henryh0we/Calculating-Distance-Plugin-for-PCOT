@@ -455,6 +455,7 @@ if ((len(points_left) == 1) and (len(points_right) == 1)):
     # diagonal_length.append(8)
     diagonal_length.append(9)
     diagonal_length.append(9.125)
+    diagonal_length.append(9.992)
     # diagonal_length.append(9.25)
     # diagonal_length.append(9.5)
     # diagonal_length.append(10)
@@ -476,7 +477,8 @@ if ((len(points_left) == 1) and (len(points_right) == 1)):
     # sensor_width_mm = side_length
 
 def calculate_depth(disparity, diagonal_length):
-    focal_length_mm = 12
+    # focal_length_mm = 12 # OG focal length
+    focal_length_mm = 12.1 # updated focal length
     # focal_length_mm = 12.65
     image_width_pixels = 1024
 
@@ -496,7 +498,35 @@ def calculate_depth(disparity, diagonal_length):
 
     return sensor_width_mm, depth, approximate_ground_distance, focal_length
 
+def calculate_depth_from_width(disparity, sensor_width_mm):
+    # focal_length_mm = 12 # OG focal length
+    focal_length_mm = 12.1 # updated focal length
+    # focal_length_mm = 12.65
+    image_width_pixels = 1024
+
+    # sensor_width_mm = calc_side_length(diagonal_length)
+
+    focal_length_pixels = (focal_length_mm / sensor_width_mm) * image_width_pixels
+
+    focal_length = focal_length_pixels
+
+    baseline = 0.5  # Distance in meters OG
+
+    baseline = 0.535  # Distance in meters after some experimenting for accuracy
+
+    depth = (focal_length * baseline) / disparity
+
+    aupe_height = 1.094
+
+    approximate_ground_distance = np.sqrt(depth**2 - aupe_height**2)
+
+    return sensor_width_mm, depth, approximate_ground_distance, focal_length
+
 for length in diagonal_length:
     sensor_width_mm, depth, approximate_ground_distance, focal_length = calculate_depth(disparity, length)
     print(f"diagonal length: {length} mm, sensor width: {sensor_width_mm:.3f} mm, depth: {depth:.3f} m, approximate ground distance: {approximate_ground_distance:.3f} m, focal length: {focal_length:.12f} pixels")
 
+print("======")
+
+sensor_width_mm, depth, approximate_ground_distance, focal_length = calculate_depth_from_width(disparity, 7.0656)
+print(f"sensor width: {sensor_width_mm:.3f} mm, depth: {depth:.3f} m, approximate ground distance: {approximate_ground_distance:.3f} m, focal length: {focal_length:.12f} pixels")
