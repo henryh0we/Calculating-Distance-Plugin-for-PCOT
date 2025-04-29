@@ -201,52 +201,6 @@ class XFormDistEstimateRoi(XFormType):
         if node.tabs is not None:
             for tab in node.tabs:
                 tab.onNodeChanged()
-        # region
-        # left_coords = []
-        # right_coords = []
-
-        # for roi in left_img_rois:
-        #     left_coords.extend(self.extract_roi_points(roi))
-        # for roi2 in right_img_rois:
-        #     right_coords.extend(self.extract_roi_points(roi2))
-        # # if len(left_coords) > 0 and len(right_coords) > 0:
-        # #     distance = self.estimate_distance(left_coords[0], right_coords[0])
-        
-        # if not left_coords or not right_coords:
-        #     print("Error: No coordinates extracted from ROIs")
-        #     node.setOutput(0, Datum(Datum.NUMBER, Value(float('nan')), nullSourceSet))  
-        #     return
-
-        # distance = 10
-        # try:
-        #     distance = self.estimate_distance(left_coords[0][0], right_coords[0][0])
-        # except Exception as e:
-        #     print(f"Error in estimate_distance calculation: {e}")
-        #     node.setOutput(0, Datum(Datum.NUMBER, Value(float('nan')), nullSourceSet))  
-        #     return
-        
-        # # camera_height = 1.094
-
-        # try:
-        #     crow_distance = (distance**2 - camera_height**2)**0.5
-        # except Exception as e:
-        #     print(f"Error in crow distance calculation: {e}")
-
-        # distance_datum = Datum(Datum.NUMBER, Value(distance), nullSourceSet)
-        # crow_datum = Datum(Datum.NUMBER, Value(crow_distance), nullSourceSet)
-
-        # node.setOutput(0, distance_datum)
-        # node.setOutput(1, crow_datum)
-
-        # if node.tab is not None:
-        #     node.tab.update()
-
-    # def getDistanceList(self):
-    #     print("Getting distance list")
-    #     all_distances = getattr(self, 'all_distances', [])
-    #     print(f"Returning {len(distances)} distances")
-    #     return distances
-    # endregion
 
     def get_crow(self, distance):
         height = self.camera_height
@@ -261,16 +215,11 @@ class XFormDistEstimateRoi(XFormType):
         elif isinstance(roi, ROICircle):
             return [(roi.x, roi.y)]  # Center and radius are also attributes
         elif isinstance(roi, ROIPainted):
-            # mask_points = np.column_stack(np.where(roi.mask))  # Assuming roi.mask is a 2D numpy array
-            # return [(int(x), int(y)) for y, x in mask_points]  # Convert to list of (x, y) tuples
             return [roi.centroid()]
         else:
             return []
 
     def estimate_distance(self, left_x, right_x):
-        # left_x = left_coords[0]
-        # right_x = right_coords[0]
-
         disparity = right_x - left_x
 
         if disparity == 0:
@@ -404,17 +353,8 @@ class TabDistEstimateRoi(Tab):
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
 
-        # self.table = QTableWidget()
-        # self.table.setColumnCount(3)
-        # self.table.setHorizontalHeaderLabels(["Label", "Distance (Depth)", "Crow"])
-
-        # self.table.setColumnWidth(0, 200)
-        # self.table.setColumnWidth(1, 250)
-        # self.table.setColumnWidth(2, 250)  
-        # 
         self.table_widget = QTableWidget()      
 
-        # self.scroll_area.setWidget(self.table)
         self.scroll_area.setWidget(self.table_widget)
         self.splitter.addWidget(self.scroll_area)
 
@@ -446,102 +386,11 @@ class TabDistEstimateRoi(Tab):
         self.table = None
 
         self.nodeChanged()
-    # region
-    # def __init__(self, node, w):
-    #     super().__init__(w, node)
-
-    #     self.layout = QVBoxLayout(self.w)
-        
-    #     self.canvas_widget = QWidget()
-    #     self.canvas_layout = QHBoxLayout(self.canvas_widget)
-
-    #     self.left_canvas = Canvas(self)
-    #     self.right_canvas = Canvas(self)
-
-    #     self.left_canvas.setGraph(node.graph)
-    #     self.right_canvas.setGraph(node.graph)
-
-    #     self.canvas_layout.addWidget(self.left_canvas)
-    #     self.canvas_layout.addWidget(self.right_canvas)
-
-    #     self.layout.addWidget(self.canvas_widget)
-
-    #     self.scroll_area = QScrollArea()
-    #     self.scroll_area.setWidgetResizable(True)
-
-    #     self.table = QTableWidget()
-    #     self.table.setColumnCount(3)
-    #     self.table.setHorizontalHeaderLabels(["Left ROI Label", "Right ROI Label", "Distance"])
-
-    #     self.table.setColumnWidth(0, 200)
-    #     self.table.setColumnWidth(1, 200)
-    #     self.table.setColumnWidth(2, 250)        
-
-    #     self.scroll_area.setWidget(self.table)
-    #     self.layout.addWidget(self.scroll_area)
-
-    #     self.nodeChanged()
-
-    # def __init__(self, node, w):
-    #     super().__init__(w, node)
-
-    #     self.splitter = QSplitter()
-    #     self.layout = QVBoxLayout(self.w)
-    #     self.layout.addWidget(self.splitter)
-        
-    #     self.canvas_widget = QWidget()
-    #     self.canvas_layout = QHBoxLayout(self.canvas_widget)
-
-    #     self.left_canvas = Canvas(self)
-    #     self.right_canvas = Canvas(self)
-
-    #     self.left_canvas.setGraph(node.graph)
-    #     self.right_canvas.setGraph(node.graph)
-
-    #     self.canvas_layout.addWidget(self.left_canvas)
-    #     self.canvas_layout.addWidget(self.right_canvas)
-
-    #     self.splitter.addWidget(self.canvas_widget)
-
-    #     self.scroll_area = QScrollArea()
-    #     self.scroll_area.setWidgetResizable(True)
-
-    #     self.table = QTableWidget()
-    #     self.table.setColumnCount(3)
-    #     self.table.setHorizontalHeaderLabels(["Left ROI Label", "Right ROI Label", "Distance"])
-
-    #     self.table.setColumnWidth(0, 200)
-    #     self.table.setColumnWidth(1, 200)
-    #     self.table.setColumnWidth(2, 250)        
-
-    #     self.scroll_area.setWidget(self.table)
-    #     self.splitter.addWidget(self.scroll_area)
-
-    #     self.splitter.setStretchFactor(0, 3)
-    #     self.splitter.setStretchFactor(1, 1)
-
-    #     self.nodeChanged()
-    # endregion
 
     def onNodeChanged(self):
         node = self.node
         print(f"Node type: {type(node)}")
         print(f"Node attributes before access: {dir(node)}")
-
-        distance_list = node.all_distances
-        # node.all_distances_table = node.all_distances_table
-
-        # print("Table:")
-        # for row in range(table.__len__()):
-        #     for col in range(table._keys()):
-        #         item = table.item(row, col)
-        #         print(item.text() if item else '', end=' ')
-        #     print()
-
-        # table = node.populate_table()
-        # distance_list = node.type.getDistanceList()  # Assume this method returns the all_distances list
-        # print(distance_list)
-        # self.populate_table(distance_list)
 
         print(f"Table before update: {node.all_distances_table}") 
         self.update_tab_table(node.all_distances_table)
@@ -565,39 +414,6 @@ class TabDistEstimateRoi(Tab):
             print("Right rectified image is not available")
 
     def update_tab_table(self, distance_table):
-        # print(f"Populating table with {len(distance_list)} entries")
-        # self.table.setRowCount(len(distance_list))
-        # for row_index, data in enumerate(distance_list):
-        #     # left_label = data['left_roi']['label']
-        #     label = data['right_roi']['label']
-        #     distance = data['distance']
-        #     crow = data['crow']
-
-        #     print(f"Row {row_index}: Label: {label}, Distance: {distance}, Crow: {crow}")
-
-        #     self.table.setItem(row_index, 0, QTableWidgetItem(label))
-        #     self.table.setItem(row_index, 1, QTableWidgetItem(str(distance)))
-        #     self.table.setItem(row_index, 2, QTableWidgetItem(str(crow)))
-
-        # table = Table()
-        # for data in distance_list:
-        #     # left_label = data['left_roi']['label']
-        #     label = data['right_roi']['label']
-        #     distance = data['distance']
-        #     crow = data['crow']
-
-        #     table.newRow(label)
-        #     table.add('Label', label)
-        #     table.add('Distance', distance)
-        #     table.add('Crow', crow)
-
-        #     print(f"Label: {label}, Distance: {distance}, Crow: {crow}")
-
-        # self.table = table
-
-        # html_str = table.html()
-        # self.table_widget.setHtml(html_str)
-
         self.table_widget.clear()
 
         row_count = distance_table.__len__()
@@ -614,17 +430,6 @@ class TabDistEstimateRoi(Tab):
 
         self.table_widget.setHorizontalHeaderLabels(headers)
 
-        # for row_index, data in enumerate(distance_table):
-        #     # left_label = data['left_roi']['label']
-        #     label = data['right_roi']['label']
-        #     distance = data['distance']
-        #     crow = data['crow']
-
-        #     print(f"Row {row_index}: Label: {label}, Distance (depth): {distance}, Crow: {crow}")
-
-        #     self.table_widget.setItem(row_index, 0, QTableWidgetItem(label))
-        #     self.table_widget.setItem(row_index, 1, QTableWidgetItem(str(distance)))
-        #     self.table_widget.setItem(row_index, 2, QTableWidgetItem(str(crow)))
         print(f"Headers: {headers}")
         print(f"Distance table: {distance_table}")
 
@@ -636,8 +441,6 @@ class TabDistEstimateRoi(Tab):
                 self.table_widget.setItem(row_index, col_index, QTableWidgetItem(str(data[col_index])))
 
         self.table_widget.resizeColumnsToContents()
-
-        # self.table.set_table(table)
 
     def dump_data_to_txt(self):
         if self.node.all_distances_table is None:
@@ -669,19 +472,6 @@ class TabDistEstimateRoi(Tab):
                 for header in headers:
                     f.write(f"{header},")
                 f.write("\n")
-                
-                # Write the data
-                # for data in self.node.all_distances:
-                #     label = data['right_roi']['label']
-                #     distance = data['distance']
-                #     crow = data['crow']
-                #     f.write(f"{label},{distance},{crow}\n")
-
-                # for row in self.table:
-                #     label, distance, crow = row
-                #     # distance = data['distance']
-                #     # crow = data['crow']
-                #     f.write(f"{label},{distance},{crow}\n")
 
                 for row in self.node.all_distances_table:
                     f.write(",".join(map(str, row)) + "\n")
@@ -699,63 +489,3 @@ class TabDistEstimateRoi(Tab):
             with open(file_name, "w") as f:
                 f.write(self.node.all_distances_table.html())
             print(f"Data dumped to {file_name}")
-
-
-# region
-# class TabDistEstimateRoi(Tab):
-#     def __init__(self, node, w):
-#         super().__init__(w, node)
-#         # self.layout = QGridLayout(self.w)
-#         self.layout = QVBoxLayout(self.w)
-
-#         self.distance_label = QLabel("Distance: N/A")
-#         # self.layout.addWidget(self.distance_label, 0, 0)
-#         self.layout.addWidget(self.distance_label)
-
-#         self.crow_label = QLabel("Crow Distance: N/A")
-#         self.layout.addWidget(self.crow_label)
-
-#         self.height_label = QLabel("Height: N/A")
-#         self.layout.addWidget(self.height_label)
-
-#         self.nodeChanged()
-
-#     def onNodeChanged(self):
-#         distance_datum = self.node.getOutput(0)
-#         crow_datum = self.node.getOutput(1)
-
-        
-#         # Debugging information
-#         print(f"distance_datum: {distance_datum}")
-#         if distance_datum is not None:
-#             print(f"type of distance_datum: {type(distance_datum)}")
-#             self.distance_label.setText(f"Distance: {distance_datum}")
-#         else:
-#             self.distance_label.setText("Distance: N/A")
-        
-#         if crow_datum is not None:
-#             print(f"type of crow_datum: {type(crow_datum)}")
-#             self.crow_label.setText(f"Crow Distance: {crow_datum}")
-#         else:
-#             self.crow_label.setText("Crow Distance: N/A")
-
-#         self.height_label.setText(f"Height: {camera_height}")
-
-# class DistEstimateRoiTab(QWidget):
-#     def __init__(self, node, window):
-#         super().__init__()
-#         self.node = node
-#         self.window = window
-#         self.layout = QVBoxLayout()
-#         self.distance_label = QLabel("Distance: N/A")
-#         self.layout.addWidget(self.distance_label)
-#         self.setLayout(self.layout)
-#         self.update()
-
-#     def update(self):
-#         distance_datum = self.node.getOutput(0)
-#         if distance_datum is not None and distance_datum.val is not None:
-#             self.distance_label.setText(f"Distance: {distance_datum.val.val}")
-#         else:
-#             self.distance_label.setText("Distance: N/A")
-# endregion
