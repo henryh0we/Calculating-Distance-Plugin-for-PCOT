@@ -197,15 +197,12 @@ class XFormDistEstimateRoi(XFormType):
         node.left_rectified = left_img_datum.get(Datum.IMG)
         node.right_rectified = right_img_datum.get(Datum.IMG)
 
-
         print("Computed distances:", self.all_distances)
         
-
         if self.all_distances:
             node.setOutput(0, Datum(Datum.DATA, Value(self.all_distances_table), nullSourceSet))
         else:
             node.setOutput(0, Datum(Datum.DATA, Value(float('nan')), nullSourceSet))
-
 
         if node.tabs is not None:
             for tab in node.tabs:
@@ -215,8 +212,16 @@ class XFormDistEstimateRoi(XFormType):
         height = self.camera_height
         return (distance**2 - height**2)**0.5
         
-    
     def extract_roi_points(self, roi):
+        """Extracts the points from the ROI. Functionally irrelevant now, after 
+        switching to useing MultiDot (all ROIs should be ROICircle)
+
+        Args:
+            roi (_type_): region of interest
+
+        Returns:
+            list: list containing tuple of x and y coordinates
+        """
         if isinstance(roi, ROIPoly):
             return roi.points  # List of (x, y) tuples
         elif isinstance(roi, ROIRect):
@@ -229,6 +234,18 @@ class XFormDistEstimateRoi(XFormType):
             return []
 
     def estimate_distance(self, left_x, right_x):
+        """Estimates the depth of a point given its x coordinates in the left and right images.
+
+        Parameters:
+        left_x (float): The x coordinate of the point in the left image.
+        right_x (float): The x coordinate of the point in the right image.
+
+        Returns:
+        float: The estimated depth of the point.
+
+        Raises:
+        ValueError: If the disparity is zero.
+        """
         disparity = right_x - left_x
 
         if disparity == 0:
@@ -290,6 +307,7 @@ class XFormDistEstimateRoi(XFormType):
         print("No ROIs found")
         return {}
 
+
     def store_distance_and_rois(self, distance, crow, left_roi, right_roi):
         """
         Stores the distance and the two ROIs in a dictionary.
@@ -310,8 +328,14 @@ class XFormDistEstimateRoi(XFormType):
         }
         return storage
 
-    def populate_table(self):
+    def populate_table(self):        
+        """
+        Populate the table with the stored distances and ROIs.
         
+        Iterates through the stored distances and ROIs, and populates a table with the
+        results. The table is sorted by the label of the right ROI.
+        """
+    
         table = Table()
         for data in self.all_distances:
             # left_label = data['left_roi']['label']
@@ -328,12 +352,8 @@ class XFormDistEstimateRoi(XFormType):
 
         self.all_distances_table = table
     
-
 class UnlabeledROIException(Exception):
     pass
-
-# class TabDistanceTable(Tab):
-#     def __init__(self, node, w):
 
 class TabDistEstimateRoi(Tab):
     def __init__(self, node, w):
