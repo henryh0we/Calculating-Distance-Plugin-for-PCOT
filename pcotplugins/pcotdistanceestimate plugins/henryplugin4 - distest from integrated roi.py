@@ -104,8 +104,7 @@ class XFormDistEstimateRoi(XFormType):
         # No initialisation required.
         pass
 
-    def perform(self, node):
-        
+    def perform(self, node):        
         self.all_distances = []
         self.all_distances_table = Table()
 
@@ -198,7 +197,7 @@ class XFormDistEstimateRoi(XFormType):
 
         print("Computed distances:", self.all_distances)
         
-        if self.all_distances:
+        if self.all_distances_table:
             node.setOutput(0, Datum(Datum.DATA, str(self.all_distances_table), nullSourceSet))
         else:
             node.setOutput(0, Datum(Datum.DATA, Value(float('nan')), nullSourceSet))
