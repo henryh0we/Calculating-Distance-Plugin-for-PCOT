@@ -74,43 +74,6 @@ class XFormImageRectify(XFormType):
         
         pass
 
-    # def perform(self, node):
-    #     left_img_datum = node.getInput('Left Image', Datum.IMG)
-    #     right_img_datum = node.getInput('Right Image', Datum.IMG)
-        
-    #     left_img = left_img_datum.get(Datum.IMG)
-    #     right_img = right_img_datum.get(Datum.IMG)
-
-    #     # left_img = left_img_datum.img 
-    #     # right_img = right_img_datum.img
-
-    #     map_left_x, map_left_y = cv.initUndistortRectifyMap(
-    #         self.mtx_left,  self.dist_left, self.rect_left, self.proj_left, left_img.shape[:2], cv.CV_32FC1
-    #         )
-    #     map_right_x, map_right_y = cv.initUndistortRectifyMap(
-    #         self.mtx_right, self.dist_right, self.rect_right, self.proj_right, right_img.shape[:2], cv.CV_32FC1
-    #         )
-
-    #     # map_left_x, map_left_y = cv.initUndistortRectifyMap(
-    #     #     self.mtx_left, self.dist_left, self.rect_left, self.proj_left, (node.getInput('Left Image').data.shape[1], node.getInput('Left Image').data.shape[0]), cv.CV_32FC1)
-    #     # map_right_x, map_right_y = cv.initUndistortRectifyMap(
-    #     #     self.mtx_right, self.dist_right, self.rect_right, self.proj_right, (node.getInput('Right Image').data.shape[1], node.getInput('Right Image').data.shape[0]), cv.CV_32FC1)
-
-    #     left_rectified = cv.remap(left_img, map_left_x, map_left_y, cv.INTER_LINEAR)
-    #     right_rectified = cv.remap(right_img, map_right_x, map_right_y, cv.INTER_LINEAR)
-
-    #     node.left_rectified = left_rectified
-    #     node.right_rectified = right_rectified
-
-    #     left_rectified_datum = Datum(Datum.IMG, left_rectified)
-    #     right_rectified_datum = Datum(Datum.IMG, right_rectified)
-
-    #     # left_rectified = cv.remap(node.getInput('Left Image').data, map_left_x, map_left_y, cv.INTER_LINEAR)
-    #     # right_rectified = cv.remap(node.getInput('Right Image').data, map_right_x, map_right_y, cv.INTER_LINEAR)
-
-    #     node.setOutput('Left Output', left_rectified_datum)
-    #     node.setOutput('Right Output', right_rectified_datum)
-
     def perform(self, node):
         left_img_datum = node.getInput(0)  # Use index 0 for 'Left Image'
         right_img_datum = node.getInput(1)  # Use index 1 for 'Right Image'
@@ -135,9 +98,19 @@ class XFormImageRectify(XFormType):
             raise TypeError("Input images must be of type np.ndarray")
 
         map_left_x, map_left_y = cv.initUndistortRectifyMap(
-            self.mtx_left, self.dist_left, self.rect_left, self.proj_left, left_img.shape[:2], cv.CV_32FC1)
+            self.mtx_left, 
+            self.dist_left, 
+            self.rect_left, 
+            self.proj_left, 
+            left_img.shape[:2], 
+            cv.CV_32FC1)
         map_right_x, map_right_y = cv.initUndistortRectifyMap(
-            self.mtx_right, self.dist_right, self.rect_right, self.proj_right, right_img.shape[:2], cv.CV_32FC1
+            self.mtx_right, 
+            self.dist_right, 
+            self.rect_right, 
+            self.proj_right, 
+            right_img.shape[:2], 
+            cv.CV_32FC1
         )
 
         left_rectified = cv.remap(left_img, map_left_x, map_left_y, cv.INTER_LINEAR)
@@ -155,21 +128,11 @@ class XFormImageRectify(XFormType):
         left_rectified_datum = Datum(Datum.IMG, left_rectified_cube)
         right_rectified_datum = Datum(Datum.IMG, right_rectified_cube)
 
-        # # Create Datum objects
-        # left_rectified_datum = Datum(Datum.IMG, left_rectified_cube)
-        # right_rectified_datum = Datum(Datum.IMG, right_rectified_cube)
-
-        # # Create Datum objects for the outputs
-        # left_rectified_datum = Datum(Datum.IMG, left_rectified)
-        # right_rectified_datum = Datum(Datum.IMG, right_rectified)
-
         # Set the output connectors
         node.setOutput(0, left_rectified_datum)  # Use index 0 for 'Left Output'
         node.setOutput(1, right_rectified_datum)  # Use index 1 for 'Right Output'
 
     def load_json(self, file_path):
-        # camera_data_file_path = 'HenryFiles/camera_data.json'
-        # file_path = 'pcotplugins/pcotdistanceestimate plugins/mtx_dst_rect_proj.json'
 
         if os.path.exists(file_path):
 
@@ -185,37 +148,6 @@ class XFormImageRectify(XFormType):
             self.dist_right = np.array(data['dist_right']).reshape(-1,1)
             self.rect_right = np.array(data['rect_right'])
             self.proj_right = np.array(data['proj_right'])
-
-
-# class TabImageRectify(pcot.ui.tabs.Tab):
-#     def __init__(self, node, window):
-#         super().__init__(window, node)
-#         layout = QVBoxLayout(self.w)
-        
-#         self.leftImageLabel = QLabel("Left Rectified Image")
-#         self.rightImageLabel = QLabel("Right Rectified Image")
-        
-#         layout.addWidget(self.leftImageLabel)
-#         layout.addWidget(self.rightImageLabel)
-        
-#         self.nodeChanged()
-
-#     # def onNodeChanged(self):
-#     #     if self.node.left_rectified is not None:
-#     #         pixmap = pcot.utils.image.toQPixmap(self.node.left_rectified)
-#     #         self.leftImageLabel.setPixmap(pixmap)
-        
-#     #     if self.node.right_rectified is not None:
-#     #         pixmap = pcot.utils.image.toQPixmap(self.node.right_rectified)
-#     #         self.rightImageLabel.setPixmap(pixmap)
-#     def onNodeChanged(self):
-#         if hasattr(self.node, 'left_rectified') and self.node.left_rectified is not None:
-#             pixmap = pcot.utils.image.toQPixmap(self.node.left_rectified)
-#             self.leftImageLabel.setPixmap(pixmap)
-        
-#         if hasattr(self.node, 'right_rectified') and self.node.right_rectified is not None:
-#             pixmap = pcot.utils.image.toQPixmap(self.node.right_rectified)
-#             self.rightImageLabel.setPixmap(pixmap)
 
 class TabImageRectify(Tab):
     def __init__(self, node, window):
