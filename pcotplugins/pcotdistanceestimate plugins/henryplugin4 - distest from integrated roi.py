@@ -249,7 +249,7 @@ class XFormDistEstimateRoi(XFormType):
     # endregion
 
     def get_crow(self, distance):
-        height = 1.094
+        height = self.camera_height
         return (distance**2 - height**2)**0.5
         
     
