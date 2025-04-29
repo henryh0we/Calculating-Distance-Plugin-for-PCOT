@@ -278,6 +278,9 @@ class XFormDistEstimateRoi(XFormType):
         
         disparity = abs(disparity) #  Always non-negative
 
+        print("SELF FLENGTH", self.focal_length)
+        print("SELF BASELINE", self.baseline)
+
         depth = self.focal_length * self.baseline / disparity
 
         return depth
