@@ -561,7 +561,17 @@ class TabDistEstimateRoi(Tab):
         else:
             print("Right rectified image is not available")
 
+        if self.node.left_img_datum is None:
+            node.setOutput(0, Datum(Datum.NUMBER, Value(float('nan')), nullSourceSet))
+            self.left_canvas.setImg(None)
+            return
+        if self.node.right_img_datum is None:
+            node.setOutput(0, Datum(Datum.NUMBER, Value(float('nan')), nullSourceSet))
+            self.right_canvas.setImg(None)
+            return
+
     def update_tab_table(self, distance_table):
+        # region
         # print(f"Populating table with {len(distance_list)} entries")
         # self.table.setRowCount(len(distance_list))
         # for row_index, data in enumerate(distance_list):
@@ -594,6 +604,7 @@ class TabDistEstimateRoi(Tab):
 
         # html_str = table.html()
         # self.table_widget.setHtml(html_str)
+        # endregion
 
         self.table_widget.clear()
 
