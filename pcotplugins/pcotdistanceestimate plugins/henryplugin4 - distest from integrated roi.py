@@ -194,6 +194,8 @@ class XFormDistEstimateRoi(XFormType):
         node.all_distances_table = self.all_distances_table
         node.left_rectified = left_img_datum.get(Datum.IMG)
         node.right_rectified = right_img_datum.get(Datum.IMG)
+        node.left_img_datum = left_img_datum
+        node.right_img_datum = right_img_datum
 
         print("Computed distances:", self.all_distances)
         
