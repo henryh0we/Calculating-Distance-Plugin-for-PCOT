@@ -45,7 +45,9 @@ def generate_data():
             'camera_height': camera_height
         }
     
-    data['focal_length'] = focal_length_from_sensor_width(side_length, focal_length_mm, 1024)
+    new_focal_length = focal_length_from_sensor_width(side_length, focal_length_mm, 1024)
+    data['focal_length'] = new_focal_length
+    print(f"New focal length: {new_focal_length}")
     
     with open(file_path, 'w') as f:
         json.dump(data, f, indent=4)
