@@ -512,7 +512,7 @@ def calculate_depth_from_width(disparity, sensor_width_mm):
 
     baseline = 0.5  # Distance in meters OG
 
-    baseline = 0.535  # Distance in meters after some experimenting for accuracy
+    # baseline = 0.535  # Distance in meters after some experimenting for accuracy
 
     depth = (focal_length * baseline) / disparity
 
