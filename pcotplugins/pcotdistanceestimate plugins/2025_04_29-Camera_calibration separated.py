@@ -6,7 +6,8 @@ import json
 
 # Chessboard parameters
 chessboard_size = (9, 6)  # Number of inner corners
-square_size = 1.0  # Size of a square 
+# square_size = 1.0  # Size of a square 
+square_size = 0.02 # size of square in m = 20mm
 img_size = (1024, 1024)
 
 # Prepare object points (0,0,0), (1,0,0), (2,0,0) ... (8,5,0)
@@ -197,10 +198,15 @@ def full_calibration():
     flags |= cv.CALIB_FIX_INTRINSIC
     # criteria_stereo = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
+    with open('pcotplugins/pcotdistanceestimate plugins/mtx_dst_rect_proj.json', 'r') as file:
+        data = json.load(file)
+    known_T = np.array(data['known_t'])
+    known_R = np.array(data['known_r'])
+
     ret_stereo, mtx_left, dist_left, mtx_right, dist_right, R, T, E, F = cv.stereoCalibrate(
         objpoints, imgpoints_left, imgpoints_right, 
         mtx_left, dist_left, mtx_right, dist_right, 
-        img_size, criteria=criteria, flags=flags)
+        img_size, known_R, known_T, criteria=criteria, flags=flags)
     
     print("Successfully performed stereo calibration")
     print(R)
@@ -216,22 +222,26 @@ def full_calibration():
 
     print("Successfully computed rectification transforms")
 
-    data = {
-        "mtx_left": mtx_left.tolist(),
-        "dist_left": dist_left.tolist(),
-        "rect_left": rect_left.tolist(),
-        "proj_left": proj_left.tolist(),
+    if os.path.exists(camera_data_file_path):
+        with open(camera_data_file_path, 'r') as file:
+            data = json.load(file)
+    else:
+        data = {}
 
-        "mtx_right": mtx_right.tolist(),
-        "dist_right": dist_right.tolist(),
-        "rect_right": rect_right.tolist(),
-        "proj_right": proj_right.tolist(),
+    data["mtx_left"] = mtx_left.tolist()
+    data["dist_left"] = dist_left.tolist()
+    data["rect_left"] = rect_left.tolist()
+    data["proj_left"] = proj_left.tolist()
 
-        "R": R.tolist(),
-        "T": T.tolist(),
-        "E": E.tolist(),
-        "F": F.tolist(),
-    }
+    data["mtx_right"] = mtx_right.tolist()
+    data["dist_right"] = dist_right.tolist()
+    data["rect_right"] = rect_right.tolist()
+    data["proj_right"] = proj_right.tolist()
+
+    data["R"] = R.tolist()
+    data["T"] = T.tolist()
+    data["E"] = E.tolist()
+    data["F"] = F.tolist()
 
     with open(camera_data_file_path, 'w') as file:
         json.dump(data, file, indent=4)
