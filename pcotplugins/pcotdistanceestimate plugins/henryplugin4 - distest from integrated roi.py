@@ -443,6 +443,15 @@ class TabDistEstimateRoi(Tab):
         else:
             print("Right rectified image is not available")
 
+        if self.node.left_img_datum is None:
+            node.setOutput(0, Datum(Datum.NUMBER, Value(float('nan')), nullSourceSet))
+            self.left_canvas.setImg(None)
+            return
+        if self.node.right_img_datum is None:
+            node.setOutput(0, Datum(Datum.NUMBER, Value(float('nan')), nullSourceSet))
+            self.right_canvas.setImg(None)
+            return
+
     def update_tab_table(self, distance_table):
         self.table_widget.clear()
 
