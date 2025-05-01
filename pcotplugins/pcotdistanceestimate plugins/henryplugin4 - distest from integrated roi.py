@@ -322,9 +322,9 @@ class XFormDistEstimateRoi(XFormType):
         """
         storage = {
             "distance": distance,
+            "crow": crow,
             "left_roi": left_roi.to_tagged_dict(),
             "right_roi": right_roi.to_tagged_dict(),
-            "crow": crow
         }
         return storage
 
