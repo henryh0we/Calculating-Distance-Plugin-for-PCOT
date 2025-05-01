@@ -34,7 +34,7 @@ class XFormDistEstimateRoi(XFormType):
     and then calculate the distance to said point
     This version takes in multiple rois and then returns 
     the distance for all of them.
-    The distances are all displayed in a table
+    The depths are all displayed in a table
 
     Author: Henry Howe
     Date:2025-04-22
@@ -58,12 +58,12 @@ class XFormDistEstimateRoi(XFormType):
 
         self.load_json(file_data_path)
 
-        self.all_distances = []
-        # self.all_distances_table = None
-        self.all_distances_table = Table()
+        self.all_depths = []
+        # self.all_depths_table = None
+        self.all_depths_table = Table()
 
-        print(f"Initialized all_distances: {self.all_distances}")
-        print(f"Initialized all_distances_table: {self.all_distances_table}")
+        print(f"Initialized all_depths: {self.all_depths}")
+        print(f"Initialized all_depths_table: {self.all_depths_table}")
 
         self.addInputConnector("left", Datum.IMG)
         self.addInputConnector("right", Datum.IMG)
@@ -105,8 +105,8 @@ class XFormDistEstimateRoi(XFormType):
         pass
 
     def perform(self, node):        
-        self.all_distances = []
-        self.all_distances_table = Table()
+        self.all_depths = []
+        self.all_depths_table = Table()
 
         left_img_datum = node.getInput(0)  
         right_img_datum = node.getInput(1)  
@@ -139,7 +139,7 @@ class XFormDistEstimateRoi(XFormType):
         print(left_rois_sorted)
         print(right_rois_sorted)
 
-        # all_distances = []
+        # all_depths = []
 
         for label in sorted(left_rois_sorted.keys() & right_rois_sorted.keys()):
             print("Processing label:", label)
@@ -158,17 +158,17 @@ class XFormDistEstimateRoi(XFormType):
             left_x = left_coord[0][0]
             right_x = right_coord[0][0]
 
-            distance = self.estimate_distance(left_x, right_x)
-            print("Estimated Distance:", distance)
+            depth = self.estimate_depth(left_x, right_x)
+            print("Estimated Depth:", depth)
 
             left_roi = left_rois_match[0]
             right_roi = right_rois_match[0]
 
-            crow = self.get_crow(distance)
+            crow = self.get_crow(depth)
 
-            storage = self.store_distance_and_rois(distance, crow, left_roi, right_roi)
+            storage = self.store_depth_and_rois(depth, crow, left_roi, right_roi)
 
-            self.all_distances.append(storage)
+            self.all_depths.append(storage)
             # region
             # left_rois_match = left_rois_sorted[label]
             # right_rois_match = right_rois_sorted[label]
@@ -185,22 +185,22 @@ class XFormDistEstimateRoi(XFormType):
 
             # print(storage)
 
-            # all_distances.append(storage)
+            # all_depths.append(storage)
             # endregion
 
         self.populate_table()
 
-        node.all_distances = self.all_distances
-        node.all_distances_table = self.all_distances_table
+        node.all_depths = self.all_depths
+        node.all_depths_table = self.all_depths_table
         node.left_rectified = left_img_datum.get(Datum.IMG)
         node.right_rectified = right_img_datum.get(Datum.IMG)
         node.left_img_datum = left_img_datum
         node.right_img_datum = right_img_datum
 
-        print("Computed distances:", self.all_distances)
+        print("Computed depths:", self.all_depths)
         
-        if self.all_distances_table:
-            node.setOutput(0, Datum(Datum.DATA, str(self.all_distances_table), nullSourceSet))
+        if self.all_depths_table:
+            node.setOutput(0, Datum(Datum.DATA, str(self.all_depths_table), nullSourceSet))
         else:
             node.setOutput(0, Datum(Datum.DATA, Value(float('nan')), nullSourceSet))
 
@@ -208,9 +208,9 @@ class XFormDistEstimateRoi(XFormType):
             for tab in node.tabs:
                 tab.onNodeChanged()
 
-    def get_crow(self, distance):
+    def get_crow(self, depth):
         height = self.camera_height
-        return (distance**2 - height**2)**0.5
+        return (depth**2 - height**2)**0.5
         
     def extract_roi_points(self, roi):
         """Extracts the points from the ROI. Functionally irrelevant now, after 
@@ -233,7 +233,7 @@ class XFormDistEstimateRoi(XFormType):
         else:
             return []
 
-    def estimate_distance(self, left_x, right_x):
+    def estimate_depth(self, left_x, right_x):
         """Estimates the depth of a point given its x coordinates in the left and right images.
 
         Parameters:
@@ -308,20 +308,21 @@ class XFormDistEstimateRoi(XFormType):
         return {}
 
 
-    def store_distance_and_rois(self, distance, crow, left_roi, right_roi):
+    def store_depth_and_rois(self, depth, crow, left_roi, right_roi):
         """
-        Stores the distance and the two ROIs in a dictionary.
+        Stores the depth and the two ROIs in a dictionary.
         
         Parameters:
-        distance (float): The calculated distance.
+        depth (float): The calculated depth.
+        crow (float): The calculated crow distance.
         left_roi (ROI): The ROI from the left image.
         right_roi (ROI): The ROI from the right image.
         
         Returns:
-        dict: A dictionary containing the distance and the ROIs.
+        dict: A dictionary containing the depth, crow and the ROIs.
         """
         storage = {
-            "distance": distance,
+            "depth": depth,
             "crow": crow,
             "left_roi": left_roi.to_tagged_dict(),
             "right_roi": right_roi.to_tagged_dict(),
@@ -330,27 +331,27 @@ class XFormDistEstimateRoi(XFormType):
 
     def populate_table(self):        
         """
-        Populate the table with the stored distances and ROIs.
+        Populate the table with the stored depths and ROIs.
         
-        Iterates through the stored distances and ROIs, and populates a table with the
+        Iterates through the stored depths and ROIs, and populates a table with the
         results. The table is sorted by the label of the right ROI.
         """
     
         table = Table()
-        for data in self.all_distances:
+        for data in self.all_depths:
             # left_label = data['left_roi']['label']
             label = data['right_roi']['label']
-            distance = data['distance']
+            depth = data['depth']
             crow = data['crow']
 
             table.newRow(label)
             table.add('Label', label)
-            table.add('Distance', distance)
+            table.add('Depth', depth)
             table.add('Crow', crow)
 
-            print(f"Label: {label}, Distance: {distance}, Crow: {crow}")
+            print(f"Label: {label}, Depth: {depth}, Crow: {crow}")
 
-        self.all_distances_table = table
+        self.all_depths_table = table
     
 class UnlabeledROIException(Exception):
     pass
@@ -424,8 +425,8 @@ class TabDistEstimateRoi(Tab):
         print(f"Node type: {type(node)}")
         print(f"Node attributes before access: {dir(node)}")
 
-        print(f"Table before update: {node.all_distances_table}") 
-        self.update_tab_table(node.all_distances_table)
+        print(f"Table before update: {node.all_depths_table}") 
+        self.update_tab_table(node.all_depths_table)
 
 
         if hasattr(node, 'left_rectified') and node.left_rectified is not None:
@@ -454,15 +455,15 @@ class TabDistEstimateRoi(Tab):
             self.right_canvas.setImg(None)
             return
 
-    def update_tab_table(self, distance_table):
+    def update_tab_table(self, depth_table):
         self.table_widget.clear()
 
-        row_count = distance_table.__len__()
+        row_count = depth_table.__len__()
 
         self.table_widget.setRowCount(row_count)
         print(f"Row count: {row_count}")
 
-        headers = distance_table.keys()
+        headers = depth_table.keys()
         print(f"Headers: {headers}")
 
         # print(distance_table.__str__())
@@ -472,9 +473,9 @@ class TabDistEstimateRoi(Tab):
         self.table_widget.setHorizontalHeaderLabels(headers)
 
         print(f"Headers: {headers}")
-        print(f"Distance table: {distance_table}")
+        print(f"Depth table: {depth_table}")
 
-        for row_index, data in enumerate(distance_table):
+        for row_index, data in enumerate(depth_table):
             print(f"Row {row_index}: {data}")
             for col_index, header in enumerate(headers):
                 # header = int(header)
@@ -484,49 +485,49 @@ class TabDistEstimateRoi(Tab):
         self.table_widget.resizeColumnsToContents()
 
     def dump_data_to_txt(self):
-        if self.node.all_distances_table is None:
+        if self.node.all_depths_table is None:
             print("No data to dump TXT")
             return
 
         options = QFileDialog.Options()
-        file_name, _ = QFileDialog.getSaveFileName(self, "Save Data", "distances.txt", "Text Files (*.txt)", options=options)
+        file_name, _ = QFileDialog.getSaveFileName(self, "Save Data", "depths.txt", "Text Files (*.txt);;All files (*.*)", options=options)
         if file_name:
             with open(file_name, "w") as f:
-                headers = self.node.all_distances_table.keys()
+                headers = self.node.all_depths_table.keys()
                 f.write(", ".join(f'{header}' for header in headers) + "\n")
-                for row in self.node.all_distances_table:
+                for row in self.node.all_depths_table:
                     f.write(", ".join(f'{header}: {row[i]}' for i, header in enumerate(headers)) + "\n")
 
             print(f"Data dumped to {file_name}")
 
     def dump_data_to_csv(self):
-        if self.node.all_distances_table is None:
+        if self.node.all_depths_table is None:
             print("No data to dump CSV")
             return
 
         options = QFileDialog.Options()
-        file_name, _ = QFileDialog.getSaveFileName(self, "Save Data", "distances.csv", "CSV Files (*.csv)", options=options)
+        file_name, _ = QFileDialog.getSaveFileName(self, "Save Data", "depths.csv", "CSV Files (*.csv);;All files (*.*)", options=options)
         if file_name:
             with open(file_name, "w") as f:
                 # Write the header
-                headers = self.node.all_distances_table.keys()
+                headers = self.node.all_depths_table.keys()
                 for header in headers:
                     f.write(f"{header},")
                 f.write("\n")
 
-                for row in self.node.all_distances_table:
+                for row in self.node.all_depths_table:
                     f.write(",".join(map(str, row)) + "\n")
 
             print(f"Data dumped to {file_name}")
 
     def dump_data_to_html(self):
-        if self.node.all_distances_table is None:
+        if self.node.all_depths_table is None:
             print("No data to dump HTML")
             return
 
         options = QFileDialog.Options()
-        file_name, _ = QFileDialog.getSaveFileName(self, "Save Data", "distances.html", "HTML Files (*.html)", options=options)
+        file_name, _ = QFileDialog.getSaveFileName(self, "Save Data", "depths.html", "HTML Files (*.html)", options=options)
         if file_name:
             with open(file_name, "w") as f:
-                f.write(self.node.all_distances_table.html())
+                f.write(self.node.all_depths_table.html())
             print(f"Data dumped to {file_name}")
