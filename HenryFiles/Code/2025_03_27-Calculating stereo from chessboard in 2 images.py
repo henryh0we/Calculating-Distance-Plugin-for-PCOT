@@ -6,7 +6,8 @@ import json
 
 # Chessboard parameters
 chessboard_size = (9, 6)  # Number of inner corners
-square_size = 1.0  # Size of a square in your preferred unit
+# square_size = 1.0  # Size of a square in your preferred unit
+square_size = 0.02
 img_size = (1024, 1024)
 
 # Prepare object points (0,0,0), (1,0,0), (2,0,0) ... (8,5,0)
@@ -207,7 +208,7 @@ def calibrate_non_duo(images):
 
     return camera_mats, camera_dists
 
-camera_data_file_path = 'HenryFiles/camera_data.json'
+camera_data_file_path = 'HenryFiles/camera_data_change_rect_and_square2.json'
 # camera_data_file_path = 'HenryFiles/camera_data_pre_major_non_duo_change.json'
 
 if os.path.exists(camera_data_file_path):
@@ -312,7 +313,7 @@ else:
     print(F)
 
     # Compute rectification transforms
-    rect_scale = 0.6  # Scaling factor: 0=zoomed out, 1=cropped
+    rect_scale = 0.7  # Scaling factor: 0=zoomed out, 1=cropped
     rect_left, rect_right, proj_left, proj_right, Q, roi_left, roi_right = cv.stereoRectify(
         mtx_left, dist_left, mtx_right, dist_right, img_size, 
         R, T, flags=cv.CALIB_ZERO_DISPARITY, alpha=rect_scale)
@@ -336,7 +337,7 @@ else:
         "F": F.tolist(),
     }
 
-    with open('HenryFiles/camera_data.json', 'w') as file:
+    with open(camera_data_file_path, 'w') as file:
         json.dump(data, file, indent=4)
 
     print("Successfully wrote the camera data to file")
