@@ -7,7 +7,7 @@ import json
 # Chessboard parameters
 chessboard_size = (9, 6)  # Number of inner corners
 # square_size = 1.0  # Size of a square 
-square_size = 0.02 # size of square in m = 20mm
+square_size = 0.024 # size of square in m = 24mm
 img_size = (1024, 1024)
 
 # Prepare object points (0,0,0), (1,0,0), (2,0,0) ... (8,5,0)
