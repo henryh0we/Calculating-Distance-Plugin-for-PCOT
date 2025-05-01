@@ -301,12 +301,16 @@ else:
     flags |= cv.CALIB_FIX_INTRINSIC
     # criteria_stereo = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
-    
+    with open(camera_data_file_path, 'r') as file:
+        data = json.load(file)
+
+    known_R = np.array(data['known_R'])
+    known_T = np.array(data['known_T'])
 
     ret_stereo, mtx_left, dist_left, mtx_right, dist_right, R, T, E, F = cv.stereoCalibrate(
         objpoints, imgpoints_left, imgpoints_right, 
         mtx_left, dist_left, mtx_right, dist_right, 
-        img_size, criteria=criteria, flags=flags)
+        img_size, known_R, known_T, criteria=criteria, flags=flags)
     
     print("Successfully performed stereo calibration")
     print(R)
@@ -332,6 +336,9 @@ else:
         "dist_right": dist_right.tolist(),
         "rect_right": rect_right.tolist(),
         "proj_right": proj_right.tolist(),
+
+        "known_R": known_R.tolist(),
+        "known_T": known_T.tolist(),
 
         "R": R.tolist(),
         "T": T.tolist(),
