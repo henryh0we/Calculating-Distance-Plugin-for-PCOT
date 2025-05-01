@@ -142,7 +142,7 @@ for i in range(len(rect_values)):
 
         print(f"depth: {depth:.3f} m, approximate ground distance: {approximate_ground_distance:.3f} m")
 
-        output = f"alpha value: {alpha_val}, leftpoint: {point_left}, rightpoint: {point_right}, depth: {depth:.3f} m, approximate ground distance: {approximate_ground_distance:.3f} m"
+        output = f"alpha value: {alpha_val}, leftpoint: {point_left}, rightpoint: {point_right}, disparity: {disparity}, depth: {depth:.3f} m, approximate ground distance: {approximate_ground_distance:.3f} m"
 
         output_table.append(output)
 
