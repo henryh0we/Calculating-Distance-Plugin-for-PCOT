@@ -215,7 +215,7 @@ def full_calibration():
     print(F)
 
     # Compute rectification transforms
-    rect_scale = 0.6  # Scaling factor: 0=zoomed out, 1=cropped
+    rect_scale = 0.7  # Scaling factor: 0=zoomed out, 1=cropped
     rect_left, rect_right, proj_left, proj_right, Q, roi_left, roi_right = cv.stereoRectify(
         mtx_left, dist_left, mtx_right, dist_right, img_size, 
         R, T, flags=cv.CALIB_ZERO_DISPARITY, alpha=rect_scale)
