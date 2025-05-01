@@ -338,6 +338,9 @@ class XFormDistEstimateRoi(XFormType):
         """
     
         table = Table()
+
+        # sorted_data = sorted(self.all_depths, key=lambda x: x['d']['label'])
+
         for data in self.all_depths:
             # left_label = data['left_roi']['label']
             label = data['right_roi']['label']
