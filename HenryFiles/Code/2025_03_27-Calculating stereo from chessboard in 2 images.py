@@ -301,6 +301,8 @@ else:
     flags |= cv.CALIB_FIX_INTRINSIC
     # criteria_stereo = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
+    
+
     ret_stereo, mtx_left, dist_left, mtx_right, dist_right, R, T, E, F = cv.stereoCalibrate(
         objpoints, imgpoints_left, imgpoints_right, 
         mtx_left, dist_left, mtx_right, dist_right, 
