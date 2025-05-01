@@ -5,8 +5,11 @@ file_path = "pcotplugins\pcotdistanceestimate plugins\mtx_dst_rect_proj.json"
 with open(file_path, 'r') as file:
     data = json.load(file)
 
-print(data['R'])
-print(data['T'])
+R = data['R']
+T = data['T']
+
+print("R:", R)
+print("T:", T)
 
 def rotation_matrix_to_degrees(R):
     sy = np.sqrt(R[0, 0] * R[0, 0] + R[1, 0] * R[1, 0])
@@ -65,7 +68,7 @@ r_degrees = rotation_matrix_to_degrees(np.array(data['R']))
 T_output = translation_matrix_to_mm(np.array(data['T']))
 
 print("R_degrees:", r_degrees)
-print("T_output:", T_output)
+print("T:", T)
 print("==========")
 
 possible_r = (0, 5.6, 0)
