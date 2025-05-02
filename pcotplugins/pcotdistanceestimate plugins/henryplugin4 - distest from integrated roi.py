@@ -529,7 +529,7 @@ class TabDistEstimateRoi(Tab):
             return
 
         options = QFileDialog.Options()
-        file_name, _ = QFileDialog.getSaveFileName(self, "Save Data", "depths.html", "HTML Files (*.html)", options=options)
+        file_name, _ = QFileDialog.getSaveFileName(self, "Save Data", "depths.html", "HTML Files (*.html);;All files (*.*)", options=options)
         if file_name:
             with open(file_name, "w") as f:
                 f.write(self.node.all_depths_table.html())
