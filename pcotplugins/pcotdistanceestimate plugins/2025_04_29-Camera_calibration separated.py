@@ -111,10 +111,10 @@ def calibrate_non_duo(images):
             print('[{0}/{1}]'.format(count, len(images)))
             # print(gray.shape[::-1])
             
-            # Calibrate the camera
-            # This is achieved by comparing the placement of the chessboard corners in the image
-            # to those of the real world.
-            # The discrepency between the two is used to calculate the camera matrix
+    # Calibrate the camera
+    # This is achieved by comparing the placement of the chessboard corners in the image
+    # to those of the real world.
+    # The discrepency between the two is used to calculate the camera matrix
     
     ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, img_size, None, None)
 
