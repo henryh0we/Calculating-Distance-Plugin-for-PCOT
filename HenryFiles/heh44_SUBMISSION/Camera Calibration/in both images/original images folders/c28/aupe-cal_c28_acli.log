@@ -1,0 +1,38 @@
+2025-02-25T15:48:07.587 root               INFO     ------- new log session started -------
+2025-02-25T15:48:07.999 cli                INFO     starting acli 0.8.1.dev3+gebaa656.d20220803
+2025-02-25T15:48:08.000 cli                INFO     args: -s aupe-cal -d c28 -b 8 wac panorama -l 1 -r 1 -p 0 -t 0
+2025-02-25T15:48:08.008 ExoFitPngXmlWriter INFO     requested bit depth: 8
+2025-02-25T15:48:08.008 ExoFitPngXmlWriter INFO     using xml template 'C:\Users\AUPE\Desktop\aupe_tools\acli-venv\Lib\site-packages\acli\exofit_template.xml'
+2025-02-25T15:48:08.009 aupe_connect       INFO     connecting to AUPE @ 192.168.0.110:8888
+2025-02-25T15:48:08.085 cli                INFO     using auto exposure
+2025-02-25T15:48:08.090 cli                INFO     caching of shutters enabled
+2025-02-25T15:48:08.094 ShutterCache       INFO     loading shutter cache from 'C:\Users\AUPE\Desktop\aupe_tools\shutter_cache.toml'
+2025-02-25T15:48:08.123 wac_handler        INFO     command: panorama
+2025-02-25T15:48:08.895 WacWrapper         INFO     lwac initialized with AE
+2025-02-25T15:48:08.896 WacWrapper         INFO     lwac filters selected: [1]
+2025-02-25T15:48:09.823 WacWrapper         INFO     rwac initialized with AE
+2025-02-25T15:48:09.824 WacWrapper         INFO     rwac filters selected: [1]
+2025-02-25T15:48:09.828 wac_panorama       INFO     orienting the PTU to T: 0.0
+2025-02-25T15:48:10.055 wac_panorama       INFO     orienting the PTU to P: 0.0
+2025-02-25T15:48:10.821 CaptureHandler     INFO     starting capture
+2025-02-25T15:48:10.822 CaptureHandler     INFO     selecting camera: lwac
+2025-02-25T15:48:10.828 WacWrapper         INFO     filter: 1
+2025-02-25T15:48:10.832 WacWrapper         INFO     shutter: 0.513536
+2025-02-25T15:48:14.507 ExoFitPngXmlWriter INFO     saving image as 'aupe-cal_c28_LWAC01_T00_P00_BS.png'
+2025-02-25T15:48:14.987 ExoFitPngXmlWriter INFO     creating XML sidecar metadata file
+2025-02-25T15:48:14.988 ExoFitPngXmlWriter INFO     adding image metadata tags
+2025-02-25T15:48:14.992 ExoFitPngXmlWriter WARNING  no GNC directory specified; skipping
+2025-02-25T15:48:14.996 ExoFitPngXmlWriter INFO     XML metadata saved as 'aupe-cal_c28_LWAC01_T00_P00_BS.xml'
+2025-02-25T15:48:15.058 WacWrapper         INFO     final shutter stored in shutter cache: 0.277001
+2025-02-25T15:48:15.059 CaptureHandler     INFO     selecting camera: rwac
+2025-02-25T15:48:15.062 WacWrapper         INFO     filter: 1
+2025-02-25T15:48:15.068 WacWrapper         INFO     shutter: 0.445664
+2025-02-25T15:48:18.299 ExoFitPngXmlWriter INFO     saving image as 'aupe-cal_c28_RWAC01_T00_P00_BS.png'
+2025-02-25T15:48:18.715 ExoFitPngXmlWriter INFO     creating XML sidecar metadata file
+2025-02-25T15:48:18.716 ExoFitPngXmlWriter INFO     adding image metadata tags
+2025-02-25T15:48:18.718 ExoFitPngXmlWriter WARNING  no GNC directory specified; skipping
+2025-02-25T15:48:18.726 ExoFitPngXmlWriter INFO     XML metadata saved as 'aupe-cal_c28_RWAC01_T00_P00_BS.xml'
+2025-02-25T15:48:18.741 WacWrapper         INFO     final shutter stored in shutter cache: 0.310638
+2025-02-25T15:48:18.742 ShutterCache       INFO     writing shutter cache to disk
+2025-02-25T15:48:18.746 aupe_connect       INFO     disconnecting from AUPE
+2025-02-25T15:48:18.762 cli                INFO     success
