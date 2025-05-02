@@ -6,7 +6,7 @@ import numpy as np
 # side_length = 7.0656 # in mm
 # ============================
 
-file_path = 'pcotplugins/pcotdistanceestimate/focal_baseline_height.json'
+file_path = 'pcotplugins/heh44_SUBMISSION/pcotdistanceestimate/focal_baseline_height.json'
 
 baseline = 0.5 # in meters
 
