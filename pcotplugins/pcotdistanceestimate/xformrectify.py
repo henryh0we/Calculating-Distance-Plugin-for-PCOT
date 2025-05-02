@@ -52,7 +52,7 @@ class XFormImageRectify(XFormType):
         self.proj_right = None
 
         # Load JSON data
-        file_path = 'pcotplugins/pcotdistanceestimate plugins/mtx_dst_rect_proj.json'
+        file_path = 'pcotplugins/pcotdistanceestimate/mtx_dst_rect_proj.json'
         self.load_json(file_path)
 
         self.left_rectified = None

@@ -51,7 +51,7 @@ class XFormDistEstimateRoi(XFormType):
         # self.baseline = 0.5
 
         # LOAD DATA FROM FILE
-        file_data_path = 'pcotplugins/pcotdistanceestimate plugins/focal_baseline_height.json'
+        file_data_path = 'pcotplugins/pcotdistanceestimate/focal_baseline_height.json'
         self.focal_length = None
         self.baseline = None
         self.camera_height = None

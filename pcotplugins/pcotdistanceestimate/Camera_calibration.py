@@ -22,7 +22,7 @@ objpoints = []  # 3D points in real world space
 imgpoints_left = []  # 2D points in left image plane
 imgpoints_right = []  # 2D points in right image plane
 
-camera_data_file_path = 'pcotplugins/pcotdistanceestimate plugins/mtx_dst_rect_proj.json'
+camera_data_file_path = 'pcotplugins/pcotdistanceestimate/mtx_dst_rect_proj.json'
 # Get image pairs 
 duo_left_images = glob.glob(os.path.join('HenryFiles/Camera Calibration/in both images/left images duo', '*.png'))
 duo_right_images = glob.glob(os.path.join('HenryFiles/Camera Calibration/in both images/right images duo', '*.png'))
@@ -198,7 +198,7 @@ def full_calibration():
     flags |= cv.CALIB_FIX_INTRINSIC
     # criteria_stereo = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
-    with open('pcotplugins/pcotdistanceestimate plugins/mtx_dst_rect_proj.json', 'r') as file:
+    with open(camera_data_file_path, 'r') as file:
         data = json.load(file)
     known_T = np.array(data['known_t'])
     known_R = np.array(data['known_r'])
