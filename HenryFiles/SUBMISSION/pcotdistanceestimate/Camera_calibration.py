@@ -24,11 +24,11 @@ imgpoints_right = []  # 2D points in right image plane
 
 camera_data_file_path = 'pcotplugins/pcotdistanceestimate/mtx_dst_rect_proj.json'
 # Get image pairs 
-duo_left_images = glob.glob(os.path.join('HenryFiles/Camera Calibration/in both images/left images duo', '*.png'))
-duo_right_images = glob.glob(os.path.join('HenryFiles/Camera Calibration/in both images/right images duo', '*.png'))
+duo_left_images = glob.glob(os.path.join('Camera Calibration/in both images/left images duo', '*.png'))
+duo_right_images = glob.glob(os.path.join('Camera Calibration/in both images/right images duo', '*.png'))
 
-non_left_images = glob.glob(os.path.join('HenryFiles/Camera Calibration/left images', '*.png'))
-non_right_images = glob.glob(os.path.join('HenryFiles/Camera Calibration/right images', '*.png'))
+non_left_images = glob.glob(os.path.join('Camera Calibration/left images', '*.png'))
+non_right_images = glob.glob(os.path.join('Camera Calibration/right images', '*.png'))
 
 def calibrate_duo_image(left_images, right_images):
     count = 0

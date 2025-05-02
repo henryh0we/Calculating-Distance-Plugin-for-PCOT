@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<rawentity UUID="6ff42ec0-6aa7-4bfa-a9cd-3fb35fe4194a" createdtime="UTC=2018-07-05T12:51:38.826539">
+    <name>IMAGE xcalchecker_xcalchecker1_LWAC01_T00_P00_BS.png</name>
+    <description>LWAC image. Last: 2018-07-05T12:51:38.826539</description>
+    <rawEntityType>IMAGE</rawEntityType>
+    <context>
+        <attribute name="contextname" value="xcalchecker_xcalchecker1_LWAC01_T00_P00_BS.png"/>
+        <attribute name="cameraname" value="LWAC"/>
+    </context>
+    <metadata>
+        <attribute name="acli-Version" value="0.8.1.dev3+gebaa656.d20220803"/>
+        <attribute name="acli-utc_iso" value="2025-03-31T10:57:15.825751"/>
+        <attribute name="Session-ID" value="xcalchecker"/>
+        <attribute name="Dataproduct-ID" value="xcalchecker1"/>
+        <attribute name="Bit-Depth" value="8"/>
+        <attribute name="Left-Aligned" value="True"/>
+
+        <attribute name="Bigendian" value="true"/>
+        <attribute name="Height" value="1024"/>
+        <attribute name="Width" value="1024"/>
+        <attribute name="Exposure-Time" value="0.241800"/>
+        <attribute name="Gain" value="0"/>
+        <attribute name="Camera-Temperature" value=""/>
+        <attribute name="Stereo-Bench-Temperature" value=""/>
+        <attribute name="Pan" value="0.0000"/>
+        <attribute name="Tilt" value="0.0000"/>
+        <attribute name="Filter-Number" value="1"/>
+
+        <!--<attribute name="Coordinate-System" value="Earth-Cartesian"/>-->
+        <attribute name="Rover-GNC-Source" value="real-time"/>
+        <attribute name="Rover-GNC-File-Name" value="$rover_gnc_file_name"/>
+        <attribute name="Rover-GNC-Simulation-Time" value="$rover_gnc_sim_time"/>
+        <attribute name="Rover-GNC-Pose-X" value="$rover_gnc_pose_x"/>
+        <attribute name="Rover-GNC-Pose-Y" value="$rover_gnc_pose_y"/>
+        <attribute name="Rover-GNC-Pose-Z" value="$rover_gnc_pose_z"/>
+        <attribute name="Rover-GNC-Pose-qW" value="$rover_gnc_pose_qw"/>
+        <attribute name="Rover-GNC-Pose-qX" value="$rover_gnc_pose_qx"/>
+        <attribute name="Rover-GNC-Pose-qY" value="$rover_gnc_pose_qy"/>
+        <attribute name="Rover-GNC-Pose-qZ" value="$rover_gnc_pose_qz"/>
+    </metadata>
+    <filename>xcalchecker_xcalchecker1_LWAC01_T00_P00_BS.png</filename>
+</rawentity>
