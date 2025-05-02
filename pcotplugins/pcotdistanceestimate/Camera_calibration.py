@@ -176,23 +176,6 @@ def full_calibration():
 
     print("Successfully generated the average camera matrix")
 
-    # ===============
-    # Testing
-    # ===============
-    # mtx_test = 1
-    # dist_test = 1
-    # mtx_left = L_cm[mtx_test]
-    # # mtx_left = np.mean(np.array(L_cm), axis=0)
-    # dist_left = L_cd[dist_test]
-    # dist_left = np.mean (np.array(L_cd), axis=0)
-
-    # mtx_right = R_cm[mtx_test]
-    # # mtx_right = np.mean(np.array(R_cm), axis=0)
-    # dist_right = R_cd[dist_test]
-    # dist_right = np.mean(np.array(R_cd), axis=0)
-    # ===============
-
-
     # Stereo calibration
     flags = 0
     flags |= cv.CALIB_FIX_INTRINSIC
@@ -245,8 +228,6 @@ def full_calibration():
 
     with open(camera_data_file_path, 'w') as file:
         json.dump(data, file, indent=4)
-
-# camera_data_file_path = 'HenryFiles/camera_data_pre_major_non_duo_change.json'
 
 if not os.path.exists(camera_data_file_path):
     print("Camera_data.json does not exist. Creating...")

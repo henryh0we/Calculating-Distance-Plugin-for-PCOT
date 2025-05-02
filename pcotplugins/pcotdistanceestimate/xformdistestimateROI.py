@@ -44,12 +44,6 @@ class XFormDistEstimateRoi(XFormType):
         
         super().__init__("distestimateROI", "processing", "0.0.0")
 
-        # HARDCODED DATA
-        # self.focal_length = 2172.176065052148
-        # self.focal_length = 1904.422603226366 # diag = 9.125mm USE THIS ONE
-        # self.focal_length = 1930.872917160066 # diag = 9mm
-        # self.baseline = 0.5
-
         # LOAD DATA FROM FILE
         file_data_path = 'pcotplugins/pcotdistanceestimate/focal_baseline_height.json'
         self.focal_length = None
@@ -59,7 +53,6 @@ class XFormDistEstimateRoi(XFormType):
         self.load_json(file_data_path)
 
         self.all_depths = []
-        # self.all_depths_table = None
         self.all_depths_table = Table()
 
         print(f"Initialized all_depths: {self.all_depths}")
@@ -139,8 +132,6 @@ class XFormDistEstimateRoi(XFormType):
         print(left_rois_sorted)
         print(right_rois_sorted)
 
-        # all_depths = []
-
         for label in sorted(left_rois_sorted.keys() & right_rois_sorted.keys()):
             print("Processing label:", label)
             left_rois_match = left_rois_sorted[label]
@@ -169,24 +160,6 @@ class XFormDistEstimateRoi(XFormType):
             storage = self.store_depth_and_rois(depth, crow, left_roi, right_roi)
 
             self.all_depths.append(storage)
-            # region
-            # left_rois_match = left_rois_sorted[label]
-            # right_rois_match = right_rois_sorted[label]
-
-            # left_coord = self.extract_roi_points(left_rois_match[0])
-            # right_coord = self.extract_roi_points(right_rois_match[0])
-
-            # left_x = left_coord[0][0]
-            # right_x = right_coord[0][0]
-
-            # distance = self.estimate_distance(left_x, right_x) 
-
-            # storage = self.store_distance_and_rois(distance, left_rois_match[0], right_rois_match[0])
-
-            # print(storage)
-
-            # all_depths.append(storage)
-            # endregion
 
         self.populate_table()
 
@@ -338,8 +311,6 @@ class XFormDistEstimateRoi(XFormType):
         """
     
         table = Table()
-
-        # sorted_data = sorted(self.all_depths, key=lambda x: x['d']['label'])
 
         for data in self.all_depths:
             # left_label = data['left_roi']['label']

@@ -25,8 +25,6 @@ from pcot.expressions.register import datumfunc
 
 import pcot.config
 
-# camera_data_file_path = 'HenryFiles/camera_data.json'
-
 @xformtype
 class XFormImageRectify(XFormType):
     """
