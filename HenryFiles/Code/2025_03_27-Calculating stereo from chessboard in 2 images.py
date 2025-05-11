@@ -54,11 +54,17 @@ def calibrate_duo_image(left_images, right_images):
             imgpoints_right.append(corners_right)
             
             # Draw and display the corners (optional)
-            cv.drawChessboardCorners(left_img, chessboard_size, corners_left, ret_left)
-            cv.drawChessboardCorners(right_img, chessboard_size, corners_right, ret_right)
+            # cv.drawChessboardCorners(left_img, chessboard_size, corners_left, ret_left)
+            # cv.drawChessboardCorners(right_img, chessboard_size, corners_right, ret_right)
+            # cv.namedWindow('Left Corners', cv.WINDOW_NORMAL)
+            # cv.resizeWindow('Left Corners', 700, 700)
+            # cv.moveWindow('Left Corners', 0, 0)
             # cv.imshow('Left Corners', left_img)
+            # cv.namedWindow('Right Corners', cv.WINDOW_NORMAL)
+            # cv.resizeWindow('Right Corners', 700, 700)
+            # cv.moveWindow('Right Corners', 700, 0)
             # cv.imshow('Right Corners', right_img)
-            # cv.waitKey(1)
+            # cv.waitKey(0)
 
             count += 1
             print('[{0}/{1}]'.format(count, len(left_images)))
@@ -208,7 +214,7 @@ def calibrate_non_duo(images):
 
     return camera_mats, camera_dists
 
-camera_data_file_path = 'HenryFiles/camera_data_change_rect_and_square2.json'
+camera_data_file_path = 'HenryFiles/camera_data_dne.json'
 # camera_data_file_path = 'HenryFiles/camera_data_pre_major_non_duo_change.json'
 
 if os.path.exists(camera_data_file_path):
