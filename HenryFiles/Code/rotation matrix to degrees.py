@@ -1,15 +1,15 @@
 import numpy as np
 import json
-file_path = "pcotplugins\pcotdistanceestimate plugins\mtx_dst_rect_proj.json"
+# file_path = "pcotplugins\pcotdistanceestimate plugins\mtx_dst_rect_proj.json"
 
-with open(file_path, 'r') as file:
-    data = json.load(file)
+# with open(file_path, 'r') as file:
+#     data = json.load(file)
 
-R = data['R']
-T = data['T']
+# R = data['R']
+# T = data['T']
 
-print("R:", R)
-print("T:", T)
+# print("R:", R)
+# print("T:", T)
 
 def rotation_matrix_to_degrees(R):
     sy = np.sqrt(R[0, 0] * R[0, 0] + R[1, 0] * R[1, 0])
@@ -61,15 +61,15 @@ def degrees_to_rotation_matrix(degrees):
     R = Rz @ Ry @ Rx
     return R
 
-def translation_matrix_to_mm(T):
-    return T * 1000
-r_degrees = rotation_matrix_to_degrees(np.array(data['R']))
+# def translation_matrix_to_mm(T):
+#     return T * 1000
+# r_degrees = rotation_matrix_to_degrees(np.array(data['R']))
 
-T_output = translation_matrix_to_mm(np.array(data['T']))
+# T_output = translation_matrix_to_mm(np.array(data['T']))
 
-print("R_degrees:", r_degrees)
-print("T:", T)
-print("==========")
+# print("R_degrees:", r_degrees)
+# print("T:", T)
+# print("==========")
 
 possible_r = (0, 5.6, 0)
 
