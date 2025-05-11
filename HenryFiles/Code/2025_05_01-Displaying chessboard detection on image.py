@@ -1,7 +1,8 @@
 import cv2 as cv
 
 chessboard_size = (9, 6)
-file_path = "HenryFiles/Camera Calibration/right images/aupe-cal_c7_RWAC01_T00_P00_BS.png"
+file_path1 = "HenryFiles/Camera Calibration/aupe-cal/c2/aupe-cal_c2_RWAC01_T00_P00_BS.png"
+file_path2 = "HenryFiles/Camera Calibration/aupe-cal/c2/aupe-cal_c2_LWAC01_T00_P00_BS.png"
 def display_chessboard_detection(image_file_path):
     img = cv.imread(image_file_path)
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
@@ -15,4 +16,5 @@ def display_chessboard_detection(image_file_path):
         cv.waitKey(0)
         cv.destroyAllWindows()
 
-display_chessboard_detection(file_path)
+display_chessboard_detection(file_path1)
+display_chessboard_detection(file_path2)
