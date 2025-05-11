@@ -214,7 +214,7 @@ def calibrate_non_duo(images):
 
     return camera_mats, camera_dists
 
-camera_data_file_path = 'HenryFiles/camera_data_dne.json'
+camera_data_file_path = 'HenryFiles/camera_data_change_rect_and_square2.json'
 # camera_data_file_path = 'HenryFiles/camera_data_pre_major_non_duo_change.json'
 
 if os.path.exists(camera_data_file_path):
