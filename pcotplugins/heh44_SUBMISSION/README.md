@@ -29,4 +29,4 @@ Alternatively, a .pcot file called Multiple Points Selected for Submission.pcot 
 
 ## Questions
 If there are any further questions regarding set up, please do not hesitate to contact me at my email:
-heh44@aber.ac.uk
+https://github.com/henryrhowe02
