@@ -45,7 +45,6 @@ class XFormDistEstimateRoi(XFormType):
         super().__init__("distestimateROI", "processing", "0.0.0")
 
         # LOAD DATA FROM FILE
-        # file_data_path = 'pcotplugins/heh44_SUBMISSION/pcotdistanceestimate/focal_baseline_height.json'
         script_dir = os.path.dirname(os.path.abspath(__file__))
         file_data_path = os.path.join(script_dir, 'focal_baseline_height.json')
 

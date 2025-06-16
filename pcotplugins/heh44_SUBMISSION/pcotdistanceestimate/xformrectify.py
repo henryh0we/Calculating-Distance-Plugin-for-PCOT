@@ -50,7 +50,6 @@ class XFormImageRectify(XFormType):
         self.proj_right = None
 
         # Load JSON data
-        # file_path = 'pcotplugins/heh44_SUBMISSION/pcotdistanceestimate/mtx_dst_rect_proj.json'
         script_dir = os.path.dirname(os.path.abspath(__file__))
         file_path = os.path.join(script_dir, 'mtx_dst_rect_proj.json')
         self.load_json(file_path)

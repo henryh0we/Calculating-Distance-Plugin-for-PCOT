@@ -6,7 +6,6 @@ import numpy as np
 # side_length = 7.0656 # in mm
 # ============================
 
-# file_path = 'pcotplugins/heh44_SUBMISSION/pcotdistanceestimate/focal_baseline_height.json'
 script_dir = os.path.dirname(os.path.abspath(__file__))
 file_path = os.path.join(script_dir, 'focal_baseline_height.json')
 

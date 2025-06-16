@@ -22,7 +22,6 @@ objpoints = []  # 3D points in real world space
 imgpoints_left = []  # 2D points in left image plane
 imgpoints_right = []  # 2D points in right image plane
 
-# camera_data_file_path = 'pcotplugins/heh44_SUBMISSION/pcotdistanceestimate/mtx_dst_rect_proj.json'
 script_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(script_dir)
 print("Script directory: ", script_dir)
@@ -38,13 +37,6 @@ duo_right_images = glob.glob(os.path.join(cam_cal_dir, 'in both images/right ima
 
 non_left_images = glob.glob(os.path.join(cam_cal_dir, 'left images', '*.png'))
 non_right_images = glob.glob(os.path.join(cam_cal_dir, 'right images', '*.png'))
-
-# Get image pairs 
-# duo_left_images = glob.glob(os.path.join('pcotplugins/heh44_SUBMISSION/Camera Calibration/in both images/left images duo', '*.png'))
-# duo_right_images = glob.glob(os.path.join('pcotplugins/heh44_SUBMISSION/Camera Calibration/in both images/right images duo', '*.png'))
-
-# non_left_images = glob.glob(os.path.join('pcotplugins/heh44_SUBMISSION/Camera Calibration/left images', '*.png'))
-# non_right_images = glob.glob(os.path.join('pcotplugins/heh44_SUBMISSION/Camera Calibration/right images', '*.png'))
 
 def calibrate_duo_image(left_images, right_images):
     count = 0
