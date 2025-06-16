@@ -4,26 +4,15 @@ import numpy as np
 import os
 import json
 from PySide2.QtWidgets import QLabel, QVBoxLayout
-from PySide2.QtGui import QPixmap
-import pcot.utils.image
 from PySide2.QtWidgets import QVBoxLayout, QLabel, QHBoxLayout
 from pcot.ui.tabs import Tab
 from pcot.datum import Datum
 from pcot.ui.canvas import Canvas
 
 # Coppied from other pcot plugins
-from pcot.sources import SourceSet
 from pcot.xform import XFormType, xformtype
-from pcot.xforms.tabdata import TabData
 from pcot.imagecube import ImageCube
 from pcot.datum import Datum
-from pcot.value import Value
-from pcot.datumtypes import Type
-from PySide2.QtGui import QColor
-from pcot.expressions.register import datumfunc
-
-
-import pcot.config
 
 @xformtype
 class XFormImageRectify(XFormType):

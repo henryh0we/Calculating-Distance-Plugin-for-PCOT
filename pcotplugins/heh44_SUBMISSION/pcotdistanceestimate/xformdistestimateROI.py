@@ -1,28 +1,18 @@
 import os
-import cv2 as cv
-import numpy as np
 from pcot.ui.canvas import Canvas
 from pcot.ui.tabs import Tab
 from pcot.utils.table import Table
 from pcot.value import Value
 from pcot.sources import nullSourceSet
-from PySide2.QtWidgets import QGridLayout, QLabel, QVBoxLayout, QTableWidget, QTableWidgetItem, QHBoxLayout, QScrollArea, QSplitter, QWidget, QPushButton, QFileDialog, QTextEdit
+from PySide2.QtWidgets import QVBoxLayout, QTableWidget, QTableWidgetItem, QHBoxLayout, QScrollArea, QSplitter, QWidget, QPushButton, QFileDialog
 from PySide2.QtCore import Qt
 import json
 
 from pcot.parameters.taggedaggregates import TaggedDictType
 from pcot.rois import ROICircle, ROIPainted, ROIPoly, ROIRect
-from pcot.sources import SourceSet
 from pcot.xform import XFormType, xformtype
-from pcot.xforms.tabdata import TabData
-from pcot.imagecube import ImageCube
 from pcot.datum import Datum
 from pcot.value import Value
-from pcot.datumtypes import Type
-from PySide2.QtGui import QColor
-from pcot.expressions.register import datumfunc
-
-import pcot.config
 
 # camera_height = 1.094
 
