@@ -7,8 +7,11 @@ import math
 # from Camera_Calibration.Tutorial.opencv_calibrate_camera_function import calibrate_camera
 
 # Load the images
-imgL_path = r'AUPE Images/distance/pctset-1m-8bit/distance_pctset-1m-8bit_LWAC01_T00_P00_BS.png'
-imgR_path = r'AUPE Images/distance/pctset-1m-8bit/distance_pctset-1m-8bit_RWAC01_T00_P00_BS.png'
+# imgL_path = r'AUPE Images/distance/pctset-1m-8bit/distance_pctset-1m-8bit_LWAC01_T00_P00_BS.png'
+# imgR_path = r'AUPE Images/distance/pctset-1m-8bit/distance_pctset-1m-8bit_RWAC01_T00_P00_BS.png'
+
+imgL_path = r'HenryFiles/AUPE Images/distance/pctset-1m-8bit/distance_pctset-1m-8bit_LWAC01_T00_P00_BS.png'
+imgR_path = r'HenryFiles/AUPE Images/distance/pctset-1m-8bit/distance_pctset-1m-8bit_RWAC01_T00_P00_BS.png'
 
 # Check if the files exist
 if not os.path.exists(imgL_path) or not os.path.exists(imgR_path):

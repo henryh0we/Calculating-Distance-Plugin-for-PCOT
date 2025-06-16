@@ -1,0 +1,56 @@
+PS C:\Users\henry\pcot-exomars-pancam-major-project> & C:/Users/henry/AppData/Local/Programs/Python/Python310/python.exe "c:/Users/henry/pcot-exomars-pancam-major-project/HenryFiles/Code/2025_03_27-Calculating stereo from chessboard in 2 images.py"
+Right Image: Point selected at: 464, 852
+disparity:  352
+focal_length:  2172.176065052148
+depth:  3.0854773651308918
+approximate_ground_distance:  2.885776597509771
+PS C:\Users\henry\pcot-exomars-pancam-major-project> & C:/Users/henry/AppData/Local/Programs/Python/Python310/python.exe "c:/Users/henry/pcot-exomars-pancam-major-project/HenryFiles/Code/2025_03_27-Calculating stereo from chessboard in 2 images.py"
+Left Image: Point selected at: 780, 659
+Right Image: Point selected at: 512, 664
+disparity:  268
+focal_length:  2172.176065052148
+depth:  4.052567285545052
+approximate_ground_distance:  3.9026705733215548
+enryFiles/Code/2025_03_27-Calculating stereo from chessboard in 2 images.py"
+Left Image: Point selected at: 737, 551
+Right Image: Point selected at: 526, 555
+disparity:  211
+focal_length:  2172.176065052148
+depth:  5.147336647043004
+approximate_ground_distance:  5.030170032711808
+enryFiles/Code/2025_03_27-Calculating stereo from chessboard in 2 images.py"
+Left Image: Point selected at: 719, 476
+Right Image: Point selected at: 543, 480
+disparity:  176
+focal_length:  2172.176065052148
+depth:  6.1709547302617835
+approximate_ground_distance:  6.073567179421026
+PS C:\Users\henry\pcot-exomars-pancam-major-project> & C:/Users/henry/AppData/Local/Programs/Python/Python310/python.exe "c:/Users/henry/pcot-exomars-pancam-major-project/HenryFiles/Code/2025_03_27-Calculating stereo from chessboard in 2 images.py"
+Left Image: Point selected at: 703, 425
+Right Image: Point selected at: 553, 423
+disparity:  150
+focal_length:  2172.176065052148
+depth:  7.240586883507159
+approximate_ground_distance:  7.1577674185192635
+PS C:\Users\henry\pcot-exomars-pancam-major-project> & C:/Users/henry/AppData/Local/Programs/Python/Python310/python.exe "c:/Users/henry/pcot-exomars-pancam-major-project/HenryFiles/Code/2025_03_27-Calculating stereo from chessboard in 2 images.py"
+Left Image: Point selected at: 695, 384
+Right Image: Point selected at: 560, 384
+disparity:  135
+focal_length:  2172.176065052148
+depth:  8.045096537230178
+approximate_ground_distance:  7.97064077056249
+PS C:\Users\henry\pcot-exomars-pancam-major-project> & C:/Users/henry/AppData/Local/Programs/Python/Python310/python.exe "c:/Users/henry/pcot-exomars-pancam-major-project/HenryFiles/Code/2025_03_27-Calculating stereo from chessboard in 2 images.py"
+Left Image: Point selected at: 678, 352
+Right Image: Point selected at: 555, 350
+disparity:  123
+focal_length:  2172.176065052148
+depth:  8.829984004277023
+approximate_ground_distance:  8.762200266815869
+PS C:\Users\henry\pcot-exomars-pancam-major-project> & C:/Users/henry/AppData/Local/Programs/Python/Python310/python.exe "c:/Users/henry/pcot-exomars-pancam-major-project/HenryFiles/Code/2025_03_27-Calculating stereo from chessboard in 2 images.py"
+Left Image: Point selected at: 674, 326
+Right Image: Point selected at: 567, 324
+disparity:  107
+focal_length:  2172.176065052148
+depth:  10.150355444168914
+approximate_ground_distance:  10.091444477524986
+PS C:\Users\henry\pcot-exomars-pancam-major-project>
