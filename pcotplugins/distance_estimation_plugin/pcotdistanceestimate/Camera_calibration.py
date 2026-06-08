@@ -237,15 +237,20 @@ def full_calibration():
     with open(camera_data_file_path, 'w') as file:
         json.dump(data, file, indent=4)
 
-if not os.path.exists(camera_data_file_path):
-    print(f"{camera_data_file_path} does not exist. Creating...")
-    full_calibration()
-    print("Successfully wrote the camera data to file")
-else:
-    response = input(f"{camera_data_file_path} already exists. Overwrite? (y/n): ")
-    if response.lower() == 'y':
-        print(f"Overwriting {camera_data_file_path}")
+def main():
+    if not os.path.exists(camera_data_file_path):
+        print(f"{camera_data_file_path} does not exist. Creating...")
         full_calibration()
         print("Successfully wrote the camera data to file")
     else:
-        print(f"Not overwriting {camera_data_file_path}")
+        response = input(f"{camera_data_file_path} already exists. Overwrite? (y/n): ")
+        if response.lower() == 'y':
+            print(f"Overwriting {camera_data_file_path}")
+            full_calibration()
+            print("Successfully wrote the camera data to file")
+        else:
+            print(f"Not overwriting {camera_data_file_path}")
+
+
+if __name__ == "__main__":
+    main()

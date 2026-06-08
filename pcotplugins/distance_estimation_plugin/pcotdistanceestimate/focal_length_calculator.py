@@ -74,15 +74,20 @@ def generate_data():
 #             'camera_height': camera_height
 #         }, f, indent=4)
 
-if not os.path.exists(file_path):
-    print(f"File {file_path} does not exist. Creating a new file with default values...")
-    generate_data()
-    print("Success")
-else:
-    response = input(f"File {file_path} already exists. Overwrite? (y/n): ")
-    if response.lower() == 'y':
-        print("Overwriting file...")
+def main():
+    if not os.path.exists(file_path):
+        print(f"File {file_path} does not exist. Creating a new file with default values...")
         generate_data()
         print("Success")
     else:
-        print("Not overwriting file.")
+        response = input(f"File {file_path} already exists. Overwrite? (y/n): ")
+        if response.lower() == 'y':
+            print("Overwriting file...")
+            generate_data()
+            print("Success")
+        else:
+            print("Not overwriting file.")
+
+
+if __name__ == "__main__":
+    main()
