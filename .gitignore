@@ -1,4 +1,10 @@
 __pycache__/
+*.pyc
 Thumbs.db
 camera_data.json
 old_camera_data*
+
+# Local research/workbench artefacts; keep base PCOT and plugin source tracked.
+HenryFiles/
+RStar_AUPE/
+pcotplugins/distance_estimation_plugin/local/
