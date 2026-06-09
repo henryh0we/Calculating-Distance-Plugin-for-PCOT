@@ -29,14 +29,14 @@ print("Parent directory: ", parent_dir)
 
 camera_data_file_path = os.path.join(script_dir, 'mtx_dst_rect_proj.json')
 
-cam_cal_dir = os.path.join(parent_dir, 'Camera Calibration')
+cam_cal_dir = os.path.join(parent_dir, 'data', 'calibration')
 print("Camera calibration directory: ", cam_cal_dir)
 
-duo_left_images = glob.glob(os.path.join(cam_cal_dir, 'in both images/left images duo', '*.png'))
-duo_right_images = glob.glob(os.path.join(cam_cal_dir, 'in both images/right images duo', '*.png'))
+duo_left_images = glob.glob(os.path.join(cam_cal_dir, 'paired', 'in-both-images', 'left images duo', '*.png'))
+duo_right_images = glob.glob(os.path.join(cam_cal_dir, 'paired', 'in-both-images', 'right images duo', '*.png'))
 
-non_left_images = glob.glob(os.path.join(cam_cal_dir, 'left images', '*.png'))
-non_right_images = glob.glob(os.path.join(cam_cal_dir, 'right images', '*.png'))
+non_left_images = glob.glob(os.path.join(cam_cal_dir, 'raw', 'left', 'images', '*.png'))
+non_right_images = glob.glob(os.path.join(cam_cal_dir, 'raw', 'right', 'images', '*.png'))
 
 def calibrate_duo_image(left_images, right_images):
     count = 0
