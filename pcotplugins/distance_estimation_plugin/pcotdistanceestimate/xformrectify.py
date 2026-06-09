@@ -85,19 +85,22 @@ class XFormImageRectify(XFormType):
         if not isinstance(left_img, np.ndarray) or not isinstance(right_img, np.ndarray):
             raise TypeError("Input images must be of type np.ndarray")
 
+        left_size = (left_img.shape[1], left_img.shape[0])
+        right_size = (right_img.shape[1], right_img.shape[0])
+
         map_left_x, map_left_y = cv.initUndistortRectifyMap(
             self.mtx_left, 
             self.dist_left, 
             self.rect_left, 
             self.proj_left, 
-            left_img.shape[:2], 
+            left_size,
             cv.CV_32FC1)
         map_right_x, map_right_y = cv.initUndistortRectifyMap(
             self.mtx_right, 
             self.dist_right, 
             self.rect_right, 
             self.proj_right, 
-            right_img.shape[:2], 
+            right_size,
             cv.CV_32FC1
         )
 
