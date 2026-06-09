@@ -1,6 +1,7 @@
 import importlib.util
 import os
 import sys
+from types import SimpleNamespace
 from pcot.ui.canvas import Canvas
 from pcot.ui.tabs import Tab
 from pcot.utils.table import Table
@@ -55,6 +56,11 @@ except ModuleNotFoundError:
 
 MEASUREMENT_PARAM_FIELDS = [
     (
+        "cameraHeightM",
+        "Camera Height (m)",
+        "Height of the camera above the ground plane. The default/current loaded value is the height of the AUPE Camera System.",
+    ),
+    (
         "minDisparityPx",
         "Min Disparity (px)",
         "Minimum positive horizontal pixel difference required before a stereo measurement is accepted.",
@@ -107,6 +113,7 @@ MEASUREMENT_PARAM_FIELDS = [
 ]
 
 MEASUREMENT_PARAM_SPINBOX_CONFIG = {
+    "cameraHeightM": {"decimals": 4, "step": 0.001},
     "minDisparityPx": {"decimals": 2, "step": 0.1},
     "maxVerticalOffsetPx": {"decimals": 2, "step": 0.1},
     "mediumQualityMaxVerticalOffsetPx": {"decimals": 2, "step": 0.1},
@@ -159,6 +166,7 @@ class XFormDistEstimateRoi(XFormType):
         self.addOutputConnector("distance", Datum.DATA)
 
         self.params = TaggedDictType(
+            cameraHeightM=("Camera height above the ground plane in metres", float, self.camera_height or 1.094),
             minDisparityPx=("Minimum positive disparity accepted for distance estimation", float, 2.0),
             maxVerticalOffsetPx=("Maximum vertical offset allowed between matched circle centres", float, 2.0),
             mediumQualityMaxVerticalOffsetPx=("Maximum vertical offset for medium quality classification", float, 1.0),
@@ -255,7 +263,12 @@ class XFormDistEstimateRoi(XFormType):
                 continue
 
             try:
-                storage = build_measurement(node.params, self, label, left_rois_match[0], right_rois_match[0])
+                calibration = SimpleNamespace(
+                    focal_length=self.focal_length,
+                    baseline=self.baseline,
+                    camera_height=node.params.cameraHeightM,
+                )
+                storage = build_measurement(node.params, calibration, label, left_rois_match[0], right_rois_match[0])
             except DistanceEstimateException as ex:
                 self.add_validation_issue("Invalid", label, str(ex))
                 continue
