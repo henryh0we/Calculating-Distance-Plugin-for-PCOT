@@ -2,7 +2,6 @@ import os
 from pcot.ui.canvas import Canvas
 from pcot.ui.tabs import Tab
 from pcot.utils.table import Table
-from pcot.value import Value
 from pcot.sources import nullSourceSet
 from PySide2.QtWidgets import QVBoxLayout, QTableWidget, QTableWidgetItem, QHBoxLayout, QScrollArea, QSplitter, QWidget, QPushButton, QFileDialog
 from PySide2.QtCore import Qt
@@ -12,7 +11,6 @@ from pcot.parameters.taggedaggregates import TaggedDictType
 from pcot.rois import ROICircle, ROIPainted, ROIPoly, ROIRect
 from pcot.xform import XFormType, xformtype
 from pcot.datum import Datum
-from pcot.value import Value
 
 # camera_height = 1.094
 
@@ -46,9 +44,7 @@ class XFormDistEstimateRoi(XFormType):
 
         self.all_depths = []
         self.all_depths_table = Table()
-
-        print(f"Initialized all_depths: {self.all_depths}")
-        print(f"Initialized all_depths_table: {self.all_depths_table}")
+        self.validation_errors = []
 
         self.addInputConnector("left", Datum.IMG)
         self.addInputConnector("right", Datum.IMG)
@@ -80,101 +76,118 @@ class XFormDistEstimateRoi(XFormType):
 
 
     def createTab(self, n, w):
-        print(f"Creating tab for node of type: {type(n)}")
-        print(f"Node attributes: {dir(n)}")
-
         return TabDistEstimateRoi(n, w)
     
     def init(self, n):
-        # No initialisation required.
-        pass
+        self.initialise_node_state(n)
 
-    def perform(self, node):        
+    def initialise_node_state(self, node):
+        node.all_depths = []
+        node.all_depths_table = Table()
+        node.validation_errors = []
+        node.left_rectified = None
+        node.right_rectified = None
+        node.left_img_datum = None
+        node.right_img_datum = None
+
+    def perform(self, node):
         self.all_depths = []
         self.all_depths_table = Table()
+        self.validation_errors = []
 
         left_img_datum = node.getInput(0)  
         right_img_datum = node.getInput(1)  
+        node.left_img_datum = left_img_datum
+        node.right_img_datum = right_img_datum
+        node.left_rectified = None
+        node.right_rectified = None
 
         if left_img_datum is None or right_img_datum is None:
-            node.setOutput(0, Datum(Datum.NUMBER, Value(float('nan')), nullSourceSet))  
+            self.add_validation_error("Inputs", "Left and right image inputs are required.")
+            self.finish_node(node)
             return
 
         left_img_cube = left_img_datum.get(Datum.IMG)
         right_img_cube = right_img_datum.get(Datum.IMG)
 
         if left_img_cube is None or right_img_cube is None:
-            node.setOutput(0, Datum(Datum.NUMBER, Value(float('nan')), nullSourceSet))  
+            self.add_validation_error("Inputs", "Left and right image inputs must both be images.")
+            self.finish_node(node)
             return
 
         left_img_rois = left_img_cube.rois
         right_img_rois = right_img_cube.rois
 
-        if left_img_rois is None or right_img_rois is None:
-            node.setOutput(0, Datum(Datum.NUMBER, Value(float('nan')), nullSourceSet))  
-            return
+        node.left_rectified = left_img_cube
+        node.right_rectified = right_img_cube
 
-        print(left_img_rois)
-        print(right_img_rois)
+        if not left_img_rois or not right_img_rois:
+            self.add_validation_error("ROIs", "Both images must contain labelled ROIs.")
+            self.finish_node(node)
+            return
 
         left_rois_sorted = self.extract_and_check_rois(left_img_datum)
         right_rois_sorted = self.extract_and_check_rois(right_img_datum)
 
-        print("Sorted ROIs")
-        print(left_rois_sorted)
-        print(right_rois_sorted)
+        self.validate_roi_pairs(left_rois_sorted, right_rois_sorted)
 
         for label in sorted(left_rois_sorted.keys() & right_rois_sorted.keys()):
-            print("Processing label:", label)
             left_rois_match = left_rois_sorted[label]
             right_rois_match = right_rois_sorted[label]
 
-            print("Left ROIs Match:", left_rois_match)
-            print("Right ROIs Match:", right_rois_match)
+            if len(left_rois_match) != 1 or len(right_rois_match) != 1:
+                continue
 
             left_coord = self.extract_roi_points(left_rois_match[0])
             right_coord = self.extract_roi_points(right_rois_match[0])
 
-            print("Left Coordinates:", left_coord)
-            print("Right Coordinates:", right_coord)
+            if not left_coord or not right_coord:
+                self.add_validation_error(label, "Could not extract a point from both ROIs.")
+                continue
 
             left_x = left_coord[0][0]
             right_x = right_coord[0][0]
 
-            depth = self.estimate_depth(left_x, right_x)
-            print("Estimated Depth:", depth)
+            try:
+                depth = self.estimate_depth(left_x, right_x)
+                crow = self.get_crow(depth)
+            except DistanceEstimateException as ex:
+                self.add_validation_error(label, str(ex))
+                continue
 
             left_roi = left_rois_match[0]
             right_roi = right_rois_match[0]
-
-            crow = self.get_crow(depth)
 
             storage = self.store_depth_and_rois(depth, crow, left_roi, right_roi)
 
             self.all_depths.append(storage)
 
+        if not self.all_depths and not self.validation_errors:
+            self.add_validation_error("ROIs", "No matching labelled ROI pairs were found.")
+
+        self.finish_node(node)
+
+    def finish_node(self, node):
         self.populate_table()
 
         node.all_depths = self.all_depths
         node.all_depths_table = self.all_depths_table
-        node.left_rectified = left_img_datum.get(Datum.IMG)
-        node.right_rectified = right_img_datum.get(Datum.IMG)
-        node.left_img_datum = left_img_datum
-        node.right_img_datum = right_img_datum
+        node.validation_errors = self.validation_errors
 
-        print("Computed depths:", self.all_depths)
-        
-        if self.all_depths_table:
-            node.setOutput(0, Datum(Datum.DATA, str(self.all_depths_table), nullSourceSet))
-        else:
-            node.setOutput(0, Datum(Datum.DATA, Value(float('nan')), nullSourceSet))
+        node.setOutput(0, Datum(Datum.DATA, str(self.all_depths_table), nullSourceSet))
 
-        if node.tabs is not None:
+        if hasattr(node, 'tabs') and node.tabs is not None:
             for tab in node.tabs:
                 tab.onNodeChanged()
 
     def get_crow(self, depth):
         height = self.camera_height
+        if height is None:
+            raise DistanceEstimateException("Camera height calibration is not loaded.")
+        if depth < height:
+            raise DistanceEstimateException(
+                f"Depth {depth:.6g} is smaller than camera height {height:.6g}."
+            )
         return (depth**2 - height**2)**0.5
         
     def extract_roi_points(self, roi):
@@ -211,15 +224,17 @@ class XFormDistEstimateRoi(XFormType):
         Raises:
         ValueError: If the disparity is zero.
         """
-        disparity = right_x - left_x
+        if self.focal_length is None or self.baseline is None:
+            raise DistanceEstimateException("Focal length and baseline calibration are not loaded.")
+
+        disparity = left_x - right_x
 
         if disparity == 0:
-            raise ValueError("Disparity cannot be zero")
-        
-        disparity = abs(disparity) #  Always non-negative
-
-        print("SELF FLENGTH", self.focal_length)
-        print("SELF BASELINE", self.baseline)
+            raise DistanceEstimateException("Disparity cannot be zero.")
+        if disparity < 0:
+            raise DistanceEstimateException(
+                f"Disparity has the wrong sign ({disparity:.6g}); check image order and ROI pairing."
+            )
 
         depth = self.focal_length * self.baseline / disparity
 
@@ -235,10 +250,7 @@ class XFormDistEstimateRoi(XFormType):
         Returns:
         dict: A dictionary of ROIs keyed by their labels, sorted by label.
 
-        Raises:
-        UnlabeledROIException: If multiple ROIs are present and any ROI is unlabeled.
         """
-        print(f"Checking datum of type {datum.tp} for ROIs")
         if datum.tp in (Datum.ROI, Datum.IMG, Datum.VARIANT, Datum.ANY):
             rois = None
             if datum.tp == Datum.IMG:
@@ -252,13 +264,10 @@ class XFormDistEstimateRoi(XFormType):
                     rois = datum.val
 
             if rois:
-                print(f"Found {len(rois)} ROIs")
                 roi_dict = {}
                 for roi in rois:
-                    print(f"Checking ROI {roi.label if roi.label else 'with no label'}")
                     if not roi.label:
-                        if len(rois) > 1:
-                            raise UnlabeledROIException("Multiple ROIs must be labeled.")
+                        self.add_validation_error("ROIs", "All ROIs must be labelled.")
                     else:
                         if roi.label not in roi_dict:
                             roi_dict[roi.label] = []
@@ -266,12 +275,27 @@ class XFormDistEstimateRoi(XFormType):
                 
                 # Sorting ROIs by label
                 sorted_rois = {label: roi_dict[label] for label in sorted(roi_dict)}
-                print(f"Returning {len(sorted_rois)} labeled ROIs")
                 return sorted_rois
 
-        print("No ROIs found")
         return {}
 
+    def validate_roi_pairs(self, left_rois, right_rois):
+        left_labels = set(left_rois)
+        right_labels = set(right_rois)
+
+        for label in sorted(left_labels - right_labels):
+            self.add_validation_error(label, "Label exists only on the left image.")
+        for label in sorted(right_labels - left_labels):
+            self.add_validation_error(label, "Label exists only on the right image.")
+        for label, rois in sorted(left_rois.items()):
+            if len(rois) > 1:
+                self.add_validation_error(label, "Duplicate label on the left image.")
+        for label, rois in sorted(right_rois.items()):
+            if len(rois) > 1:
+                self.add_validation_error(label, "Duplicate label on the right image.")
+
+    def add_validation_error(self, label, message):
+        self.validation_errors.append({"label": label, "message": message})
 
     def store_depth_and_rois(self, depth, crow, left_roi, right_roi):
         """
@@ -314,12 +338,18 @@ class XFormDistEstimateRoi(XFormType):
             table.add('Label', label)
             table.add('Depth', depth)
             table.add('Crow', crow)
+            table.add('Status', 'OK')
 
-            print(f"Label: {label}, Depth: {depth}, Crow: {crow}")
+        for error in self.validation_errors:
+            table.newRow(error['label'])
+            table.add('Label', error['label'])
+            table.add('Depth', '')
+            table.add('Crow', '')
+            table.add('Status', error['message'])
 
         self.all_depths_table = table
     
-class UnlabeledROIException(Exception):
+class DistanceEstimateException(Exception):
     pass
 
 class TabDistEstimateRoi(Tab):
@@ -388,36 +418,28 @@ class TabDistEstimateRoi(Tab):
 
     def onNodeChanged(self):
         node = self.node
-        print(f"Node type: {type(node)}")
-        print(f"Node attributes before access: {dir(node)}")
-
-        print(f"Table before update: {node.all_depths_table}") 
-        self.update_tab_table(node.all_depths_table)
+        self.update_tab_table(getattr(node, 'all_depths_table', Table()))
 
 
         if hasattr(node, 'left_rectified') and node.left_rectified is not None:
-            print("Left rectified image is available")
             # left_img_cube = ImageCube(node.left_rectified)
             left_img_cube = node.left_rectified
 
             self.left_canvas.display(left_img_cube)
         else:
-            print("Left rectified image is not available")
+            self.left_canvas.setImg(None)
 
         if hasattr(node, 'right_rectified') and node.right_rectified is not None:
-            print("Right rectified image is available")
             # right_img_cube = ImageCube(node.right_rectified)
             right_img_cube = node.right_rectified
             self.right_canvas.display(right_img_cube)
         else:
-            print("Right rectified image is not available")
+            self.right_canvas.setImg(None)
 
-        if self.node.left_img_datum is None:
-            node.setOutput(0, Datum(Datum.NUMBER, Value(float('nan')), nullSourceSet))
+        if getattr(self.node, 'left_img_datum', None) is None:
             self.left_canvas.setImg(None)
             return
-        if self.node.right_img_datum is None:
-            node.setOutput(0, Datum(Datum.NUMBER, Value(float('nan')), nullSourceSet))
+        if getattr(self.node, 'right_img_datum', None) is None:
             self.right_canvas.setImg(None)
             return
 
@@ -427,10 +449,8 @@ class TabDistEstimateRoi(Tab):
         row_count = depth_table.__len__()
 
         self.table_widget.setRowCount(row_count)
-        print(f"Row count: {row_count}")
 
         headers = depth_table.keys()
-        print(f"Headers: {headers}")
 
         # print(distance_table.__str__())
 
@@ -438,14 +458,9 @@ class TabDistEstimateRoi(Tab):
 
         self.table_widget.setHorizontalHeaderLabels(headers)
 
-        print(f"Headers: {headers}")
-        print(f"Depth table: {depth_table}")
-
         for row_index, data in enumerate(depth_table):
-            print(f"Row {row_index}: {data}")
             for col_index, header in enumerate(headers):
                 # header = int(header)
-                print(f"Setting item ({row_index}, {col_index}) to {data[col_index]}")
                 self.table_widget.setItem(row_index, col_index, QTableWidgetItem(str(data[col_index])))
 
         self.table_widget.resizeColumnsToContents()
