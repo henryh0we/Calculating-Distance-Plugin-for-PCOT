@@ -18,6 +18,7 @@ from PySide2.QtWidgets import (
     QSplitter,
     QTableWidget,
     QTableWidgetItem,
+    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -32,16 +33,56 @@ from pcot.datum import Datum
 # camera_height = 1.094
 
 MEASUREMENT_PARAM_FIELDS = [
-    ("minDisparityPx", "Min Disparity (px)"),
-    ("maxVerticalOffsetPx", "Max Vertical Offset (px)"),
-    ("mediumQualityMaxVerticalOffsetPx", "Medium Quality Max Vertical Offset (px)"),
-    ("highQualityMaxVerticalOffsetPx", "High Quality Max Vertical Offset (px)"),
-    ("highQualityMinDisparityPx", "High Quality Min Disparity (px)"),
-    ("mediumQualityMinDisparityPx", "Medium Quality Min Disparity (px)"),
-    ("pixelErrorPx", "Pixel Error (px)"),
-    ("highQualityMaxRelUncertainty", "High Quality Max Relative Uncertainty"),
-    ("mediumQualityMaxRelUncertainty", "Medium Quality Max Relative Uncertainty"),
-    ("calibrationFocalToleranceRatio", "Calibration Focal Tolerance Ratio"),
+    (
+        "minDisparityPx",
+        "Min Disparity (px)",
+        "Minimum positive horizontal pixel difference required before a stereo measurement is accepted.",
+    ),
+    (
+        "maxVerticalOffsetPx",
+        "Max Vertical Offset (px)",
+        "Largest allowed vertical difference between left and right ROI centres after rectification.",
+    ),
+    (
+        "mediumQualityMaxVerticalOffsetPx",
+        "Medium Quality Max Vertical Offset (px)",
+        "Maximum vertical offset allowed for a measurement to be classed as medium quality.",
+    ),
+    (
+        "highQualityMaxVerticalOffsetPx",
+        "High Quality Max Vertical Offset (px)",
+        "Maximum vertical offset allowed for a measurement to be classed as high quality.",
+    ),
+    (
+        "highQualityMinDisparityPx",
+        "High Quality Min Disparity (px)",
+        "Minimum disparity required for a measurement to be classed as high quality.",
+    ),
+    (
+        "mediumQualityMinDisparityPx",
+        "Medium Quality Min Disparity (px)",
+        "Minimum disparity required for a measurement to be classed as medium quality.",
+    ),
+    (
+        "pixelErrorPx",
+        "Pixel Error (px)",
+        "Assumed disparity error in pixels used to estimate the depth uncertainty range.",
+    ),
+    (
+        "highQualityMaxRelUncertainty",
+        "High Quality Max Relative Uncertainty",
+        "Maximum relative depth uncertainty allowed for a measurement to be classed as high quality.",
+    ),
+    (
+        "mediumQualityMaxRelUncertainty",
+        "Medium Quality Max Relative Uncertainty",
+        "Maximum relative depth uncertainty allowed for a measurement to be classed as medium quality.",
+    ),
+    (
+        "calibrationFocalToleranceRatio",
+        "Calibration Focal Tolerance Ratio",
+        "Relative difference allowed between the depth focal value and the rectified projection focal before a warning is shown.",
+    ),
 ]
 
 MEASUREMENT_PARAM_SPINBOX_CONFIG = {
@@ -517,7 +558,7 @@ class MeasurementSettingsDialog(QDialog):
         self.node = node
         self.original_values = {
             key: getattr(node.params, key)
-            for key, _ in MEASUREMENT_PARAM_FIELDS
+            for key, _, _ in MEASUREMENT_PARAM_FIELDS
         }
         self.inputs = {}
 
@@ -525,10 +566,20 @@ class MeasurementSettingsDialog(QDialog):
 
         layout = QVBoxLayout()
         grid = QGridLayout()
-        grid.setColumnStretch(1, 1)
+        grid.setColumnStretch(2, 1)
 
-        for row, (key, label) in enumerate(MEASUREMENT_PARAM_FIELDS):
-            grid.addWidget(QLabel(label), row, 0)
+        for row, (key, label, help_text) in enumerate(MEASUREMENT_PARAM_FIELDS):
+            label_widget = QLabel(label)
+            label_widget.setToolTip(help_text)
+            grid.addWidget(label_widget, row, 0)
+
+            info_button = QToolButton()
+            info_button.setText("i")
+            info_button.setToolTip(help_text)
+            info_button.setAutoRaise(True)
+            info_button.setFixedWidth(18)
+            grid.addWidget(info_button, row, 1, alignment=Qt.AlignLeft)
+
             config = MEASUREMENT_PARAM_SPINBOX_CONFIG[key]
             spin = QDoubleSpinBox()
             spin.setDecimals(config["decimals"])
@@ -536,7 +587,7 @@ class MeasurementSettingsDialog(QDialog):
             spin.setRange(0.0001, 1_000_000.0)
             spin.setValue(float(self.original_values[key]))
             self.inputs[key] = spin
-            grid.addWidget(spin, row, 1)
+            grid.addWidget(spin, row, 2)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
         buttons.accepted.connect(self.try_save)
@@ -571,10 +622,10 @@ class MeasurementSettingsDialog(QDialog):
 
     def parse_values(self):
         parsed = {}
-        for key, _ in MEASUREMENT_PARAM_FIELDS:
+        for key, _, _ in MEASUREMENT_PARAM_FIELDS:
             parsed[key] = float(self.inputs[key].value())
 
-        for key, label in MEASUREMENT_PARAM_FIELDS:
+        for key, label, _ in MEASUREMENT_PARAM_FIELDS:
             if parsed[key] <= 0:
                 QMessageBox.warning(self, "Invalid Value", f"{label} must be greater than zero.")
                 return None
