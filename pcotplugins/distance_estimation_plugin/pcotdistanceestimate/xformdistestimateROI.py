@@ -19,6 +19,7 @@ from PySide2.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
     QToolButton,
+    QToolTip,
     QVBoxLayout,
     QWidget,
 )
@@ -570,14 +571,18 @@ class MeasurementSettingsDialog(QDialog):
 
         for row, (key, label, help_text) in enumerate(MEASUREMENT_PARAM_FIELDS):
             label_widget = QLabel(label)
-            label_widget.setToolTip(help_text)
             grid.addWidget(label_widget, row, 0)
 
             info_button = QToolButton()
-            info_button.setText("i")
-            info_button.setToolTip(help_text)
+            info_button.setText("info")
             info_button.setAutoRaise(True)
-            info_button.setFixedWidth(18)
+            info_button.setCursor(Qt.PointingHandCursor)
+            info_button.setStyleSheet(
+                "QToolButton { color: #0057b8; text-decoration: underline; padding: 0px; }"
+            )
+            info_button.clicked.connect(
+                lambda _checked=False, button=info_button, text=help_text: self.show_help_popup(button, text)
+            )
             grid.addWidget(info_button, row, 1, alignment=Qt.AlignLeft)
 
             config = MEASUREMENT_PARAM_SPINBOX_CONFIG[key]
@@ -596,6 +601,9 @@ class MeasurementSettingsDialog(QDialog):
         layout.addLayout(grid)
         layout.addWidget(buttons)
         self.setLayout(layout)
+
+    def show_help_popup(self, button, text):
+        QToolTip.showText(button.mapToGlobal(button.rect().bottomLeft()), text, button)
 
     def try_save(self):
         parsed = self.parse_values()
