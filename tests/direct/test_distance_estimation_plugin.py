@@ -26,6 +26,7 @@ def dist_node():
     node.baseline = 0.5
     node.camera_height = 1.094
     node.rectified_focal_length = node.focal_length
+    node.test_params = node.params.create()
     return node
 
 
@@ -33,7 +34,7 @@ def test_build_measurement_returns_diagnostics_for_valid_circle_pair(dist_node):
     left = ROICircle(741, 783, 10, label="3m")
     right = ROICircle(459, 783, 10, label="3m")
 
-    measurement = dist_node.build_measurement("3m", left, right)
+    measurement = dist_node.build_measurement(dist_node.test_params, "3m", left, right)
 
     assert measurement["label"] == "3m"
     assert measurement["disparity"] == pytest.approx(282.0)
@@ -53,7 +54,7 @@ def test_build_measurement_rejects_non_circle_rois(dist_node):
     right = ROICircle(459, 783, 10, label="3m")
 
     with pytest.raises(DistanceEstimateException, match="must be a circle ROI"):
-        dist_node.build_measurement("3m", left, right)
+        dist_node.build_measurement(dist_node.test_params, "3m", left, right)
 
 
 def test_build_measurement_rejects_large_vertical_offset(dist_node):
@@ -61,14 +62,14 @@ def test_build_measurement_rejects_large_vertical_offset(dist_node):
     right = ROICircle(459, 786, 10, label="3m")
 
     with pytest.raises(DistanceEstimateException, match="Vertical offset"):
-        dist_node.build_measurement("3m", left, right)
+        dist_node.build_measurement(dist_node.test_params, "3m", left, right)
 
 
 def test_build_measurement_warns_for_low_quality_measurements(dist_node):
     left = ROICircle(100, 100, 10, label="far")
     right = ROICircle(91, 101, 10, label="far")
 
-    measurement = dist_node.build_measurement("far", left, right)
+    measurement = dist_node.build_measurement(dist_node.test_params, "far", left, right)
 
     assert measurement["disparity"] == pytest.approx(9.0)
     assert measurement["vertical_offset"] == pytest.approx(1.0)
@@ -80,7 +81,7 @@ def test_validate_calibration_consistency_adds_warning_when_focals_drift(dist_no
     dist_node.rectified_focal_length = dist_node.focal_length * 1.05
     dist_node.validation_issues = []
 
-    dist_node.validate_calibration_consistency()
+    dist_node.validate_calibration_consistency(dist_node.test_params)
 
     assert dist_node.validation_issues == [
         {

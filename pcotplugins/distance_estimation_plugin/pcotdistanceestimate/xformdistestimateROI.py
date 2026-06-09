@@ -4,7 +4,23 @@ from pcot.ui.canvas import Canvas
 from pcot.ui.tabs import Tab
 from pcot.utils.table import Table
 from pcot.sources import nullSourceSet
-from PySide2.QtWidgets import QVBoxLayout, QTableWidget, QTableWidgetItem, QHBoxLayout, QScrollArea, QSplitter, QWidget, QPushButton, QFileDialog
+from PySide2.QtWidgets import (
+    QDialog,
+    QDialogButtonBox,
+    QDoubleSpinBox,
+    QFileDialog,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QMessageBox,
+    QPushButton,
+    QScrollArea,
+    QSplitter,
+    QTableWidget,
+    QTableWidgetItem,
+    QVBoxLayout,
+    QWidget,
+)
 from PySide2.QtCore import Qt
 import json
 
@@ -14,6 +30,32 @@ from pcot.xform import XFormType, xformtype
 from pcot.datum import Datum
 
 # camera_height = 1.094
+
+MEASUREMENT_PARAM_FIELDS = [
+    ("minDisparityPx", "Min Disparity (px)"),
+    ("maxVerticalOffsetPx", "Max Vertical Offset (px)"),
+    ("mediumQualityMaxVerticalOffsetPx", "Medium Quality Max Vertical Offset (px)"),
+    ("highQualityMaxVerticalOffsetPx", "High Quality Max Vertical Offset (px)"),
+    ("highQualityMinDisparityPx", "High Quality Min Disparity (px)"),
+    ("mediumQualityMinDisparityPx", "Medium Quality Min Disparity (px)"),
+    ("pixelErrorPx", "Pixel Error (px)"),
+    ("highQualityMaxRelUncertainty", "High Quality Max Relative Uncertainty"),
+    ("mediumQualityMaxRelUncertainty", "Medium Quality Max Relative Uncertainty"),
+    ("calibrationFocalToleranceRatio", "Calibration Focal Tolerance Ratio"),
+]
+
+MEASUREMENT_PARAM_SPINBOX_CONFIG = {
+    "minDisparityPx": {"decimals": 2, "step": 0.1},
+    "maxVerticalOffsetPx": {"decimals": 2, "step": 0.1},
+    "mediumQualityMaxVerticalOffsetPx": {"decimals": 2, "step": 0.1},
+    "highQualityMaxVerticalOffsetPx": {"decimals": 2, "step": 0.1},
+    "highQualityMinDisparityPx": {"decimals": 2, "step": 0.5},
+    "mediumQualityMinDisparityPx": {"decimals": 2, "step": 0.5},
+    "pixelErrorPx": {"decimals": 2, "step": 0.1},
+    "highQualityMaxRelUncertainty": {"decimals": 4, "step": 0.01},
+    "mediumQualityMaxRelUncertainty": {"decimals": 4, "step": 0.01},
+    "calibrationFocalToleranceRatio": {"decimals": 4, "step": 0.001},
+}
 
 
 @xformtype
@@ -28,17 +70,6 @@ class XFormDistEstimateRoi(XFormType):
     Author: Henry Howe
     Date:2025-04-22
     """
-
-    MIN_DISPARITY_PX = 2.0
-    MAX_VERTICAL_OFFSET_PX = 2.0
-    MEDIUM_QUALITY_MAX_VERTICAL_OFFSET_PX = 1.0
-    HIGH_QUALITY_MAX_VERTICAL_OFFSET_PX = 0.5
-    HIGH_QUALITY_MIN_DISPARITY_PX = 20.0
-    MEDIUM_QUALITY_MIN_DISPARITY_PX = 8.0
-    PIXEL_ERROR_PX = 1.0
-    HIGH_QUALITY_MAX_REL_UNCERTAINTY = 0.05
-    MEDIUM_QUALITY_MAX_REL_UNCERTAINTY = 0.15
-    CALIBRATION_FOCAL_TOLERANCE_RATIO = 0.01
 
     def __init__(self):
         
@@ -66,8 +97,16 @@ class XFormDistEstimateRoi(XFormType):
         self.addOutputConnector("distance", Datum.DATA)
 
         self.params = TaggedDictType(
-            left_img_rois =('Left Image ROIs', list, []),
-            right_img_rois =('Right Image ROIs', list, [])
+            minDisparityPx=("Minimum positive disparity accepted for distance estimation", float, 2.0),
+            maxVerticalOffsetPx=("Maximum vertical offset allowed between matched circle centres", float, 2.0),
+            mediumQualityMaxVerticalOffsetPx=("Maximum vertical offset for medium quality classification", float, 1.0),
+            highQualityMaxVerticalOffsetPx=("Maximum vertical offset for high quality classification", float, 0.5),
+            highQualityMinDisparityPx=("Minimum disparity for high quality classification", float, 20.0),
+            mediumQualityMinDisparityPx=("Minimum disparity for medium quality classification", float, 8.0),
+            pixelErrorPx=("Disparity error used for uncertainty estimation", float, 1.0),
+            highQualityMaxRelUncertainty=("Maximum relative uncertainty for high quality classification", float, 0.05),
+            mediumQualityMaxRelUncertainty=("Maximum relative uncertainty for medium quality classification", float, 0.15),
+            calibrationFocalToleranceRatio=("Maximum allowed focal drift ratio before warning", float, 0.01),
         )
 
     def load_json(self, file_path):
@@ -116,7 +155,7 @@ class XFormDistEstimateRoi(XFormType):
         node.left_rectified = None
         node.right_rectified = None
 
-        self.validate_calibration_consistency()
+        self.validate_calibration_consistency(node.params)
 
         if left_img_datum is None or right_img_datum is None:
             self.add_validation_issue("Invalid", "Inputs", "Left and right image inputs are required.")
@@ -155,7 +194,7 @@ class XFormDistEstimateRoi(XFormType):
                 continue
 
             try:
-                storage = self.build_measurement(label, left_rois_match[0], right_rois_match[0])
+                storage = self.build_measurement(node.params, label, left_rois_match[0], right_rois_match[0])
             except DistanceEstimateException as ex:
                 self.add_validation_issue("Invalid", label, str(ex))
                 continue
@@ -207,12 +246,12 @@ class XFormDistEstimateRoi(XFormType):
         if focal_terms:
             self.rectified_focal_length = sum(focal_terms) / len(focal_terms)
 
-    def validate_calibration_consistency(self):
+    def validate_calibration_consistency(self, params):
         if self.focal_length is None or self.rectified_focal_length is None:
             return
 
         diff_ratio = abs(self.rectified_focal_length - self.focal_length) / self.rectified_focal_length
-        if diff_ratio > self.CALIBRATION_FOCAL_TOLERANCE_RATIO:
+        if diff_ratio > params.calibrationFocalToleranceRatio:
             self.add_validation_issue(
                 "Warning",
                 "Calibration",
@@ -226,7 +265,7 @@ class XFormDistEstimateRoi(XFormType):
             )
         return float(roi.x), float(roi.y)
 
-    def estimate_depth(self, left_x, right_x):
+    def estimate_depth(self, params, left_x, right_x):
         """Estimates the depth of a point given its x coordinates in the left and right images.
 
         Parameters:
@@ -250,17 +289,17 @@ class XFormDistEstimateRoi(XFormType):
             raise DistanceEstimateException(
                 f"Disparity has the wrong sign ({disparity:.6g}); check image order and ROI pairing."
             )
-        if disparity < self.MIN_DISPARITY_PX:
+        if disparity < params.minDisparityPx:
             raise DistanceEstimateException(
-                f"Disparity {disparity:.6g} is below the minimum threshold of {self.MIN_DISPARITY_PX:.6g} px."
+                f"Disparity {disparity:.6g} is below the minimum threshold of {params.minDisparityPx:.6g} px."
             )
 
         depth = self.focal_length * self.baseline / disparity
 
         return depth
 
-    def estimate_uncertainty(self, disparity, depth):
-        disparity_error = self.PIXEL_ERROR_PX
+    def estimate_uncertainty(self, params, disparity, depth):
+        disparity_error = params.pixelErrorPx
         lower_disparity = disparity + disparity_error
         upper_disparity = disparity - disparity_error
 
@@ -273,39 +312,39 @@ class XFormDistEstimateRoi(XFormType):
 
         return depth_low, depth_high, depth_uncertainty
 
-    def classify_quality(self, disparity, vertical_offset, relative_uncertainty):
+    def classify_quality(self, params, disparity, vertical_offset, relative_uncertainty):
         if (
-            vertical_offset <= self.HIGH_QUALITY_MAX_VERTICAL_OFFSET_PX
-            and disparity >= self.HIGH_QUALITY_MIN_DISPARITY_PX
-            and relative_uncertainty <= self.HIGH_QUALITY_MAX_REL_UNCERTAINTY
+            vertical_offset <= params.highQualityMaxVerticalOffsetPx
+            and disparity >= params.highQualityMinDisparityPx
+            and relative_uncertainty <= params.highQualityMaxRelUncertainty
         ):
             return "High", "OK", "Accepted"
 
         if (
-            vertical_offset <= self.MEDIUM_QUALITY_MAX_VERTICAL_OFFSET_PX
-            and disparity >= self.MEDIUM_QUALITY_MIN_DISPARITY_PX
-            and relative_uncertainty <= self.MEDIUM_QUALITY_MAX_REL_UNCERTAINTY
+            vertical_offset <= params.mediumQualityMaxVerticalOffsetPx
+            and disparity >= params.mediumQualityMinDisparityPx
+            and relative_uncertainty <= params.mediumQualityMaxRelUncertainty
         ):
             return "Medium", "OK", "Accepted"
 
         return "Low", "Warning", "Accepted with elevated uncertainty."
 
-    def build_measurement(self, label, left_roi, right_roi):
+    def build_measurement(self, params, label, left_roi, right_roi):
         left_x, left_y = self.extract_measurement_point(label, left_roi, "Left")
         right_x, right_y = self.extract_measurement_point(label, right_roi, "Right")
         disparity = left_x - right_x
         vertical_offset = abs(left_y - right_y)
 
-        if vertical_offset > self.MAX_VERTICAL_OFFSET_PX:
+        if vertical_offset > params.maxVerticalOffsetPx:
             raise DistanceEstimateException(
-                f"Vertical offset {vertical_offset:.6g} px exceeds the maximum of {self.MAX_VERTICAL_OFFSET_PX:.6g} px."
+                f"Vertical offset {vertical_offset:.6g} px exceeds the maximum of {params.maxVerticalOffsetPx:.6g} px."
             )
 
-        depth = self.estimate_depth(left_x, right_x)
+        depth = self.estimate_depth(params, left_x, right_x)
         ground_distance = self.get_crow(depth)
-        depth_low, depth_high, depth_uncertainty = self.estimate_uncertainty(disparity, depth)
+        depth_low, depth_high, depth_uncertainty = self.estimate_uncertainty(params, disparity, depth)
         relative_uncertainty = depth_uncertainty / depth if depth != 0 else math.inf
-        quality, status, message = self.classify_quality(disparity, vertical_offset, relative_uncertainty)
+        quality, status, message = self.classify_quality(params, disparity, vertical_offset, relative_uncertainty)
 
         return self.store_depth_and_rois(
             label,
@@ -471,6 +510,107 @@ class XFormDistEstimateRoi(XFormType):
 class DistanceEstimateException(Exception):
     pass
 
+
+class MeasurementSettingsDialog(QDialog):
+    def __init__(self, node, parent=None):
+        super().__init__(parent)
+        self.node = node
+        self.original_values = {
+            key: getattr(node.params, key)
+            for key, _ in MEASUREMENT_PARAM_FIELDS
+        }
+        self.inputs = {}
+
+        self.setWindowTitle("Measurement Settings")
+
+        layout = QVBoxLayout()
+        grid = QGridLayout()
+        grid.setColumnStretch(1, 1)
+
+        for row, (key, label) in enumerate(MEASUREMENT_PARAM_FIELDS):
+            grid.addWidget(QLabel(label), row, 0)
+            config = MEASUREMENT_PARAM_SPINBOX_CONFIG[key]
+            spin = QDoubleSpinBox()
+            spin.setDecimals(config["decimals"])
+            spin.setSingleStep(config["step"])
+            spin.setRange(0.0001, 1_000_000.0)
+            spin.setValue(float(self.original_values[key]))
+            self.inputs[key] = spin
+            grid.addWidget(spin, row, 1)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.try_save)
+        buttons.rejected.connect(self.reject)
+
+        layout.addLayout(grid)
+        layout.addWidget(buttons)
+        self.setLayout(layout)
+
+    def try_save(self):
+        parsed = self.parse_values()
+        if parsed is None:
+            return
+
+        if not self.has_changes(parsed):
+            self.accept()
+            return
+
+        response = QMessageBox.question(
+            self,
+            "Save Measurement Settings",
+            "Are you sure you want to save the changed measurement settings?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        if response != QMessageBox.Yes:
+            return
+
+        for key, value in parsed.items():
+            setattr(self.node.params, key, value)
+        self.accept()
+
+    def parse_values(self):
+        parsed = {}
+        for key, _ in MEASUREMENT_PARAM_FIELDS:
+            parsed[key] = float(self.inputs[key].value())
+
+        for key, label in MEASUREMENT_PARAM_FIELDS:
+            if parsed[key] <= 0:
+                QMessageBox.warning(self, "Invalid Value", f"{label} must be greater than zero.")
+                return None
+
+        if parsed["highQualityMaxVerticalOffsetPx"] > parsed["mediumQualityMaxVerticalOffsetPx"]:
+            QMessageBox.warning(
+                self,
+                "Invalid Value",
+                "High quality max vertical offset must be less than or equal to medium quality max vertical offset."
+            )
+            return None
+
+        if parsed["highQualityMinDisparityPx"] < parsed["mediumQualityMinDisparityPx"]:
+            QMessageBox.warning(
+                self,
+                "Invalid Value",
+                "High quality min disparity must be greater than or equal to medium quality min disparity."
+            )
+            return None
+
+        if parsed["highQualityMaxRelUncertainty"] > parsed["mediumQualityMaxRelUncertainty"]:
+            QMessageBox.warning(
+                self,
+                "Invalid Value",
+                "High quality max relative uncertainty must be less than or equal to medium quality max relative uncertainty."
+            )
+            return None
+
+        return parsed
+
+    def has_changes(self, parsed):
+        for key, value in parsed.items():
+            if value != self.original_values[key]:
+                return True
+        return False
+
 class TabDistEstimateRoi(Tab):
     def __init__(self, node, w):
         super().__init__(w, node)
@@ -533,7 +673,16 @@ class TabDistEstimateRoi(Tab):
         self.button_layout.addWidget(self.html_button)
         # ================================================
 
+        self.settings_button = QPushButton("Measurement Settings...")
+        self.settings_button.clicked.connect(self.open_measurement_settings)
+        self.button_layout.addWidget(self.settings_button)
+
         self.layout.addLayout(self.button_layout)
+
+    def open_measurement_settings(self):
+        dialog = MeasurementSettingsDialog(self.node, self)
+        if dialog.exec_():
+            self.changed()
 
     def onNodeChanged(self):
         node = self.node
