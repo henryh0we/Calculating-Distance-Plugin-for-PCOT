@@ -1,3 +1,4 @@
+import math
 import os
 from pcot.ui.canvas import Canvas
 from pcot.ui.tabs import Tab
@@ -8,7 +9,7 @@ from PySide2.QtCore import Qt
 import json
 
 from pcot.parameters.taggedaggregates import TaggedDictType
-from pcot.rois import ROICircle, ROIPainted, ROIPoly, ROIRect
+from pcot.rois import ROICircle
 from pcot.xform import XFormType, xformtype
 from pcot.datum import Datum
 
@@ -28,6 +29,17 @@ class XFormDistEstimateRoi(XFormType):
     Date:2025-04-22
     """
 
+    MIN_DISPARITY_PX = 2.0
+    MAX_VERTICAL_OFFSET_PX = 2.0
+    MEDIUM_QUALITY_MAX_VERTICAL_OFFSET_PX = 1.0
+    HIGH_QUALITY_MAX_VERTICAL_OFFSET_PX = 0.5
+    HIGH_QUALITY_MIN_DISPARITY_PX = 20.0
+    MEDIUM_QUALITY_MIN_DISPARITY_PX = 8.0
+    PIXEL_ERROR_PX = 1.0
+    HIGH_QUALITY_MAX_REL_UNCERTAINTY = 0.05
+    MEDIUM_QUALITY_MAX_REL_UNCERTAINTY = 0.15
+    CALIBRATION_FOCAL_TOLERANCE_RATIO = 0.01
+
     def __init__(self):
         
         super().__init__("distestimateROI", "processing", "0.0.0")
@@ -39,12 +51,14 @@ class XFormDistEstimateRoi(XFormType):
         self.focal_length = None
         self.baseline = None
         self.camera_height = None
+        self.rectified_focal_length = None
 
         self.load_json(file_data_path)
+        self.load_rectification_json(os.path.join(script_dir, 'mtx_dst_rect_proj.json'))
 
         self.all_depths = []
         self.all_depths_table = Table()
-        self.validation_errors = []
+        self.validation_issues = []
 
         self.addInputConnector("left", Datum.IMG)
         self.addInputConnector("right", Datum.IMG)
@@ -84,7 +98,7 @@ class XFormDistEstimateRoi(XFormType):
     def initialise_node_state(self, node):
         node.all_depths = []
         node.all_depths_table = Table()
-        node.validation_errors = []
+        node.validation_issues = []
         node.left_rectified = None
         node.right_rectified = None
         node.left_img_datum = None
@@ -93,7 +107,7 @@ class XFormDistEstimateRoi(XFormType):
     def perform(self, node):
         self.all_depths = []
         self.all_depths_table = Table()
-        self.validation_errors = []
+        self.validation_issues = []
 
         left_img_datum = node.getInput(0)  
         right_img_datum = node.getInput(1)  
@@ -102,8 +116,10 @@ class XFormDistEstimateRoi(XFormType):
         node.left_rectified = None
         node.right_rectified = None
 
+        self.validate_calibration_consistency()
+
         if left_img_datum is None or right_img_datum is None:
-            self.add_validation_error("Inputs", "Left and right image inputs are required.")
+            self.add_validation_issue("Invalid", "Inputs", "Left and right image inputs are required.")
             self.finish_node(node)
             return
 
@@ -111,7 +127,7 @@ class XFormDistEstimateRoi(XFormType):
         right_img_cube = right_img_datum.get(Datum.IMG)
 
         if left_img_cube is None or right_img_cube is None:
-            self.add_validation_error("Inputs", "Left and right image inputs must both be images.")
+            self.add_validation_issue("Invalid", "Inputs", "Left and right image inputs must both be images.")
             self.finish_node(node)
             return
 
@@ -122,7 +138,7 @@ class XFormDistEstimateRoi(XFormType):
         node.right_rectified = right_img_cube
 
         if not left_img_rois or not right_img_rois:
-            self.add_validation_error("ROIs", "Both images must contain labelled ROIs.")
+            self.add_validation_issue("Invalid", "ROIs", "Both images must contain labelled circle ROIs.")
             self.finish_node(node)
             return
 
@@ -138,32 +154,16 @@ class XFormDistEstimateRoi(XFormType):
             if len(left_rois_match) != 1 or len(right_rois_match) != 1:
                 continue
 
-            left_coord = self.extract_roi_points(left_rois_match[0])
-            right_coord = self.extract_roi_points(right_rois_match[0])
-
-            if not left_coord or not right_coord:
-                self.add_validation_error(label, "Could not extract a point from both ROIs.")
-                continue
-
-            left_x = left_coord[0][0]
-            right_x = right_coord[0][0]
-
             try:
-                depth = self.estimate_depth(left_x, right_x)
-                crow = self.get_crow(depth)
+                storage = self.build_measurement(label, left_rois_match[0], right_rois_match[0])
             except DistanceEstimateException as ex:
-                self.add_validation_error(label, str(ex))
+                self.add_validation_issue("Invalid", label, str(ex))
                 continue
-
-            left_roi = left_rois_match[0]
-            right_roi = right_rois_match[0]
-
-            storage = self.store_depth_and_rois(depth, crow, left_roi, right_roi)
 
             self.all_depths.append(storage)
 
-        if not self.all_depths and not self.validation_errors:
-            self.add_validation_error("ROIs", "No matching labelled ROI pairs were found.")
+        if not self.all_depths and not self.validation_issues:
+            self.add_validation_issue("Invalid", "ROIs", "No matching labelled ROI pairs were found.")
 
         self.finish_node(node)
 
@@ -172,7 +172,7 @@ class XFormDistEstimateRoi(XFormType):
 
         node.all_depths = self.all_depths
         node.all_depths_table = self.all_depths_table
-        node.validation_errors = self.validation_errors
+        node.validation_issues = self.validation_issues
 
         node.setOutput(0, Datum(Datum.DATA, str(self.all_depths_table), nullSourceSet))
 
@@ -189,27 +189,42 @@ class XFormDistEstimateRoi(XFormType):
                 f"Depth {depth:.6g} is smaller than camera height {height:.6g}."
             )
         return (depth**2 - height**2)**0.5
-        
-    def extract_roi_points(self, roi):
-        """Extracts the points from the ROI. Functionally irrelevant now, after 
-        switching to useing MultiDot (all ROIs should be ROICircle)
 
-        Args:
-            roi (_type_): region of interest
+    def load_rectification_json(self, file_path):
+        if not os.path.exists(file_path):
+            return
 
-        Returns:
-            list: list containing tuple of x and y coordinates
-        """
-        if isinstance(roi, ROIPoly):
-            return roi.points  # List of (x, y) tuples
-        elif isinstance(roi, ROIRect):
-            return [(roi.x, roi.y), (roi.x + roi.w, roi.y + roi.h)]
-        elif isinstance(roi, ROICircle):
-            return [(roi.x, roi.y)]  # Center and radius are also attributes
-        elif isinstance(roi, ROIPainted):
-            return [roi.centroid()]
-        else:
-            return []
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+
+        focal_terms = []
+        for key in ('proj_left', 'proj_right'):
+            proj = data.get(key)
+            if proj is None:
+                continue
+            focal_terms.extend([proj[0][0], proj[1][1]])
+
+        if focal_terms:
+            self.rectified_focal_length = sum(focal_terms) / len(focal_terms)
+
+    def validate_calibration_consistency(self):
+        if self.focal_length is None or self.rectified_focal_length is None:
+            return
+
+        diff_ratio = abs(self.rectified_focal_length - self.focal_length) / self.rectified_focal_length
+        if diff_ratio > self.CALIBRATION_FOCAL_TOLERANCE_RATIO:
+            self.add_validation_issue(
+                "Warning",
+                "Calibration",
+                "Distance focal length differs from rectified projection focal length."
+            )
+
+    def extract_measurement_point(self, label, roi, side):
+        if not isinstance(roi, ROICircle):
+            raise DistanceEstimateException(
+                f"{side} ROI for label '{label}' must be a circle ROI for measurement."
+            )
+        return float(roi.x), float(roi.y)
 
     def estimate_depth(self, left_x, right_x):
         """Estimates the depth of a point given its x coordinates in the left and right images.
@@ -235,10 +250,78 @@ class XFormDistEstimateRoi(XFormType):
             raise DistanceEstimateException(
                 f"Disparity has the wrong sign ({disparity:.6g}); check image order and ROI pairing."
             )
+        if disparity < self.MIN_DISPARITY_PX:
+            raise DistanceEstimateException(
+                f"Disparity {disparity:.6g} is below the minimum threshold of {self.MIN_DISPARITY_PX:.6g} px."
+            )
 
         depth = self.focal_length * self.baseline / disparity
 
         return depth
+
+    def estimate_uncertainty(self, disparity, depth):
+        disparity_error = self.PIXEL_ERROR_PX
+        lower_disparity = disparity + disparity_error
+        upper_disparity = disparity - disparity_error
+
+        if upper_disparity <= 0:
+            raise DistanceEstimateException("Disparity is too small for the configured pixel-error model.")
+
+        depth_low = self.focal_length * self.baseline / lower_disparity
+        depth_high = self.focal_length * self.baseline / upper_disparity
+        depth_uncertainty = max(abs(depth - depth_low), abs(depth_high - depth))
+
+        return depth_low, depth_high, depth_uncertainty
+
+    def classify_quality(self, disparity, vertical_offset, relative_uncertainty):
+        if (
+            vertical_offset <= self.HIGH_QUALITY_MAX_VERTICAL_OFFSET_PX
+            and disparity >= self.HIGH_QUALITY_MIN_DISPARITY_PX
+            and relative_uncertainty <= self.HIGH_QUALITY_MAX_REL_UNCERTAINTY
+        ):
+            return "High", "OK", "Accepted"
+
+        if (
+            vertical_offset <= self.MEDIUM_QUALITY_MAX_VERTICAL_OFFSET_PX
+            and disparity >= self.MEDIUM_QUALITY_MIN_DISPARITY_PX
+            and relative_uncertainty <= self.MEDIUM_QUALITY_MAX_REL_UNCERTAINTY
+        ):
+            return "Medium", "OK", "Accepted"
+
+        return "Low", "Warning", "Accepted with elevated uncertainty."
+
+    def build_measurement(self, label, left_roi, right_roi):
+        left_x, left_y = self.extract_measurement_point(label, left_roi, "Left")
+        right_x, right_y = self.extract_measurement_point(label, right_roi, "Right")
+        disparity = left_x - right_x
+        vertical_offset = abs(left_y - right_y)
+
+        if vertical_offset > self.MAX_VERTICAL_OFFSET_PX:
+            raise DistanceEstimateException(
+                f"Vertical offset {vertical_offset:.6g} px exceeds the maximum of {self.MAX_VERTICAL_OFFSET_PX:.6g} px."
+            )
+
+        depth = self.estimate_depth(left_x, right_x)
+        ground_distance = self.get_crow(depth)
+        depth_low, depth_high, depth_uncertainty = self.estimate_uncertainty(disparity, depth)
+        relative_uncertainty = depth_uncertainty / depth if depth != 0 else math.inf
+        quality, status, message = self.classify_quality(disparity, vertical_offset, relative_uncertainty)
+
+        return self.store_depth_and_rois(
+            label,
+            depth,
+            ground_distance,
+            disparity,
+            vertical_offset,
+            depth_low,
+            depth_high,
+            depth_uncertainty,
+            quality,
+            status,
+            message,
+            left_roi,
+            right_roi
+        )
 
     def extract_and_check_rois(self, datum):
         """
@@ -267,7 +350,7 @@ class XFormDistEstimateRoi(XFormType):
                 roi_dict = {}
                 for roi in rois:
                     if not roi.label:
-                        self.add_validation_error("ROIs", "All ROIs must be labelled.")
+                        self.add_validation_issue("Invalid", "ROIs", "All ROIs must be labelled.")
                     else:
                         if roi.label not in roi_dict:
                             roi_dict[roi.label] = []
@@ -284,20 +367,35 @@ class XFormDistEstimateRoi(XFormType):
         right_labels = set(right_rois)
 
         for label in sorted(left_labels - right_labels):
-            self.add_validation_error(label, "Label exists only on the left image.")
+            self.add_validation_issue("Invalid", label, "Label exists only on the left image.")
         for label in sorted(right_labels - left_labels):
-            self.add_validation_error(label, "Label exists only on the right image.")
+            self.add_validation_issue("Invalid", label, "Label exists only on the right image.")
         for label, rois in sorted(left_rois.items()):
             if len(rois) > 1:
-                self.add_validation_error(label, "Duplicate label on the left image.")
+                self.add_validation_issue("Invalid", label, "Duplicate label on the left image.")
         for label, rois in sorted(right_rois.items()):
             if len(rois) > 1:
-                self.add_validation_error(label, "Duplicate label on the right image.")
+                self.add_validation_issue("Invalid", label, "Duplicate label on the right image.")
 
-    def add_validation_error(self, label, message):
-        self.validation_errors.append({"label": label, "message": message})
+    def add_validation_issue(self, status, label, message):
+        self.validation_issues.append({"status": status, "label": label, "message": message})
 
-    def store_depth_and_rois(self, depth, crow, left_roi, right_roi):
+    def store_depth_and_rois(
+        self,
+        label,
+        depth,
+        ground_distance,
+        disparity,
+        vertical_offset,
+        depth_low,
+        depth_high,
+        depth_uncertainty,
+        quality,
+        status,
+        message,
+        left_roi,
+        right_roi
+    ):
         """
         Stores the depth and the two ROIs in a dictionary.
         
@@ -311,12 +409,24 @@ class XFormDistEstimateRoi(XFormType):
         dict: A dictionary containing the depth, crow and the ROIs.
         """
         storage = {
+            "label": label,
             "depth": depth,
-            "crow": crow,
+            "ground_distance": ground_distance,
+            "disparity": disparity,
+            "vertical_offset": vertical_offset,
+            "depth_low": depth_low,
+            "depth_high": depth_high,
+            "depth_uncertainty": depth_uncertainty,
+            "quality": quality,
+            "status": status,
+            "message": message,
             "left_roi": left_roi.to_tagged_dict(),
             "right_roi": right_roi.to_tagged_dict(),
         }
         return storage
+
+    def format_number(self, value):
+        return f"{value:.3f}"
 
     def populate_table(self):        
         """
@@ -329,23 +439,32 @@ class XFormDistEstimateRoi(XFormType):
         table = Table()
 
         for data in self.all_depths:
-            # left_label = data['left_roi']['label']
-            label = data['right_roi']['label']
-            depth = data['depth']
-            crow = data['crow']
+            table.newRow(data['label'])
+            table.add('Label', data['label'])
+            table.add('Depth (m)', self.format_number(data['depth']))
+            table.add('Ground Distance (m)', self.format_number(data['ground_distance']))
+            table.add('Disparity (px)', self.format_number(data['disparity']))
+            table.add('Vertical Offset (px)', self.format_number(data['vertical_offset']))
+            table.add('Depth Low (m)', self.format_number(data['depth_low']))
+            table.add('Depth High (m)', self.format_number(data['depth_high']))
+            table.add('Depth Uncertainty (m)', self.format_number(data['depth_uncertainty']))
+            table.add('Quality', data['quality'])
+            table.add('Status', data['status'])
+            table.add('Message', data['message'])
 
-            table.newRow(label)
-            table.add('Label', label)
-            table.add('Depth', depth)
-            table.add('Crow', crow)
-            table.add('Status', 'OK')
-
-        for error in self.validation_errors:
-            table.newRow(error['label'])
-            table.add('Label', error['label'])
-            table.add('Depth', '')
-            table.add('Crow', '')
-            table.add('Status', error['message'])
+        for idx, issue in enumerate(self.validation_issues):
+            table.newRow(f"issue:{idx}:{issue['label']}")
+            table.add('Label', issue['label'])
+            table.add('Depth (m)', '')
+            table.add('Ground Distance (m)', '')
+            table.add('Disparity (px)', '')
+            table.add('Vertical Offset (px)', '')
+            table.add('Depth Low (m)', '')
+            table.add('Depth High (m)', '')
+            table.add('Depth Uncertainty (m)', '')
+            table.add('Quality', '')
+            table.add('Status', issue['status'])
+            table.add('Message', issue['message'])
 
         self.all_depths_table = table
     
