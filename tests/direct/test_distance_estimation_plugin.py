@@ -27,6 +27,7 @@ HAS_PYSIDE2 = importlib.util.find_spec("PySide2") is not None
 
 if HAS_PYSIDE2:
     from pcot.datum import Datum
+    from pcot.imagecube import ImageCube
     from pcotplugins.distance_estimation_plugin.pcotdistanceestimate.xformdistestimateROI import (
         XFormDistEstimateRoi,
     )
@@ -348,6 +349,42 @@ def test_rectify_opencv_failure_clears_outputs(monkeypatch):
     assert "map failed" in node.status_message
     assert node.outputs[0].get(Datum.IMG) is None
     assert node.outputs[1].get(Datum.IMG) is None
+
+
+@pytest.mark.skipif(not HAS_PYSIDE2, reason="PySide2 not installed")
+def test_rectify_build_cube_preserves_metadata_and_remaps_companion_arrays():
+    rectify_type = XFormImageRectify()
+    img = np.arange(9, dtype=np.float32).reshape(3, 3)
+    uncertainty = (img + 10).astype(np.float32)
+    dq = np.arange(9, dtype=np.uint16).reshape(3, 3)
+    input_cube = ImageCube(img, uncertainty=uncertainty, dq=dq)
+    input_cube.rois = [object()]
+    map_x = np.array(
+        [
+            [0.0, 1.0, 2.0],
+            [0.0, 1.0, 2.0],
+            [0.0, 1.0, 2.0],
+        ],
+        dtype=np.float32,
+    )
+    map_y = np.array(
+        [
+            [0.0, 0.0, 0.0],
+            [1.0, 1.0, 1.0],
+            [2.0, 2.0, 2.0],
+        ],
+        dtype=np.float32,
+    )
+
+    output_cube = rectify_type.build_rectified_cube(input_cube, img.copy(), map_x, map_y)
+
+    assert output_cube.mapping is input_cube.mapping
+    assert output_cube.sources is input_cube.sources
+    np.testing.assert_array_equal(output_cube.img, img)
+    np.testing.assert_array_equal(output_cube.uncertainty, uncertainty)
+    np.testing.assert_array_equal(output_cube.dq, dq)
+    assert output_cube.dq.dtype == np.uint16
+    assert output_cube.rois == []
 
 
 @pytest.mark.skipif(not HAS_PYSIDE2, reason="PySide2 not installed")

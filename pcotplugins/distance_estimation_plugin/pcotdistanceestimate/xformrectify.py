@@ -130,16 +130,25 @@ class XFormImageRectify(XFormType):
 
             left_rectified = cv.remap(left_img, map_left_x, map_left_y, cv.INTER_LINEAR)
             right_rectified = cv.remap(right_img, map_right_x, map_right_y, cv.INTER_LINEAR)
+
+            left_rectified_cube = self.build_rectified_cube(
+                left_img_cube,
+                left_rectified,
+                map_left_x,
+                map_left_y,
+            )
+            right_rectified_cube = self.build_rectified_cube(
+                right_img_cube,
+                right_rectified,
+                map_right_x,
+                map_right_y,
+            )
         except cv.error as ex:
             self.clear_node_outputs(node, f"Rectification failed: {ex}")
             return
         except ValueError as ex:
             self.clear_node_outputs(node, f"Rectification failed: {ex}")
             return
-
-        # Wrap numpy arrays into ImageCube objects
-        left_rectified_cube = ImageCube(left_rectified)
-        right_rectified_cube = ImageCube(right_rectified)
 
         # Store the rectified images in the node for tab access
         node.left_rectified_cube = left_rectified_cube
@@ -153,6 +162,19 @@ class XFormImageRectify(XFormType):
         # Set the output connectors
         node.setOutput(0, left_rectified_datum)
         node.setOutput(1, right_rectified_datum)
+
+    def build_rectified_cube(self, input_cube, rectified_img, map_x, map_y):
+        rectified_uncertainty = cv.remap(input_cube.uncertainty, map_x, map_y, cv.INTER_LINEAR)
+        rectified_dq = cv.remap(input_cube.dq, map_x, map_y, cv.INTER_NEAREST)
+
+        return ImageCube(
+            rectified_img.astype(np.float32, copy=False),
+            input_cube.mapping,
+            input_cube.sources,
+            uncertainty=rectified_uncertainty.astype(np.float32, copy=False),
+            dq=rectified_dq.astype(np.uint16, copy=False),
+            rois=[],
+        )
 
     def load_json(self, file_path):
         self.clear_calibration()
