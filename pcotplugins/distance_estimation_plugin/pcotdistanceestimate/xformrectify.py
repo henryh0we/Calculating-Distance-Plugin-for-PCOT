@@ -1,18 +1,16 @@
-# My imports
 import cv2 as cv
-import numpy as np
-import os
 import json
-from PySide2.QtWidgets import QLabel, QVBoxLayout
-from PySide2.QtWidgets import QVBoxLayout, QLabel, QHBoxLayout
-from pcot.ui.tabs import Tab
-from pcot.datum import Datum
-from pcot.ui.canvas import Canvas
+import os
 
-# Coppied from other pcot plugins
-from pcot.xform import XFormType, xformtype
-from pcot.imagecube import ImageCube
+import numpy as np
+from PySide2.QtWidgets import QLabel, QHBoxLayout, QVBoxLayout
+
 from pcot.datum import Datum
+from pcot.imagecube import ImageCube
+from pcot.ui.canvas import Canvas
+from pcot.ui.tabs import Tab
+from pcot.xform import XFormType, xformtype
+
 
 @xformtype
 class XFormImageRectify(XFormType):
@@ -43,14 +41,9 @@ class XFormImageRectify(XFormType):
         file_path = os.path.join(script_dir, 'mtx_dst_rect_proj.json')
         self.load_json(file_path)
 
-        self.left_rectified = None
-        self.right_rectified = None
-
         self.addInputConnector("Left Image", Datum.IMG)
         self.addInputConnector("Right Image", Datum.IMG)
 
-        # self.addInputConnector("Image", Datum.IMG)
-        
         self.addOutputConnector("Left Output", Datum.IMG)
         self.addOutputConnector("Right Output", Datum.IMG)
 
@@ -58,25 +51,31 @@ class XFormImageRectify(XFormType):
         return TabImageRectify(n, w)
 
     def init(self, n):
-        # No initialisation required.
-        
-        pass
+        n.left_rectified_cube = None
+        n.right_rectified_cube = None
+        n.status_message = ""
+        n._rectify_map_cache = {}
+
+    def clear_node_outputs(self, node, message):
+        node.left_rectified_cube = None
+        node.right_rectified_cube = None
+        node.status_message = message
+        node.setOutput(0, Datum(Datum.IMG, None))
+        node.setOutput(1, Datum(Datum.IMG, None))
 
     def perform(self, node):
-        left_img_datum = node.getInput(0)  # Use index 0 for 'Left Image'
-        right_img_datum = node.getInput(1)  # Use index 1 for 'Right Image'
+        left_img_datum = node.getInput(0)
+        right_img_datum = node.getInput(1)
 
         if left_img_datum is None or right_img_datum is None:
-            node.setOutput(0, Datum(Datum.IMG, None))  # Use index 0 for 'Left Output'
-            node.setOutput(1, Datum(Datum.IMG, None))  # Use index 1 for 'Right Output'
+            self.clear_node_outputs(node, "Left and right image inputs are required.")
             return
 
         left_img_cube = left_img_datum.get(Datum.IMG)
         right_img_cube = right_img_datum.get(Datum.IMG)
 
         if left_img_cube is None or right_img_cube is None:
-            node.setOutput(0, Datum(Datum.IMG, None))  # Use index 0 for 'Left Output'
-            node.setOutput(1, Datum(Datum.IMG, None))  # Use index 1 for 'Right Output'
+            self.clear_node_outputs(node, "Left and right inputs must both be images.")
             return
 
         left_img = left_img_cube.img
@@ -107,21 +106,22 @@ class XFormImageRectify(XFormType):
         left_rectified = cv.remap(left_img, map_left_x, map_left_y, cv.INTER_LINEAR)
         right_rectified = cv.remap(right_img, map_right_x, map_right_y, cv.INTER_LINEAR)
 
-        # Store the rectified images in the node for tab access
-        node.left_rectified = left_rectified
-        node.right_rectified = right_rectified
-
         # Wrap numpy arrays into ImageCube objects
         left_rectified_cube = ImageCube(left_rectified)
         right_rectified_cube = ImageCube(right_rectified)
+
+        # Store the rectified images in the node for tab access
+        node.left_rectified_cube = left_rectified_cube
+        node.right_rectified_cube = right_rectified_cube
+        node.status_message = "Images rectified."
 
         # Create Datum objects for the outputs
         left_rectified_datum = Datum(Datum.IMG, left_rectified_cube)
         right_rectified_datum = Datum(Datum.IMG, right_rectified_cube)
 
         # Set the output connectors
-        node.setOutput(0, left_rectified_datum)  # Use index 0 for 'Left Output'
-        node.setOutput(1, right_rectified_datum)  # Use index 1 for 'Right Output'
+        node.setOutput(0, left_rectified_datum)
+        node.setOutput(1, right_rectified_datum)
 
     def load_json(self, file_path):
 
@@ -143,7 +143,6 @@ class XFormImageRectify(XFormType):
 class TabImageRectify(Tab):
     def __init__(self, node, window):
         super().__init__(window, node)
-        # layout = QVBoxLayout(self.w)
         layout = QHBoxLayout(self.w)
 
         left_layout = QVBoxLayout()
@@ -169,12 +168,14 @@ class TabImageRectify(Tab):
         self.nodeChanged()
 
     def onNodeChanged(self):
-        if hasattr(self.node, 'left_rectified') and self.node.left_rectified is not None:
-            left_img_cube = ImageCube(self.node.left_rectified)
+        left_img_cube = getattr(self.node, 'left_rectified_cube', None)
+        if left_img_cube is not None:
             self.leftCanvas.display(left_img_cube)
-            # self.leftCanvas.display(self.node.left_rectified)
+        else:
+            self.leftCanvas.setImg(None)
 
-        if hasattr(self.node, 'right_rectified') and self.node.right_rectified is not None:
-            right_img_cube = ImageCube(self.node.right_rectified)
+        right_img_cube = getattr(self.node, 'right_rectified_cube', None)
+        if right_img_cube is not None:
             self.rightCanvas.display(right_img_cube)
-            #  self.rightCanvas.display(self.node.right_rectified)
+        else:
+            self.rightCanvas.setImg(None)

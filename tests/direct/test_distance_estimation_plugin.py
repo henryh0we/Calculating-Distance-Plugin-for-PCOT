@@ -24,8 +24,12 @@ from pcotplugins.distance_estimation_plugin.pcotdistanceestimate.distance_calcul
 HAS_PYSIDE2 = importlib.util.find_spec("PySide2") is not None
 
 if HAS_PYSIDE2:
+    from pcot.datum import Datum
     from pcotplugins.distance_estimation_plugin.pcotdistanceestimate.xformdistestimateROI import (
         XFormDistEstimateRoi,
+    )
+    from pcotplugins.distance_estimation_plugin.pcotdistanceestimate.xformrectify import (
+        XFormImageRectify,
     )
 
 
@@ -51,6 +55,18 @@ class RectRoi:
 
     def to_tagged_dict(self):
         return {"type": "rect", "rect": self.rect, "label": self.label}
+
+
+class FakeRectifyNode:
+    def __init__(self):
+        self.inputs = [None, None]
+        self.outputs = {}
+
+    def getInput(self, idx):
+        return self.inputs[idx]
+
+    def setOutput(self, idx, datum):
+        self.outputs[idx] = datum
 
 
 @pytest.fixture
@@ -177,6 +193,37 @@ def test_build_measurement_warns_for_low_quality_measurements(measurement_params
     assert measurement["vertical_offset"] == pytest.approx(1.0)
     assert measurement["quality"] == "Low"
     assert measurement["status"] == "Warning"
+
+
+@pytest.mark.skipif(not HAS_PYSIDE2, reason="PySide2 not installed")
+def test_rectify_init_creates_empty_preview_status_and_cache_state():
+    rectify_type = XFormImageRectify()
+    node = FakeRectifyNode()
+
+    rectify_type.init(node)
+
+    assert node.left_rectified_cube is None
+    assert node.right_rectified_cube is None
+    assert node.status_message == ""
+    assert node._rectify_map_cache == {}
+
+
+@pytest.mark.skipif(not HAS_PYSIDE2, reason="PySide2 not installed")
+def test_rectify_missing_inputs_clear_outputs_and_stale_preview_state():
+    rectify_type = XFormImageRectify()
+    node = FakeRectifyNode()
+    rectify_type.init(node)
+    node.left_rectified_cube = object()
+    node.right_rectified_cube = object()
+    node.status_message = "old status"
+
+    rectify_type.perform(node)
+
+    assert node.left_rectified_cube is None
+    assert node.right_rectified_cube is None
+    assert node.status_message == "Left and right image inputs are required."
+    assert node.outputs[0].get(Datum.IMG) is None
+    assert node.outputs[1].get(Datum.IMG) is None
 
 
 @pytest.mark.skipif(not HAS_PYSIDE2, reason="PySide2 not installed")
