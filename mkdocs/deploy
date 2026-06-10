@@ -1,6 +1,0 @@
-#!/bin/sh
-
-export PYTHONPATH="../mkdocs"
-mkdocs gh-deploy
-
-#rsync -avLc site/ pale.org:docs.pale.org/pcot

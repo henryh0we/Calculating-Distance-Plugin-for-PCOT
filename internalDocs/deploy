@@ -1,2 +1,0 @@
-#!/bin/sh
-rsync -avLc site/ pale.org:docs.pale.org/pcotInternal
