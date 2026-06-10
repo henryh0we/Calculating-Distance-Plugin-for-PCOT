@@ -1,4 +1,5 @@
 import importlib.util
+import json
 import sys
 import types
 from pathlib import Path
@@ -67,6 +68,49 @@ class FakeRectifyNode:
 
     def setOutput(self, idx, datum):
         self.outputs[idx] = datum
+
+
+def valid_rectification_calibration():
+    return {
+        "mtx_left": [
+            [1.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0],
+            [0.0, 0.0, 1.0],
+        ],
+        "dist_left": [0.0, 0.0, 0.0, 0.0, 0.0],
+        "rect_left": [
+            [1.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0],
+            [0.0, 0.0, 1.0],
+        ],
+        "proj_left": [
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
+        ],
+        "mtx_right": [
+            [1.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0],
+            [0.0, 0.0, 1.0],
+        ],
+        "dist_right": [0.0, 0.0, 0.0, 0.0, 0.0],
+        "rect_right": [
+            [1.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0],
+            [0.0, 0.0, 1.0],
+        ],
+        "proj_right": [
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
+        ],
+    }
+
+
+def write_calibration(tmp_path, data):
+    path = tmp_path / "calibration.json"
+    path.write_text(json.dumps(data), encoding="utf-8")
+    return path
 
 
 @pytest.fixture
@@ -222,6 +266,69 @@ def test_rectify_missing_inputs_clear_outputs_and_stale_preview_state():
     assert node.left_rectified_cube is None
     assert node.right_rectified_cube is None
     assert node.status_message == "Left and right image inputs are required."
+    assert node.outputs[0].get(Datum.IMG) is None
+    assert node.outputs[1].get(Datum.IMG) is None
+
+
+@pytest.mark.skipif(not HAS_PYSIDE2, reason="PySide2 not installed")
+def test_rectify_bundled_calibration_loads_successfully():
+    rectify_type = XFormImageRectify()
+
+    assert rectify_type.calibration_error is None
+    assert rectify_type.mtx_left.shape == (3, 3)
+    assert rectify_type.dist_left.shape[1] == 1
+    assert rectify_type.rect_left.shape == (3, 3)
+    assert rectify_type.proj_left.shape == (3, 4)
+    assert rectify_type.mtx_right.shape == (3, 3)
+    assert rectify_type.dist_right.shape[1] == 1
+    assert rectify_type.rect_right.shape == (3, 3)
+    assert rectify_type.proj_right.shape == (3, 4)
+
+
+@pytest.mark.skipif(not HAS_PYSIDE2, reason="PySide2 not installed")
+def test_rectify_calibration_missing_key_reports_clear_error(tmp_path):
+    rectify_type = XFormImageRectify()
+    data = valid_rectification_calibration()
+    del data["proj_right"]
+
+    rectify_type.load_json(write_calibration(tmp_path, data))
+
+    assert rectify_type.calibration_error == "Invalid calibration file: missing keys: proj_right"
+    assert rectify_type.mtx_left is None
+    assert rectify_type.proj_right is None
+
+
+@pytest.mark.skipif(not HAS_PYSIDE2, reason="PySide2 not installed")
+def test_rectify_calibration_invalid_shape_reports_clear_error(tmp_path):
+    rectify_type = XFormImageRectify()
+    data = valid_rectification_calibration()
+    data["mtx_left"] = [
+        [1.0, 0.0],
+        [0.0, 1.0],
+    ]
+
+    rectify_type.load_json(write_calibration(tmp_path, data))
+
+    assert rectify_type.calibration_error == "Invalid calibration file: mtx_left must have shape (3, 3), got (2, 2)"
+    assert rectify_type.mtx_left is None
+
+
+@pytest.mark.skipif(not HAS_PYSIDE2, reason="PySide2 not installed")
+def test_rectify_invalid_calibration_clears_outputs_before_processing(tmp_path):
+    rectify_type = XFormImageRectify()
+    data = valid_rectification_calibration()
+    del data["mtx_left"]
+    rectify_type.load_json(write_calibration(tmp_path, data))
+    node = FakeRectifyNode()
+    rectify_type.init(node)
+    node.left_rectified_cube = object()
+    node.right_rectified_cube = object()
+
+    rectify_type.perform(node)
+
+    assert node.left_rectified_cube is None
+    assert node.right_rectified_cube is None
+    assert node.status_message == "Invalid calibration file: missing keys: mtx_left"
     assert node.outputs[0].get(Datum.IMG) is None
     assert node.outputs[1].get(Datum.IMG) is None
 

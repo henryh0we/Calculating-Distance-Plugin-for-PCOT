@@ -12,6 +12,27 @@ from pcot.ui.tabs import Tab
 from pcot.xform import XFormType, xformtype
 
 
+REQUIRED_CALIBRATION_KEYS = (
+    "mtx_left",
+    "dist_left",
+    "rect_left",
+    "proj_left",
+    "mtx_right",
+    "dist_right",
+    "rect_right",
+    "proj_right",
+)
+
+CALIBRATION_MATRIX_SHAPES = {
+    "mtx_left": (3, 3),
+    "rect_left": (3, 3),
+    "proj_left": (3, 4),
+    "mtx_right": (3, 3),
+    "rect_right": (3, 3),
+    "proj_right": (3, 4),
+}
+
+
 @xformtype
 class XFormImageRectify(XFormType):
     """
@@ -35,6 +56,7 @@ class XFormImageRectify(XFormType):
         self.dist_right = None
         self.rect_right = None
         self.proj_right = None
+        self.calibration_error = None
 
         # Load JSON data
         script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -64,6 +86,10 @@ class XFormImageRectify(XFormType):
         node.setOutput(1, Datum(Datum.IMG, None))
 
     def perform(self, node):
+        if self.calibration_error is not None:
+            self.clear_node_outputs(node, self.calibration_error)
+            return
+
         left_img_datum = node.getInput(0)
         right_img_datum = node.getInput(1)
 
@@ -124,21 +150,72 @@ class XFormImageRectify(XFormType):
         node.setOutput(1, right_rectified_datum)
 
     def load_json(self, file_path):
+        self.clear_calibration()
 
-        if os.path.exists(file_path):
+        if not os.path.exists(file_path):
+            self.calibration_error = f"Calibration file not found: {file_path}"
+            return
 
+        try:
             with open(file_path, 'r') as file:
                 data = json.load(file)
+        except (OSError, json.JSONDecodeError) as ex:
+            self.calibration_error = f"Unable to load calibration file: {ex}"
+            return
 
-            self.mtx_left = np.array(data['mtx_left'])
-            self.dist_left = np.array(data['dist_left']).reshape(-1,1)
-            self.rect_left = np.array(data['rect_left'])
-            self.proj_left = np.array(data['proj_left'])
+        try:
+            calibration = self.parse_calibration(data)
+        except ValueError as ex:
+            self.calibration_error = f"Invalid calibration file: {ex}"
+            return
 
-            self.mtx_right = np.array(data['mtx_right'])
-            self.dist_right = np.array(data['dist_right']).reshape(-1,1)
-            self.rect_right = np.array(data['rect_right'])
-            self.proj_right = np.array(data['proj_right'])
+        self.mtx_left = calibration["mtx_left"]
+        self.dist_left = calibration["dist_left"]
+        self.rect_left = calibration["rect_left"]
+        self.proj_left = calibration["proj_left"]
+        self.mtx_right = calibration["mtx_right"]
+        self.dist_right = calibration["dist_right"]
+        self.rect_right = calibration["rect_right"]
+        self.proj_right = calibration["proj_right"]
+        self.calibration_error = None
+
+    def clear_calibration(self):
+        self.mtx_left = None
+        self.dist_left = None
+        self.rect_left = None
+        self.proj_left = None
+        self.mtx_right = None
+        self.dist_right = None
+        self.rect_right = None
+        self.proj_right = None
+
+    def parse_calibration(self, data):
+        missing_keys = [key for key in REQUIRED_CALIBRATION_KEYS if key not in data]
+        if missing_keys:
+            raise ValueError(f"missing keys: {', '.join(missing_keys)}")
+
+        calibration = {}
+        for key, expected_shape in CALIBRATION_MATRIX_SHAPES.items():
+            calibration[key] = self.parse_matrix(data[key], key, expected_shape)
+
+        calibration["dist_left"] = self.parse_distortion(data["dist_left"], "dist_left")
+        calibration["dist_right"] = self.parse_distortion(data["dist_right"], "dist_right")
+        return calibration
+
+    def parse_matrix(self, value, key, expected_shape):
+        matrix = np.array(value, dtype=np.float64)
+        if matrix.shape != expected_shape:
+            raise ValueError(f"{key} must have shape {expected_shape}, got {matrix.shape}")
+        return matrix
+
+    def parse_distortion(self, value, key):
+        distortion = np.array(value, dtype=np.float64)
+        if distortion.size == 0:
+            raise ValueError(f"{key} must contain at least one coefficient")
+        if distortion.ndim > 2 or (distortion.ndim == 2 and 1 not in distortion.shape):
+            raise ValueError(f"{key} must be a 1D, row, or column vector, got {distortion.shape}")
+        return distortion.reshape(-1, 1)
+
 
 class TabImageRectify(Tab):
     def __init__(self, node, window):
