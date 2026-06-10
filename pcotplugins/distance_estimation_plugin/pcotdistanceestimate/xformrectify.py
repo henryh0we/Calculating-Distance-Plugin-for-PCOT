@@ -112,21 +112,8 @@ class XFormImageRectify(XFormType):
         right_size = (right_img.shape[1], right_img.shape[0])
 
         try:
-            map_left_x, map_left_y = cv.initUndistortRectifyMap(
-                self.mtx_left,
-                self.dist_left,
-                self.rect_left,
-                self.proj_left,
-                left_size,
-                cv.CV_32FC1)
-            map_right_x, map_right_y = cv.initUndistortRectifyMap(
-                self.mtx_right,
-                self.dist_right,
-                self.rect_right,
-                self.proj_right,
-                right_size,
-                cv.CV_32FC1
-            )
+            map_left_x, map_left_y = self.get_rectification_maps(node, "left", left_size)
+            map_right_x, map_right_y = self.get_rectification_maps(node, "right", right_size)
 
             left_rectified = cv.remap(left_img, map_left_x, map_left_y, cv.INTER_LINEAR)
             right_rectified = cv.remap(right_img, map_right_x, map_right_y, cv.INTER_LINEAR)
@@ -175,6 +162,38 @@ class XFormImageRectify(XFormType):
             dq=rectified_dq.astype(np.uint16, copy=False),
             rois=[],
         )
+
+    def get_rectification_maps(self, node, side, image_size):
+        cache = getattr(node, "_rectify_map_cache", None)
+        if cache is None:
+            cache = {}
+            node._rectify_map_cache = cache
+
+        cache_key = (side, image_size)
+        if cache_key not in cache:
+            if side == "left":
+                camera_matrix = self.mtx_left
+                distortion = self.dist_left
+                rectification = self.rect_left
+                projection = self.proj_left
+            elif side == "right":
+                camera_matrix = self.mtx_right
+                distortion = self.dist_right
+                rectification = self.rect_right
+                projection = self.proj_right
+            else:
+                raise ValueError(f"Unknown rectification side: {side}")
+
+            cache[cache_key] = cv.initUndistortRectifyMap(
+                camera_matrix,
+                distortion,
+                rectification,
+                projection,
+                image_size,
+                cv.CV_32FC1,
+            )
+
+        return cache[cache_key]
 
     def load_json(self, file_path):
         self.clear_calibration()

@@ -28,6 +28,7 @@ HAS_PYSIDE2 = importlib.util.find_spec("PySide2") is not None
 if HAS_PYSIDE2:
     from pcot.datum import Datum
     from pcot.imagecube import ImageCube
+    from pcotplugins.distance_estimation_plugin.pcotdistanceestimate import xformrectify as xformrectify_module
     from pcotplugins.distance_estimation_plugin.pcotdistanceestimate.xformdistestimateROI import (
         XFormDistEstimateRoi,
     )
@@ -385,6 +386,96 @@ def test_rectify_build_cube_preserves_metadata_and_remaps_companion_arrays():
     np.testing.assert_array_equal(output_cube.dq, dq)
     assert output_cube.dq.dtype == np.uint16
     assert output_cube.rois == []
+
+
+@pytest.mark.skipif(not HAS_PYSIDE2, reason="PySide2 not installed")
+def test_rectify_map_cache_reuses_same_side_and_size(monkeypatch):
+    rectify_type = XFormImageRectify()
+    node = FakeRectifyNode()
+    rectify_type.init(node)
+    calls = []
+
+    def fake_init_map(*args):
+        calls.append(args)
+        marker = len(calls)
+        return f"map-x-{marker}", f"map-y-{marker}"
+
+    monkeypatch.setattr(xformrectify_module.cv, "initUndistortRectifyMap", fake_init_map)
+
+    first_maps = rectify_type.get_rectification_maps(node, "left", (3, 2))
+    second_maps = rectify_type.get_rectification_maps(node, "left", (3, 2))
+
+    assert first_maps == ("map-x-1", "map-y-1")
+    assert second_maps is first_maps
+    assert len(calls) == 1
+
+
+@pytest.mark.skipif(not HAS_PYSIDE2, reason="PySide2 not installed")
+def test_rectify_map_cache_regenerates_for_different_size(monkeypatch):
+    rectify_type = XFormImageRectify()
+    node = FakeRectifyNode()
+    rectify_type.init(node)
+    calls = []
+
+    def fake_init_map(*args):
+        calls.append(args)
+        marker = len(calls)
+        return f"map-x-{marker}", f"map-y-{marker}"
+
+    monkeypatch.setattr(xformrectify_module.cv, "initUndistortRectifyMap", fake_init_map)
+
+    first_maps = rectify_type.get_rectification_maps(node, "left", (3, 2))
+    second_maps = rectify_type.get_rectification_maps(node, "left", (4, 2))
+
+    assert first_maps == ("map-x-1", "map-y-1")
+    assert second_maps == ("map-x-2", "map-y-2")
+    assert len(calls) == 2
+
+
+@pytest.mark.skipif(not HAS_PYSIDE2, reason="PySide2 not installed")
+def test_rectify_map_cache_keeps_left_and_right_separate(monkeypatch):
+    rectify_type = XFormImageRectify()
+    node = FakeRectifyNode()
+    rectify_type.init(node)
+    calls = []
+
+    def fake_init_map(*args):
+        calls.append(args)
+        marker = len(calls)
+        return f"map-x-{marker}", f"map-y-{marker}"
+
+    monkeypatch.setattr(xformrectify_module.cv, "initUndistortRectifyMap", fake_init_map)
+
+    left_maps = rectify_type.get_rectification_maps(node, "left", (3, 2))
+    right_maps = rectify_type.get_rectification_maps(node, "right", (3, 2))
+
+    assert left_maps == ("map-x-1", "map-y-1")
+    assert right_maps == ("map-x-2", "map-y-2")
+    assert len(calls) == 2
+
+
+@pytest.mark.skipif(not HAS_PYSIDE2, reason="PySide2 not installed")
+def test_rectify_map_cache_is_per_node(monkeypatch):
+    rectify_type = XFormImageRectify()
+    first_node = FakeRectifyNode()
+    second_node = FakeRectifyNode()
+    rectify_type.init(first_node)
+    rectify_type.init(second_node)
+    calls = []
+
+    def fake_init_map(*args):
+        calls.append(args)
+        marker = len(calls)
+        return f"map-x-{marker}", f"map-y-{marker}"
+
+    monkeypatch.setattr(xformrectify_module.cv, "initUndistortRectifyMap", fake_init_map)
+
+    first_node_maps = rectify_type.get_rectification_maps(first_node, "left", (3, 2))
+    second_node_maps = rectify_type.get_rectification_maps(second_node, "left", (3, 2))
+
+    assert first_node_maps == ("map-x-1", "map-y-1")
+    assert second_node_maps == ("map-x-2", "map-y-2")
+    assert len(calls) == 2
 
 
 @pytest.mark.skipif(not HAS_PYSIDE2, reason="PySide2 not installed")
