@@ -90,47 +90,52 @@ class XFormImageRectify(XFormType):
             self.clear_node_outputs(node, self.calibration_error)
             return
 
-        left_img_datum = node.getInput(0)
-        right_img_datum = node.getInput(1)
-
-        if left_img_datum is None or right_img_datum is None:
-            self.clear_node_outputs(node, "Left and right image inputs are required.")
-            return
-
-        left_img_cube = left_img_datum.get(Datum.IMG)
-        right_img_cube = right_img_datum.get(Datum.IMG)
+        left_img_cube = node.getInput(0, Datum.IMG)
+        right_img_cube = node.getInput(1, Datum.IMG)
 
         if left_img_cube is None or right_img_cube is None:
-            self.clear_node_outputs(node, "Left and right inputs must both be images.")
+            self.clear_node_outputs(node, "Left and right image inputs are required.")
             return
 
         left_img = left_img_cube.img
         right_img = right_img_cube.img
 
         if not isinstance(left_img, np.ndarray) or not isinstance(right_img, np.ndarray):
-            raise TypeError("Input images must be of type np.ndarray")
+            self.clear_node_outputs(node, "Left and right inputs must both contain image arrays.")
+            return
+
+        if left_img.ndim not in (2, 3) or right_img.ndim not in (2, 3):
+            self.clear_node_outputs(node, "Left and right image arrays must be 2D or 3D.")
+            return
 
         left_size = (left_img.shape[1], left_img.shape[0])
         right_size = (right_img.shape[1], right_img.shape[0])
 
-        map_left_x, map_left_y = cv.initUndistortRectifyMap(
-            self.mtx_left, 
-            self.dist_left, 
-            self.rect_left, 
-            self.proj_left, 
-            left_size,
-            cv.CV_32FC1)
-        map_right_x, map_right_y = cv.initUndistortRectifyMap(
-            self.mtx_right, 
-            self.dist_right, 
-            self.rect_right, 
-            self.proj_right, 
-            right_size,
-            cv.CV_32FC1
-        )
+        try:
+            map_left_x, map_left_y = cv.initUndistortRectifyMap(
+                self.mtx_left,
+                self.dist_left,
+                self.rect_left,
+                self.proj_left,
+                left_size,
+                cv.CV_32FC1)
+            map_right_x, map_right_y = cv.initUndistortRectifyMap(
+                self.mtx_right,
+                self.dist_right,
+                self.rect_right,
+                self.proj_right,
+                right_size,
+                cv.CV_32FC1
+            )
 
-        left_rectified = cv.remap(left_img, map_left_x, map_left_y, cv.INTER_LINEAR)
-        right_rectified = cv.remap(right_img, map_right_x, map_right_y, cv.INTER_LINEAR)
+            left_rectified = cv.remap(left_img, map_left_x, map_left_y, cv.INTER_LINEAR)
+            right_rectified = cv.remap(right_img, map_right_x, map_right_y, cv.INTER_LINEAR)
+        except cv.error as ex:
+            self.clear_node_outputs(node, f"Rectification failed: {ex}")
+            return
+        except ValueError as ex:
+            self.clear_node_outputs(node, f"Rectification failed: {ex}")
+            return
 
         # Wrap numpy arrays into ImageCube objects
         left_rectified_cube = ImageCube(left_rectified)

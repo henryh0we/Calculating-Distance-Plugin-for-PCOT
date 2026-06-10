@@ -6,6 +6,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -62,9 +63,14 @@ class FakeRectifyNode:
     def __init__(self):
         self.inputs = [None, None]
         self.outputs = {}
+        self.input_requests = []
 
-    def getInput(self, idx):
-        return self.inputs[idx]
+    def getInput(self, idx, datum_type=None):
+        self.input_requests.append((idx, datum_type))
+        value = self.inputs[idx]
+        if datum_type is not None and hasattr(value, "get"):
+            return value.get(datum_type)
+        return value
 
     def setOutput(self, idx, datum):
         self.outputs[idx] = datum
@@ -266,6 +272,80 @@ def test_rectify_missing_inputs_clear_outputs_and_stale_preview_state():
     assert node.left_rectified_cube is None
     assert node.right_rectified_cube is None
     assert node.status_message == "Left and right image inputs are required."
+    assert node.outputs[0].get(Datum.IMG) is None
+    assert node.outputs[1].get(Datum.IMG) is None
+
+
+@pytest.mark.skipif(not HAS_PYSIDE2, reason="PySide2 not installed")
+def test_rectify_uses_typed_image_inputs():
+    rectify_type = XFormImageRectify()
+    node = FakeRectifyNode()
+    rectify_type.init(node)
+
+    rectify_type.perform(node)
+
+    assert node.input_requests == [(0, Datum.IMG), (1, Datum.IMG)]
+
+
+@pytest.mark.skipif(not HAS_PYSIDE2, reason="PySide2 not installed")
+def test_rectify_non_array_inputs_clear_outputs():
+    rectify_type = XFormImageRectify()
+    node = FakeRectifyNode()
+    rectify_type.init(node)
+    node.inputs = [
+        SimpleNamespace(img="not an array"),
+        SimpleNamespace(img=np.zeros((2, 2), dtype=np.float32)),
+    ]
+
+    rectify_type.perform(node)
+
+    assert node.status_message == "Left and right inputs must both contain image arrays."
+    assert node.outputs[0].get(Datum.IMG) is None
+    assert node.outputs[1].get(Datum.IMG) is None
+
+
+@pytest.mark.skipif(not HAS_PYSIDE2, reason="PySide2 not installed")
+def test_rectify_wrong_dimension_arrays_clear_outputs():
+    rectify_type = XFormImageRectify()
+    node = FakeRectifyNode()
+    rectify_type.init(node)
+    node.inputs = [
+        SimpleNamespace(img=np.zeros((2,), dtype=np.float32)),
+        SimpleNamespace(img=np.zeros((2, 2), dtype=np.float32)),
+    ]
+
+    rectify_type.perform(node)
+
+    assert node.status_message == "Left and right image arrays must be 2D or 3D."
+    assert node.outputs[0].get(Datum.IMG) is None
+    assert node.outputs[1].get(Datum.IMG) is None
+
+
+@pytest.mark.skipif(not HAS_PYSIDE2, reason="PySide2 not installed")
+def test_rectify_opencv_failure_clears_outputs(monkeypatch):
+    import cv2 as cv
+
+    rectify_type = XFormImageRectify()
+    node = FakeRectifyNode()
+    rectify_type.init(node)
+    node.left_rectified_cube = object()
+    node.right_rectified_cube = object()
+    node.inputs = [
+        SimpleNamespace(img=np.zeros((2, 2), dtype=np.float32)),
+        SimpleNamespace(img=np.zeros((2, 2), dtype=np.float32)),
+    ]
+
+    def raise_cv_error(*_args, **_kwargs):
+        raise cv.error("map failed")
+
+    monkeypatch.setattr(cv, "initUndistortRectifyMap", raise_cv_error)
+
+    rectify_type.perform(node)
+
+    assert node.left_rectified_cube is None
+    assert node.right_rectified_cube is None
+    assert node.status_message.startswith("Rectification failed:")
+    assert "map failed" in node.status_message
     assert node.outputs[0].get(Datum.IMG) is None
     assert node.outputs[1].get(Datum.IMG) is None
 
