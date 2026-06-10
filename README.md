@@ -16,10 +16,10 @@ To use this project with PCOT:
 
 ```ini
 [Locations]
-pluginpath = C:\Users\<your-username>\DistEstimate
+pluginpath = C:\Users\<your-username>\DistEstimate\pcotdistanceestimate
 ```
 
-The plugin path works recursively, so any directories within pluginpath should have their plugins added.
+For this repository layout, point `pluginpath` at `pcotdistanceestimate` rather than the repository root. PCOT loads plugin paths recursively, so pointing at the repository root would also load test files.
 
 ## Loading PCOT
 
