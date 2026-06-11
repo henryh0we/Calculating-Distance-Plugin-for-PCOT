@@ -12,14 +12,21 @@ To use this project with PCOT:
 
 1. Download and set up PCOT from https://github.com/AU-ExoMars/PCOT.
 2. Keep this repository outside PCOT as `DistEstimate`.
-3. Edit the plugin path in the **.pcot.ini** file to contain the following:
+3. Edit the `pluginpath` value in the **.pcot.ini** file to include this plugin directory:
 
 ```ini
 [Locations]
 pluginpath = C:\Users\<your-username>\DistEstimate\pcotdistanceestimate
 ```
 
-For this repository layout, point `pluginpath` at `pcotdistanceestimate` rather than the repository root. PCOT loads plugin paths recursively, so pointing at the repository root would also load test files.
+If you already have other PCOT plugins configured, keep those paths and append this one with a semicolon:
+
+```ini
+[Locations]
+pluginpath = C:\Users\<your-username>\pcotplugins;C:\Users\<your-username>\DistEstimate\pcotdistanceestimate
+```
+
+For this repository layout, add the `pcotdistanceestimate` directory rather than the repository root. PCOT loads each plugin path recursively, so pointing at the repository root would also load test files.
 
 ## Loading PCOT
 
