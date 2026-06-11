@@ -23,14 +23,7 @@ For this repository layout, point `pluginpath` at `pcotdistanceestimate` rather 
 
 ## Loading PCOT
 
-Once the nodes have been added into pcot, on start up, you will be asked two questions:
-
-1. To overwrite the camera data .json
-2. To overwrite the focal length, baseline, height .json
-
-Overwriting the camera data json will redo the calibration steps undertaken by camera_calibration.py on images within the Camera Calibration Directory. (This path may need to be changed, if files have been moved)
-
-Overwriting the focal length, baseline, height .json uses the known data about AUPE, hard coded within the program to generate the focal length, baseline and height.
+The repository includes [Camera_calibration.py](pcotdistanceestimate/Camera_calibration.py), which can regenerate the camera calibration data used by the plugin. The script uses the calibration images stored in [data/calibration](data/calibration/) to create the camera data.
 
 ## Using the nodes
 
@@ -39,4 +32,4 @@ Alternatively, sample workflows are available in `data/samples/workflows`.
 
 ## Questions
 If there are any further questions regarding set up, please do not hesitate to contact me at my email:
-https://github.com/henryrhowe02
+https://github.com/henryh0we
